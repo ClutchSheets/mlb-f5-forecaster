@@ -1,9 +1,15 @@
 date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-03-27,NYY,Cam Schlittler,SFG,Robbie Ray,2.4811804,2.4197474,4.9009278,0.4955884,v1.0
-2026-03-27,ATH,Luis Severino,TOR,Kevin Gausman,2.1080798,2.5396446,4.6477244,0.5331457,v1.0
-2026-03-27,COL,Kyle Freeland,MIA,Sandy Alcantara,2.3530134,2.5759571,4.9289705,0.5164817,v1.0
-2026-03-27,KCR,Cole Ragans,ATL,Chris Sale,1.9788946,2.3660453,4.3449399,0.5311706,v1.0
-2026-03-27,LAA,Yusei Kikuchi,HOU,Mike Burrows,2.4463879,2.8050203,5.2514082,0.5252932,v1.0
-2026-03-27,DET,Framber Valdez,SDP,Michael King,2.4890826,2.1786034,4.6676860,0.4763824,v1.0
-2026-03-27,CLE,Gavin Williams,SEA,George Kirby,2.2553109,2.5827743,4.8380852,0.5068760,v1.0
-2026-03-27,ARI,Ryne Nelson,LAD,Emmet Sheehan,2.0800778,2.1847968,4.2648746,0.5085697,v1.0
+2026-03-28,TBR,Joe Boyle,STL,Michael McGreevy,2.426,3.039,5.466,0.580,v1.0
+2026-03-28,WSN,Miles Mikolas,CHC,Cade Horton,2.037,2.733,4.771,0.598,v1.0
+2026-03-28,ATH,Jeffrey Springs,TOR,Dylan Cease,2.699,2.614,5.313,0.489,v1.0
+2026-03-28,MIN,Taj Bradley,BAL,Kyle Bradish,2.112,2.527,4.639,0.560,v1.0
+2026-03-28,TEX,Jacob deGrom,PHI,Aaron Nola,2.772,2.148,4.920,0.414,v1.0
+2026-03-28,BOS,Sonny Gray,CIN,Brady Singer,2.491,2.478,4.969,0.498,v1.0
+2026-03-28,PIT,Mitch Keller,NYM,David Peterson,2.175,2.583,4.757,0.512,v1.0
+2026-03-28,COL,Michael Lorenzen,MIA,Eury Pérez,2.048,2.748,4.796,0.598,v1.0
+2026-03-28,LAA,Reid Detmers,HOU,Cristian Javier,2.267,2.634,4.901,0.551,v1.0
+2026-03-28,CHW,Sean Burke,MIL,Chad Patrick,2.319,3.062,5.382,0.597,v1.0
+2026-03-28,KCR,Michael Wacha,ATL,Reynaldo López,2.584,2.263,4.847,0.455,v1.0
+2026-03-28,NYY,Will Warren,SFG,Tyler Mahle,2.182,2.685,4.867,0.570,v1.0
+2026-03-28,DET,Jack Flaherty,SDP,Randy Vásquez,2.400,2.589,4.988,0.526,v1.0
+2026-03-28,ARI,Eduardo Rodriguez,LAD,Tyler Glasnow,2.338,3.047,5.385,0.593,v1.0
