@@ -3,8 +3,38 @@ import sqlite3
 import pandas as pd
 import numpy as np
 import altair as alt
+from scipy.stats import nbinom
 
 DB_FILE = "mlb_f5_forecasts.db"
+
+# Negative binomial parameters
+# r=6.7 is the fitted dispersion; lambda (mu) varies per game
+NEGBIN_R = 6.7
+
+def negbin_params(mu: float, r: float = NEGBIN_R):
+    """Convert mean (mu) and dispersion (r) to scipy nbinom (n, p) params."""
+    p = r / (r + mu)
+    return r, p
+
+def negbin_win_prob(mu_away: float, mu_home: float, r: float = NEGBIN_R, max_runs: int = 20) -> float:
+    """P(home wins F5) using negative binomial convolution."""
+    r_a, p_a = negbin_params(mu_away, r)
+    r_h, p_h = negbin_params(mu_home, r)
+    runs = np.arange(0, max_runs + 1)
+    pmf_a = nbinom.pmf(runs, r_a, p_a)
+    pmf_h = nbinom.pmf(runs, r_h, p_h)
+    p_home_win = np.sum(
+        pmf_h[:, None] * pmf_a[None, :] * (np.arange(max_runs + 1)[:, None] > runs[None, :])
+    )
+    p_tie = np.sum(pmf_h * pmf_a)
+    return float(p_home_win + 0.5 * p_tie)
+
+def negbin_pmf_table(mu: float, r: float = NEGBIN_R, max_runs: int = 12) -> pd.DataFrame:
+    """Return a small PMF table for display (runs 0–max_runs)."""
+    n, p = negbin_params(mu, r)
+    runs = np.arange(0, max_runs + 1)
+    probs = nbinom.pmf(runs, n, p)
+    return pd.DataFrame({"Runs": runs, "Probability": np.round(probs, 4)})
 
 st.set_page_config(page_title="MLB F5 Forecast Model", layout="wide")
 
@@ -99,6 +129,72 @@ if page == "Today's Forecasts":
         hide_index=True
     )
 
+    st.divider()
+    st.subheader("Run Distribution (Negative Binomial, r=6.7)")
+    st.caption(
+        "Win probabilities above are derived from a negative binomial distribution (r=6.7) "
+        "rather than Poisson. NegBin allows for overdispersion — more variance than Poisson "
+        "at the same mean — which better fits real F5 run scoring. "
+        "Select a game below to inspect its projected run PMF."
+    )
+
+    raw_today = csv_df[csv_df["date"] == forecast_date].copy()
+    raw_today["lambda_away"] = to_num(raw_today["lambda_away"])
+    raw_today["lambda_home"] = to_num(raw_today["lambda_home"])
+    raw_today["winprob_home"] = to_num(raw_today["winprob_home"])
+
+    game_labels = [
+        f"{r['away_team']} @ {r['home_team']}"
+        for _, r in raw_today.iterrows()
+    ]
+    sel_game = st.selectbox("Select game", game_labels)
+    sel_row = raw_today.iloc[game_labels.index(sel_game)]
+
+    mu_a = float(sel_row["lambda_away"])
+    mu_h = float(sel_row["lambda_home"])
+    wp   = float(sel_row["winprob_home"])
+
+    pmf_a = negbin_pmf_table(mu_a)
+    pmf_h = negbin_pmf_table(mu_h)
+
+    # Verify negbin win prob matches CSV (sanity check)
+    wp_check = negbin_win_prob(mu_a, mu_h)
+
+    col_a, col_h = st.columns(2)
+
+    with col_a:
+        st.markdown(f"**{sel_row['away_team']} (Away)** — λ = {mu_a:.3f}")
+        chart_a = (
+            alt.Chart(pmf_a)
+            .mark_bar(color="#4A90D9")
+            .encode(
+                x=alt.X("Runs:O", title="F5 Runs"),
+                y=alt.Y("Probability:Q", title="Probability", axis=alt.Axis(format=".3f")),
+                tooltip=["Runs", alt.Tooltip("Probability:Q", format=".4f")]
+            )
+            .properties(height=220)
+        )
+        st.altair_chart(chart_a, use_container_width=True)
+
+    with col_h:
+        st.markdown(f"**{sel_row['home_team']} (Home)** — λ = {mu_h:.3f}")
+        chart_h = (
+            alt.Chart(pmf_h)
+            .mark_bar(color="#E07B39")
+            .encode(
+                x=alt.X("Runs:O", title="F5 Runs"),
+                y=alt.Y("Probability:Q", title="Probability", axis=alt.Axis(format=".3f")),
+                tooltip=["Runs", alt.Tooltip("Probability:Q", format=".4f")]
+            )
+            .properties(height=220)
+        )
+        st.altair_chart(chart_h, use_container_width=True)
+
+    st.caption(
+        f"CSV win prob: **{wp:.3f}** — NegBin recalc: **{wp_check:.3f}** "
+        f"({'✓ match' if abs(wp - wp_check) < 0.01 else '⚠ mismatch >1% — check upstream r or home field adj'})"
+    )
+
 # -----------------------------
 # ACCURACY
 # -----------------------------
@@ -140,6 +236,12 @@ elif page == "Accuracy":
 # -----------------------------
 elif page == "Calibration":
     st.title("Win Probability Calibration")
+    st.caption(
+        "Win probabilities are derived from a Negative Binomial distribution (r=6.7, "
+        "fitted dispersion parameter). NegBin produces wider tails than Poisson at the "
+        "same mean, better reflecting game-to-game variance in F5 run scoring. "
+        "Calibration checks whether those probabilities track real-world outcomes."
+    )
 
     dc = f_completed(df)
     if dc.empty:
