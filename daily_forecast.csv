@@ -1,13 +1,13 @@
 date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-03-29,MIN,Bailey Ober,BAL,Shane Baz,2.822,2.217,5.039,0.414,v3.0
-2026-03-29,TEX,MacKenzie Gore,PHI,Jesús Luzardo,1.62,2.148,3.768,0.589,v3.0
+2026-03-29,MIN,Bailey Ober,BAL,Shane Baz,2.935,2.306,5.241,0.413,v3.0
+2026-03-29,TEX,MacKenzie Gore,PHI,Jesús Luzardo,1.685,2.234,3.919,0.591,v3.0
 2026-03-29,KCR,Seth Lugo,ATL,Grant Holmes,1.011,2.079,3.09,0.698,v3.0
-2026-03-29,ATH,Luis Morales,TOR,Eric Lauer,2.686,2.466,5.152,0.469,v3.0
+2026-03-29,ATH,Luis Morales,TOR,Eric Lauer,2.793,2.564,5.357,0.469,v3.0
 2026-03-29,BOS,Connelly Early,CIN,Rhett Lowder,2.26,2.261,4.521,0.5,v3.0
-2026-03-29,PIT,Carmen Mlodzinski,NYM,Nolan McLean,1.164,2.796,3.96,0.755,v3.0
-2026-03-29,COL,Jose Quintana,MIA,Max Meyer,1.848,2.873,4.721,0.65,v3.0
-2026-03-29,LAA,Jack Kochanowicz,HOU,Tatsuya Imai,1.828,1.997,3.825,0.528,v3.0
-2026-03-29,CWS,Anthony Kay,MIL,Brandon Sproat,1.693,2.382,4.075,0.611,v3.0
-2026-03-29,TBR,Steven Matz,STL,Dustin May,2.022,3.161,5.183,0.657,v3.0
-2026-03-29,WSN,Jake Irvin,CHC,Shota Imanaga,1.632,2.297,3.929,0.61,v3.0
+2026-03-29,PIT,Carmen Mlodzinski,NYM,Nolan McLean,1.211,2.908,4.119,0.759,v3.0
+2026-03-29,COL,Jose Quintana,MIA,Max Meyer,1.922,2.988,4.91,0.652,v3.0
+2026-03-29,LAA,Jack Kochanowicz,HOU,Tatsuya Imai,1.901,2.077,3.978,0.529,v3.0
+2026-03-29,CWS,Anthony Kay,MIL,Brandon Sproat,1.761,2.477,4.238,0.613,v3.0
+2026-03-29,TBR,Steven Matz,STL,Dustin May,2.103,3.288,5.391,0.659,v3.0
+2026-03-29,WSN,Jake Irvin,CHC,Shota Imanaga,1.697,2.388,4.085,0.611,v3.0
 2026-03-29,CLE,Slade Cecconi,SEA,Emerson Hancock,2.08,2.602,4.682,0.578,v3.0
