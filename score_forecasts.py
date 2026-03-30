@@ -13,10 +13,13 @@ FORECAST_FILE = "daily_forecast.csv"
 DB_FILE = "mlb_f5_forecasts.db"
 
 TEAM_ID_MAP = {
-    "ARI": 109, "ATL": 144, "BAL": 110, "BOS": 111, "CHC": 112, "CHW": 145,
+    "ARI": 109, "ATL": 144, "BAL": 110, "BOS": 111, "CHC": 112,
+    "CWS": 145, "CHW": 145,   # both codes map to White Sox
     "CIN": 113, "CLE": 114, "COL": 115, "DET": 116, "HOU": 117, "KCR": 118,
     "LAA": 108, "LAD": 119, "MIA": 146, "MIL": 158, "MIN": 142, "NYM": 121,
-    "NYY": 147, "OAK": 133, "PHI": 143, "PIT": 134, "SDP": 135, "SEA": 136,
+    "NYY": 147,
+    "ATH": 133, "OAK": 133,   # both codes map to Athletics
+    "PHI": 143, "PIT": 134, "SDP": 135, "SEA": 136,
     "SFG": 137, "STL": 138, "TBR": 139, "TEX": 140, "TOR": 141, "WSN": 120
 }
 
@@ -110,7 +113,7 @@ def validate_row(row: pd.Series):
         raise ValueError(f"winprob_home must be in [0,1], got {p}")
 
 def main():
-    forecasts = pd.read_csv(FORECAST_FILE)
+    forecasts = pd.read_csv(FORECAST_FILE, encoding="latin-1")
 
     # normalize
     forecasts["date"] = forecasts["date"].astype(str).str.strip()
@@ -237,3 +240,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # Auto-push scores to GitHub → triggers Railway redeploy
+    from push_scores import push_scores
+    push_scores()
