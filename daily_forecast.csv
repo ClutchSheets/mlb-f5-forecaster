@@ -1,13 +1,16 @@
 date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-03-29,MIN,Bailey Ober,BAL,Shane Baz,2.935,2.306,5.241,0.413,v3.0
-2026-03-29,TEX,MacKenzie Gore,PHI,Jesús Luzardo,1.685,2.234,3.919,0.591,v3.0
-2026-03-29,KCR,Seth Lugo,ATL,Grant Holmes,1.011,2.079,3.09,0.698,v3.0
-2026-03-29,ATH,Luis Morales,TOR,Eric Lauer,2.793,2.564,5.357,0.469,v3.0
-2026-03-29,BOS,Connelly Early,CIN,Rhett Lowder,2.26,2.261,4.521,0.5,v3.0
-2026-03-29,PIT,Carmen Mlodzinski,NYM,Nolan McLean,1.211,2.908,4.119,0.759,v3.0
-2026-03-29,COL,Jose Quintana,MIA,Max Meyer,1.922,2.988,4.91,0.652,v3.0
-2026-03-29,LAA,Jack Kochanowicz,HOU,Tatsuya Imai,1.901,2.077,3.978,0.529,v3.0
-2026-03-29,CWS,Anthony Kay,MIL,Brandon Sproat,1.761,2.477,4.238,0.613,v3.0
-2026-03-29,TBR,Steven Matz,STL,Dustin May,2.103,3.288,5.391,0.659,v3.0
-2026-03-29,WSN,Jake Irvin,CHC,Shota Imanaga,1.82,2.388,4.208,0.59,v3.0
-2026-03-29,CLE,Slade Cecconi,SEA,Emerson Hancock,2.08,2.602,4.682,0.578,v3.0
+2026-03-30,MIN,Simeon Woods Richardson,KCR,Kris Bubic,1.77,1.725,3.495,0.492,v3.0
+2026-03-30,TEX,Jack Leiter,BAL,Chris Bassitt,1.46,2.329,3.789,0.645,v3.0
+2026-03-30,PIT,Braxton Ashcraft,CIN,Chase Burns,1.755,1.81,3.565,0.51,v3.0
+2026-03-30,WSN,Foster Griffin,PHI,Taijuan Walker,1.654,2.04,3.694,0.566,v3.0
+2026-03-30,CWS,Davis Martin,MIA,Chris Paddack,2.015,2.157,4.172,0.523,v3.0
+2026-03-30,COL,Tomoyuki Sugano,TOR,Cody Ponce,1.612,2.311,3.923,0.615,v3.0
+2026-03-30,ATH,Jacob Lopez,ATL,Bryce Elder,2.2,1.778,3.978,0.431,v3.0
+2026-03-30,LAA,Ryan Johnson,CHC,Edward Cabrera,2.134,2.383,4.517,0.538,v3.0
+2026-03-30,TBR,Nick Martinez,MIL,Kyle Harrison,1.59,2.268,3.858,0.613,v3.0
+2026-03-30,NYM,Clay Holmes,STL,Kyle Leahy,2.362,1.401,3.763,0.34,v3.0
+2026-03-30,BOS,Ranger Suarez,HOU,Lance McCullers Jr.,2.081,1.827,3.908,0.458,v3.0
+2026-03-30,SFG,Landen Roupp,SDP,Walker Buehler,1.662,1.097,2.759,0.387,v3.0
+2026-03-30,NYY,Ryan Weathers,SEA,Luis Castillo,2.911,1.765,4.676,0.332,v3.0
+2026-03-30,DET,Justin Verlander,ARI,Michael Soroka,2.414,3.666,6.08,0.656,v3.0
+2026-03-30,CLE,Parker Messick,LAD,Roki Sasaki,1.735,2.634,4.369,0.638,v3.0
