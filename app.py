@@ -219,14 +219,30 @@ elif page == "Accuracy":
     st.caption("Baselines: Brier ≈ 0.25 (coin flip), Log Loss ≈ 0.693 (coin flip).")
 
     if "created_at" in dv.columns and dv["created_at"].notna().any():
-        dv = dv.sort_values("created_at").copy()
-        dv["rolling_mae_7"] = to_num(dv["mae_total"]).rolling(7).mean()
-        dv["rolling_brier_7"] = to_num(dv["brier"]).rolling(7).mean()
-        dv["rolling_logloss_7"] = to_num(dv["logloss"]).rolling(7).mean()
+        dv = dv.copy()
+
+        # Use game date, not timestamp
+        dv["date"] = pd.to_datetime(dv["date"])
+
+        daily = dv.groupby("date").agg({
+            "mae_total": "mean",
+            "brier": "mean",
+            "logloss": "mean"
+        }).reset_index()
+
+        daily = daily.sort_values("date")
+
+        daily["rolling_mae_7"] = daily["mae_total"].rolling(7).mean()
+        daily["rolling_brier_7"] = daily["brier"].rolling(7).mean()
+        daily["rolling_logloss_7"] = daily["logloss"].rolling(7).mean()
 
         st.subheader("Rolling 7-Game Metrics")
         st.line_chart(
-            dv.set_index("created_at")[["rolling_mae_7", "rolling_brier_7", "rolling_logloss_7"]]
+            daily.set_index("date")[[
+                "rolling_mae_7",
+                "rolling_brier_7",
+                "rolling_logloss_7"
+            ]]
         )
     else:
         st.info("Rolling metrics will appear once you have timestamps and more rows.")
