@@ -1,4 +1,16 @@
 date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-02,MIN,Taj Bradley,KCR,Cole Ragans,2.362,2.529,4.891,0.523,v1.0
-2026-04-02,ATL,Reynaldo López,ARI,Ryne Nelson,2.078,2.665,4.743,0.583,v1.0
-2026-04-02,NYM,David Peterson,SFG,Robbie Ray,2.286,2.168,4.454,0.482,v1.0
+2026-04-03,LAD,Emmet Sheehan,WSN,Miles Mikolas,2.753,1.958,4.711,0.388,v1.0
+2026-04-03,STL,Michael McGreevy,DET,Framber Valdez,2.176,2.328,4.503,0.522,v1.0
+2026-04-03,MIA,Eury Pérez,NYY,Will Warren,2.684,2.235,4.920,0.438,v1.0
+2026-04-03,SDP,Michael King,BOS,Sonny Gray,2.447,2.532,4.979,0.512,v1.0
+2026-04-03,TOR,Dylan Cease,CHW,Average,2.670,2.504,5.174,0.478,v1.0
+2026-04-03,CIN,Brady Singer,TEX,MacKenzie Gore,2.429,2.339,4.768,0.487,v1.0
+2026-04-03,CHC,Cade Horton,CLE,Joey Cantillo,2.217,1.874,4.091,0.417,v1.0
+2026-04-03,TBR,Joe Boyle,MIN,Bailey Ober,2.737,3.132,5.869,0.549,v1.0
+2026-04-03,PHI,Aaron Nola,COL,Michael Lorenzen,2.820,2.751,5.571,0.491,v1.0
+2026-04-03,BAL,Kyle Bradish,PIT,Mitch Keller,2.384,1.957,4.341,0.436,v1.0
+2026-04-03,MIL,Chad Patrick,KCR,Average,2.620,2.417,5.037,0.472,v1.0
+2026-04-03,SEA,Bryan Woo,LAA,Reid Detmers,2.567,1.866,4.433,0.397,v1.0
+2026-04-03,HOU,Cristian Javier,ATH,Jeffrey Springs,2.496,2.363,4.859,0.481,v1.0
+2026-04-03,ATL,Grant Holmes,ARI,Eduardo Rodriguez,2.939,2.713,5.652,0.471,v1.0
+2026-04-03,NYM,Nolan McLean,SFG,Tyler Mahle,2.055,2.010,4.065,0.493,v1.0
