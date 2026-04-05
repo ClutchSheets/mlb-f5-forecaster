@@ -1,4 +1,4 @@
-date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
+ï»¿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
 2026-04-05,CHC,Edward Cabrera,CLE,Slade Cecconi,2.4260611,2.2177995,4.6438607,0.4631518,v1.0
 2026-04-05,CHC,Shota Imanaga,CLE,Parker Messick,2.6120928,2.2279070,4.8399999,0.4342818,v1.0
 2026-04-05,LAD,Roki Sasaki,WSN,Foster Griffin,2.2220540,2.6053599,4.8274140,0.5656963,v1.0
@@ -6,12 +6,11 @@ date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winp
 2026-04-05,SDP,Walker Buehler,BOS,Ranger Suarez,1.8702940,3.1091640,4.9794580,0.7003459,v1.0
 2026-04-05,MIA,Chris Paddack,NYY,Max Fried,2.1467293,2.6165641,4.7632934,0.5811709,v1.0
 2026-04-05,TBR,Nick Martinez,MIN,Simeon Woods Richardson,2.6619022,2.6917367,5.3536389,0.5047488,v1.0
-2026-04-05,TOR,Eric Lauer,CHW,Davis Martin,2.7493898,2.2363852,4.9857750,0.4144206,v1.0
+2026-04-05,TOR,Eric Lauer,CWS,Davis Martin,2.7493898,,2.7493898,,v1.0
 2026-04-05,MIL,Kyle Harrison,KCR,Kris Bubic,2.1280491,2.1358827,4.2639317,0.5014794,v1.0
 2026-04-05,CIN,Chase Burns,TEX,Jack Leiter,2.30508598,2.74,5.04570739,0.572,v1.0
 2026-04-05,PHI,Taijuan Walker,COL,Tomoyuki Sugano,3.074491044,2.72,5.79704652,0.447,v1.0
 2026-04-05,HOU,Lance McCullers Jr.,ATH,Jacob Lopez,2.980271694,3.316479734,6.296751427,0.547220173,v1.0
 2026-04-05,NYM,Kodai Senga,SFG,Logan Webb,2.155971579,2.216476458,4.372448036,0.51121227,v1.0
 2026-04-05,SEA,Luis Castillo,LAA,Ryan Johnson,2.58281637,2.42484284,5.007659209,0.473573432,v1.0
-2026-04-05,ATL,Martín Pérez,ARI,Brandon Pfaadt,2.794884026,2.140823917,4.935707942,0.39053392,v1.0
-2026-04-05,NYM,Kyle Leahy,DET,Keider Montero,2.288651557,2.411485183,4.70013674,0.521554979,v1.0
+2026-04-05,ATL,MartÃ­n PÃ©rez,ARI,Brandon Pfaadt,2.794884026,2.140823917,4.935707942,0.39053392,v1.0
