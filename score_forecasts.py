@@ -113,7 +113,19 @@ def validate_row(row: pd.Series):
         raise ValueError(f"winprob_home must be in [0,1], got {p}")
 
 def main():
-    forecasts = pd.read_csv(FORECAST_FILE, encoding="latin-1")
+    forecasts = pd.read_csv(FORECAST_FILE, encoding='utf-8-sig')
+
+    if forecasts.empty:
+        print(f"[SKIP] {FORECAST_FILE} is empty — no forecasts to score.")
+        return
+
+    # normalize column names (strip whitespace, lowercase)
+    forecasts.columns = forecasts.columns.str.strip().str.lower()
+
+    if "date" not in forecasts.columns:
+        print(f"[ERROR] 'date' column not found in {FORECAST_FILE}.")
+        print(f"  Columns present: {forecasts.columns.tolist()}")
+        return
 
     # normalize
     forecasts["date"] = forecasts["date"].astype(str).str.strip()
