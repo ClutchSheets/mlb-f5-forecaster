@@ -1,16 +1,16 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-06,CHC,Jameson Taillon,TBR,Shane McClanahan,2.530457,2.321411,4.851867,0.464208,v1.0
-2026-04-06,KCR,Michael Wacha,CLE,Tanner Bibee,2.616608,2.083578,4.700186,0.407157,v1.0
-2026-04-06,SDP,Germán Márquez,PIT,Bubba Chandler,2.386236,3.634085,6.020321,0.676338,v1.0
-2026-04-06,CIN,Brandon Williamson,MIA,Janson Junk,1.925494,2.548598,4.474093,0.612214,v1.0
-2026-04-06,STL,Andre Pallante,WSN,Zack Littell,2.134936,2.878734,5.013670,0.622668,v1.0
-2026-04-06,MIL,Brandon Woodruff,BOS,Brayan Bello,2.576971,1.831811,4.408782,0.365026,v1.0
-2026-04-06,LAD,Justin Wrobleski,TOR,Max Scherzer,3.191483,2.489639,5.681122,0.394295,v1.0
-2026-04-06,DET,Casey Mize,MIN,Joe Ryan,2.288316,2.498792,4.787109,0.536401,v1.0
-2026-04-06,BAL,TBD,CHW,Grant Taylor,2.559822,2.684658,5.244480,0.520174,v1.0
-2026-04-06,SEA,Logan Gilbert,TEX,Jacob deGrom,1.817477,2.149279,3.966757,0.565894,v1.0
-2026-04-06,HOU,Cody Bolton,COL,Ryan Feltner,2.971017,2.440341,5.411358,0.416745,v1.0
-2026-04-06,ATL,Chris Sale,LAA,José Soriano,2.635534,1.656353,4.291888,0.321378,v1.0
-2026-04-06,PHI,Andrew Painter,SFG,Adrian Houser,2.449587,2.173876,4.623463,0.451102,v1.0
-,,,,,,,,,
+2026-04-07,BAL,Trevor Rogers,CHW,Shane Smith,2.3919,1.0619,3.4538,0.2263,v1.0
+2026-04-07,ARI,Zac Gallen,NYM,Freddy Peralta,2.1602,2.4805,4.6407,0.5566,v1.0
+2026-04-07,SDP,Nick Pivetta,PIT,Paul Skenes,1.5123,1.9446,3.4569,0.5948,v1.0
+2026-04-07,CHC,Javier Assad,TBR,Mason Englert,2.5017,2.7000,5.2017,0.5322,v1.0
+2026-04-07,CIN,Andrew Abbott,MIA,Sandy Alcantara,2.2847,2.3565,4.6412,0.5127,v1.0
+2026-04-07,STL,Matthew Liberatore,WSN,Cade Cavalli,2.6748,2.7579,5.4327,0.5131,v1.0
+2026-04-07,MIL,Jacob Misiorowski,BOS,Garrett Crochet,2.1316,2.3593,4.4909,0.5413,v1.0
+2026-04-07,ATH,Aaron Civale,NYY,Cam Schlittler,1.9315,2.6651,4.5966,0.6290,v1.0
+2026-04-07,LAD,Yoshinobu Yamamoto,TOR,Kevin Gausman,2.0977,1.9951,4.0927,0.4800,v1.0
+2026-04-07,DET,Tarik Skubal,MIN,Taj Bradley,2.4226,1.5112,3.9338,0.3224,v1.0
+2026-04-07,SEA,George Kirby,TEX,Nathan Eovaldi,1.5392,2.5261,4.0654,0.6870,v1.0
+2026-04-07,HOU,Mike Burrows,COL,Kyle Freeland,3.1724,2.3362,5.5086,0.3717,v1.0
+2026-04-07,ATL,Reynaldo López,LAA,Yusei Kikuchi,3.0705,2.6820,5.7525,0.4416,v1.0
+2026-04-07,PHI,Cristopher Sánchez,SFG,Robbie Ray,1.9615,1.8483,3.8097,0.4767,v1.0
 ,,,,,,,,,
