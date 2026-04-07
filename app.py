@@ -249,7 +249,8 @@ if page == "Today's Forecasts":
     </table>
     """
 
-    st.markdown(html_table, unsafe_allow_html=True)
+    import streamlit.components.v1 as components
+    components.html(html_table, height=max(len(today) * 90, 400), scrolling=False)
 
     st.divider()
     st.subheader("Run Distribution (Negative Binomial, r=6.7)")
