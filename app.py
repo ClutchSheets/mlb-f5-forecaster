@@ -125,35 +125,131 @@ if page == "Today's Forecasts":
     today["fv_away"] = raw_wp_away.apply(prob_to_american)
     today["fv_home"] = raw_wp_home.apply(prob_to_american)
 
-    today = today.rename(columns={
-        "away_team": "Away",
-        "away_sp": "Away SP",
-        "home_team": "Home",
-        "home_sp": "Home SP",
-        "lambda_away": "Proj F5 Runs (Away)",
-        "lambda_home": "Proj F5 Runs (Home)",
-        "total_proj": "Proj F5 Total",
-        "winprob_away": "Away Win %",
-        "winprob_home": "Home Win %",
-        "fv_away": "Away FV",
-        "fv_home": "Home FV",
-    })
+    # Sort by home win prob descending before rendering
+    today = today.sort_values("winprob_home", ascending=False).reset_index(drop=True)
 
-    cols = [
-        "Away", "Away SP",
-        "Home", "Home SP",
-        "Proj F5 Runs (Away)",
-        "Proj F5 Runs (Home)",
-        "Proj F5 Total",
-        "Away Win %", "Away FV",
-        "Home Win %", "Home FV",
-    ]
+    def fv_color(fv_str):
+        """Green for underdog (+), muted for favourite (-)."""
+        if fv_str.startswith("+"):
+            return "color:#4caf50;font-weight:600;"
+        return "color:#aaa;font-weight:600;"
 
-    st.dataframe(
-        today[cols].sort_values("Home Win %", ascending=False),
-        use_container_width=True,
-        hide_index=True
-    )
+    rows_html = ""
+    for _, r in today.iterrows():
+        proj_total = to_num(pd.Series([r["total_proj"]])).iloc[0]
+        proj_total_str = f"{proj_total:.2f}" if not pd.isna(proj_total) else "—"
+
+        away_runs = to_num(pd.Series([r["lambda_away"]])).iloc[0]
+        home_runs = to_num(pd.Series([r["lambda_home"]])).iloc[0]
+
+        rows_html += f"""
+        <tr class="away-row">
+            <td class="team-cell">
+                <span class="badge away-badge">A</span>
+                <strong>{r['away_team']}</strong>
+            </td>
+            <td class="sp-cell">{r.get('away_sp','')}</td>
+            <td class="num-cell">{away_runs:.2f}</td>
+            <td class="num-cell total-cell" rowspan="2">{proj_total_str}</td>
+            <td class="num-cell">{r['winprob_away']:.1f}%</td>
+            <td class="num-cell" style="{fv_color(r['fv_away'])}">{r['fv_away']}</td>
+        </tr>
+        <tr class="home-row">
+            <td class="team-cell">
+                <span class="badge home-badge">H</span>
+                <strong>{r['home_team']}</strong>
+            </td>
+            <td class="sp-cell">{r.get('home_sp','')}</td>
+            <td class="num-cell">{home_runs:.2f}</td>
+            <td class="num-cell">{r['winprob_home']:.1f}%</td>
+            <td class="num-cell" style="{fv_color(r['fv_home'])}">{r['fv_home']}</td>
+        </tr>
+        <tr class="spacer-row"><td colspan="6"></td></tr>
+        """
+
+    html_table = f"""
+    <style>
+        .f5-table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            font-family: sans-serif;
+        }}
+        .f5-table th {{
+            text-align: left;
+            padding: 6px 12px;
+            border-bottom: 2px solid #333;
+            color: #888;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }}
+        .f5-table th.num-th {{
+            text-align: right;
+        }}
+        .away-row td {{
+            padding: 8px 12px 3px 12px;
+            border-top: 1px solid #2a2a2a;
+        }}
+        .home-row td {{
+            padding: 3px 12px 8px 12px;
+        }}
+        .spacer-row td {{
+            height: 4px;
+            background: #111;
+        }}
+        .team-cell {{
+            white-space: nowrap;
+        }}
+        .sp-cell {{
+            color: #999;
+            font-size: 0.82rem;
+            min-width: 160px;
+        }}
+        .num-cell {{
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            min-width: 80px;
+        }}
+        .total-cell {{
+            vertical-align: middle;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ddd;
+        }}
+        .badge {{
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-align: center;
+            line-height: 18px;
+            margin-right: 6px;
+        }}
+        .away-badge {{ background:#1e3a5f; color:#7ab3ef; }}
+        .home-badge {{ background:#1a3a1a; color:#6fcf6f; }}
+    </style>
+
+    <table class="f5-table">
+        <thead>
+            <tr>
+                <th>Team</th>
+                <th>Starting Pitcher</th>
+                <th class="num-th">Proj F5 Runs</th>
+                <th class="num-th">F5 Total</th>
+                <th class="num-th">Win %</th>
+                <th class="num-th">Fair Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            {rows_html}
+        </tbody>
+    </table>
+    """
+
+    st.markdown(html_table, unsafe_allow_html=True)
 
     st.divider()
     st.subheader("Run Distribution (Negative Binomial, r=6.7)")
