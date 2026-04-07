@@ -92,6 +92,8 @@ if page == "Today's Forecasts":
     st.caption("Projections from today's model run. Results scored overnight.")
 
     today = csv_df[csv_df["date"] == forecast_date].copy()
+    today.dropna(how="all", inplace=True)
+    today = today[today["away_team"].notna() & today["home_team"].notna()]
 
     if "away_sp" not in today.columns:
         today["away_sp"] = ""
@@ -101,7 +103,27 @@ if page == "Today's Forecasts":
     today["lambda_away"] = to_num(today["lambda_away"]).round(2)
     today["lambda_home"] = to_num(today["lambda_home"]).round(2)
     today["total_proj"] = to_num(today["total_proj"]).round(2)
-    today["winprob_home"] = (to_num(today["winprob_home"]) * 100).round(1)
+
+    # --- Fair value conversion (no-vig American odds) ---
+    def prob_to_american(p: float) -> str:
+        """Convert win probability to no-vig American odds string."""
+        import math
+        if p is None or (isinstance(p, float) and math.isnan(p)):
+            return ""
+        p = max(min(p, 0.9999), 0.0001)
+        if p >= 0.5:
+            odds = round(-(p / (1 - p)) * 100)
+        else:
+            odds = round(((1 - p) / p) * 100)
+        return f"+{odds}" if odds > 0 else str(odds)
+
+    raw_wp_home = to_num(today["winprob_home"])   # 0–1 range, before *100
+    raw_wp_away = 1 - raw_wp_home
+
+    today["winprob_away"] = (raw_wp_away * 100).round(1)
+    today["winprob_home"] = (raw_wp_home * 100).round(1)
+    today["fv_away"] = raw_wp_away.apply(prob_to_american)
+    today["fv_home"] = raw_wp_home.apply(prob_to_american)
 
     today = today.rename(columns={
         "away_team": "Away",
@@ -111,7 +133,10 @@ if page == "Today's Forecasts":
         "lambda_away": "Proj F5 Runs (Away)",
         "lambda_home": "Proj F5 Runs (Home)",
         "total_proj": "Proj F5 Total",
-        "winprob_home": "Home Win %"
+        "winprob_away": "Away Win %",
+        "winprob_home": "Home Win %",
+        "fv_away": "Away FV",
+        "fv_home": "Home FV",
     })
 
     cols = [
@@ -120,7 +145,8 @@ if page == "Today's Forecasts":
         "Proj F5 Runs (Away)",
         "Proj F5 Runs (Home)",
         "Proj F5 Total",
-        "Home Win %"
+        "Away Win %", "Away FV",
+        "Home Win %", "Home FV",
     ]
 
     st.dataframe(
