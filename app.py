@@ -227,7 +227,11 @@ if page == "Today's Forecasts":
                 f'{lbl}</th>'
             )
 
-    # ── Devig + edge helpers ───────────────────────────────────────
+    # ── Devig + Pinnacle blend helpers ────────────────────────────
+    MODEL_W = 0.60   # model weight in consensus
+    SHARP_W = 0.40   # Pinnacle weight in consensus
+    EDGE_MIN = 3.0
+
     def american_to_prob(odds):
         if odds is None: return None
         return 100/(odds+100) if odds > 0 else (-odds)/(-odds+100)
@@ -238,20 +242,50 @@ if page == "Today's Forecasts":
         if hold <= 0: return None, None
         return p1/hold, p2/hold
 
-    def ml_edge(model_p, book_this, book_other):
-        if None in (model_p, book_this, book_other): return None
+    def pin_devig_ml(pin_ml, side):
+        """Devig Pinnacle ML for one side. Returns true prob or None."""
+        a = pin_ml.get('away')
+        h = pin_ml.get('home')
+        pa = american_to_prob(a)
+        ph = american_to_prob(h)
+        dv_a, dv_h = devig_additive(pa, ph)
+        return dv_a if side == 'away' else dv_h
+
+    def pin_devig_tot(pin_tot, side):
+        """Devig Pinnacle total for over or under. Returns true prob or None."""
+        ov = pin_tot.get('over')
+        un = pin_tot.get('under')
+        p_ov = american_to_prob(ov)
+        p_un = american_to_prob(un)
+        dv_ov, dv_un = devig_additive(p_ov, p_un)
+        return dv_ov if side == 'over' else dv_un
+
+    def consensus_ml(model_p, pin_ml, side):
+        """60/40 blend of model and Pinnacle for ML. Falls back to model only."""
+        pin_p = pin_devig_ml(pin_ml, side) if pin_ml else None
+        if pin_p is None:
+            return model_p
+        return MODEL_W * model_p + SHARP_W * pin_p
+
+    def consensus_tot(model_p_over, pin_tot):
+        """60/40 blend of model and Pinnacle for over prob. Falls back to model only."""
+        pin_p = pin_devig_tot(pin_tot, 'over') if pin_tot else None
+        if pin_p is None:
+            return model_p_over
+        return MODEL_W * model_p_over + SHARP_W * pin_p
+
+    def ml_edge(consensus_p, book_this, book_other):
+        if None in (consensus_p, book_this, book_other): return None
         dv, _ = devig_additive(american_to_prob(book_this), american_to_prob(book_other))
         if dv is None: return None
-        return (model_p - dv) * 100
+        return (consensus_p - dv) * 100
 
-    def tot_edge(p_over_model, over_odds, under_odds, side):
-        if None in (p_over_model, over_odds, under_odds): return None
+    def tot_edge(consensus_p_over, over_odds, under_odds, side):
+        if None in (consensus_p_over, over_odds, under_odds): return None
         dv_ov, _ = devig_additive(american_to_prob(over_odds), american_to_prob(under_odds))
         if dv_ov is None: return None
-        edge = (p_over_model - dv_ov) * 100
-        return edge if side == "over" else -edge
-
-    EDGE_MIN = 3.0
+        edge = (consensus_p_over - dv_ov) * 100
+        return edge if side == 'over' else -edge
 
     def ml_cell(book_odds, model_p, other_odds):
         if book_odds is None:
@@ -304,16 +338,32 @@ if page == "Today's Forecasts":
         game     = match_odds(games_dict, away_code, home_code) if has_odds else None
         gametime = (game or {}).get("commence_edt", "")
 
+        # Pinnacle sharp reference
+        pin_data  = (game or {}).get("pinnacle", {})
+        pin_ml    = pin_data.get("ml",    {})
+        pin_tot   = pin_data.get("total", {})
+
+        # Consensus probs: 60% model / 40% Pinnacle (fallback to model if no Pinnacle)
+        cons_p_away = consensus_ml(model_p_away, pin_ml, 'away')
+        cons_p_home = consensus_ml(model_p_home, pin_ml, 'home')
+
         # Model FV line — mean-based line, NegBin juice
         fv_line, fv_over_str, fv_under_str = total_fv(mu_total)
 
-        # P(over) for edge calc
-        fv_over_p = None
+        # P(over) — model NegBin
+        model_p_over = None
         if fv_line:
             n_c  = NEGBIN_R * 2
             p_nb = n_c / (n_c + mu_total)
-            fv_over_p = 1 - float(_nbinom.cdf(
+            model_p_over = 1 - float(_nbinom.cdf(
                 int(math.ceil(float(fv_line))) - 1, n_c, p_nb))
+
+        # Consensus over prob: blend with Pinnacle total
+        fv_over_p = consensus_tot(model_p_over, pin_tot) if model_p_over is not None else None
+
+        # Consensus FV odds — use blended probs for display
+        cons_fv_away = prob_to_american(cons_p_away)
+        cons_fv_home = prob_to_american(cons_p_home)
 
         # Alternating game block
         bg = "#121920" if idx % 2 == 0 else "#0d1117"
@@ -329,20 +379,27 @@ if page == "Today's Forecasts":
                 over  = tot.get("over")
                 under = tot.get("under")
                 line  = tot.get("line")
-                away_bk += ml_cell(a_ml, model_p_away, h_ml)
+                away_bk += ml_cell(a_ml, cons_p_away, h_ml)
                 away_bk += tot_cell(over, under, line, "over", fv_over_p)
-                home_bk += ml_cell(h_ml, model_p_home, a_ml)
+                home_bk += ml_cell(h_ml, cons_p_home, a_ml)
                 home_bk += tot_cell(under, over, line, "under", fv_over_p)
 
-        # Model FV total rendered as own line — away=over, home=under
+        # Tot FV — use consensus over prob for juice display
+        if fv_line and fv_over_p is not None:
+            cons_fv_over  = prob_to_american(fv_over_p)
+            cons_fv_under = prob_to_american(1 - fv_over_p)
+        else:
+            cons_fv_over  = fv_over_str
+            cons_fv_under = fv_under_str
+
         fv_away_tot = (
             f'<span class="fv-line-num">o{fv_line}</span>'
-            f'<span class="fv-line-odds">{fv_over_str}</span>'
+            f'<span class="fv-line-odds">{cons_fv_over}</span>'
             if fv_line else "\u2014"
         )
         fv_home_tot = (
             f'<span class="fv-line-num">u{fv_line}</span>'
-            f'<span class="fv-line-odds">{fv_under_str}</span>'
+            f'<span class="fv-line-odds">{cons_fv_under}</span>'
             if fv_line else "\u2014"
         )
 
@@ -358,7 +415,7 @@ if page == "Today's Forecasts":
             f'{gametime}<span class="edt"> EDT</span>'
             f'</td>'
             f'<td class="nc wc">{r["winprob_away"]:.1f}%</td>'
-            f'<td class="nc fvc">{r["fv_away"]}</td>'
+            f'<td class="nc fvc">{cons_fv_away}</td>'
             f'<td class="nc fv-tot-cell">{fv_away_tot}</td>'
             f'{away_bk}</tr>'
             # Home row
@@ -368,7 +425,7 @@ if page == "Today's Forecasts":
             + (f'<span class="sp-name">{home_sp}</span>' if home_sp else '')
             + f'</td>'
             f'<td class="nc wc">{r["winprob_home"]:.1f}%</td>'
-            f'<td class="nc fvc">{r["fv_home"]}</td>'
+            f'<td class="nc fvc">{cons_fv_home}</td>'
             f'<td class="nc fv-tot-cell">{fv_home_tot}</td>'
             f'{home_bk}</tr>'
             # Game divider
