@@ -157,9 +157,8 @@ if page == "Today's Forecasts":
     def total_fv(mu_total, r=NEGBIN_R):
         if mu_total is None or (isinstance(mu_total,float) and math.isnan(mu_total)):
             return "", "", ""
+        # Round to nearest 0.5 — 3.4 -> 3.5, 3.6 -> 3.5, 3.75 -> 4.0
         line = round(mu_total * 2) / 2
-        if mu_total <= line:
-            line -= 0.5
         line = max(line, 0.5)
         n_combined = r * 2
         p_nb = n_combined / (n_combined + mu_total)
@@ -258,7 +257,7 @@ if page == "Today's Forecasts":
             f'<td class="tc"><span class="badge ab">A</span><span class="tm">{away_full}</span></td>'
             f'<td class="time-cell" rowspan="2">{gametime}<br><span class="edt">EDT</span></td>'
             f'<td class="nc pr">{r["lambda_away"]:.2f}</td>'
-            f'<td class="nc totc" rowspan="2">{mu_total:.1f}</td>'
+            f'<td class="nc totc" rowspan="2">{mu_total:.2f}</td>'
             f'<td class="nc wc">{r["winprob_away"]:.1f}%</td>'
             f'<td class="nc fvc">{fv_html(r["fv_away"])}</td>'
             f'<td class="nc fv-tot">{fv_total_away}</td>'
@@ -278,14 +277,14 @@ if page == "Today's Forecasts":
         "body {background:#0d1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}"
         ".t {width:100%;border-collapse:collapse;font-size:0.82rem;color:#bbb}"
         ".t thead tr {border-bottom:2px solid #21262d}"
-        ".t th {padding:6px 10px;color:#484f58;font-size:0.60rem;font-weight:700;"
+        ".t th {padding:7px 10px;color:#8b949e;font-size:0.62rem;font-weight:700;"
             "text-transform:uppercase;letter-spacing:0.07em;text-align:right;white-space:nowrap;"
-            "background:#0d1117}"
+            "background:#161b22;border-bottom:2px solid #30363d}"
         ".t th.la {text-align:left}"
         ".model-div {border-left:3px solid #30363d !important}"
         ".bk-head {border-left:3px solid #30363d;text-align:center !important;"
             "font-size:0.65rem !important;letter-spacing:0.04em !important;"
-            "padding:6px 6px 4px 6px !important;color:#8b949e !important}"
+            "padding:8px 6px !important;color:#c9d1d9 !important;background:#161b22 !important}"
         ".ar td {padding:7px 10px 2px 10px;border-top:1px solid #21262d;vertical-align:middle}"
         ".hr td {padding:2px 10px 7px 10px;vertical-align:middle}"
         ".gr td {height:1px;background:#21262d}"
