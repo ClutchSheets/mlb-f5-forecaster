@@ -1,16 +1,16 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-07,BAL,Trevor Rogers,CHW,Shane Smith,2.2500,0.9988,3.2488,0.2296,v1.0
-2026-04-07,ARI,Zac Gallen,NYM,Freddy Peralta,2.1433,2.4611,4.6044,0.5565,v1.0
-2026-04-07,SDP,Nick Pivetta,PIT,Paul Skenes,1.4855,1.9101,3.3955,0.5944,v1.0
-2026-04-07,CHC,Javier Assad,TBR,Mason Englert,2.4759,2.6723,5.1482,0.5322,v1.0
-2026-04-07,CIN,Andrew Abbott,MIA,Sandy Alcantara,2.2715,2.3429,4.6144,0.5127,v1.0
-2026-04-07,STL,Matthew Liberatore,WSN,Cade Cavalli,2.7468,2.8322,5.5791,0.5132,v1.0
-2026-04-07,MIL,Jacob Misiorowski,BOS,Garrett Crochet,2.1703,2.4022,4.5725,0.5415,v1.0
-2026-04-07,ATH,Aaron Civale,NYY,Cam Schlittler,1.9196,2.6487,4.5683,0.6288,v1.0
-2026-04-07,LAD,Yoshinobu Yamamoto,TOR,Kevin Gausman,2.0683,1.9671,4.0354,0.4801,v1.0
-2026-04-07,DET,Tarik Skubal,MIN,Taj Bradley,2.4550,1.5314,3.9863,0.3218,v1.0
-2026-04-07,SEA,George Kirby,TEX,Nathan Eovaldi,1.5004,2.4623,3.9627,0.6859,v1.0
-2026-04-07,HOU,Mike Burrows,COL,Kyle Freeland,3.5693,2.6284,6.1977,0.3682,v1.0
-2026-04-07,ATL,Reynaldo López,LAA,Yusei Kikuchi,3.1703,2.7692,5.9394,0.4412,v1.0
-2026-04-07,PHI,Cristopher Sánchez,SFG,Robbie Ray,1.8822,1.7735,3.6557,0.4770,v1.0
-,,,,,,,,,
+2026-04-08,SDP,Michael King,PIT,Mitch Keller,2.2917,2.5715,4.8632,0.5478,v1.0
+2026-04-08,KCR,Cole Ragans,CLE,Joey Cantillo,2.0516,2.2479,4.2995,0.5368,v1.0
+2026-04-08,MIL,Shane Drohan,BOS,Sonny Gray,2.7272,2.5667,5.2939,0.4743,v1.0
+2026-04-08,BAL,Kyle Bradish,CHW,Sean Burke,3.1315,2.3439,5.4753,0.3784,v1.0
+2026-04-08,SEA,Bryan Woo,TEX,MacKenzie Gore,2.3618,1.8762,4.2380,0.4086,v1.0
+2026-04-08,LAD,Shohei Ohtani,TOR,Dylan Cease,2.9817,1.8178,4.7995,0.3060,v1.0
+2026-04-08,HOU,Cristian Javier,COL,Michael Lorenzen,3.1264,2.5422,5.6686,0.4116,v1.0
+2026-04-08,PHI,Aaron Nola,SFG,Tyler Mahle,2.0217,2.6235,4.6452,0.6055,v1.0
+2026-04-08,STL,Michael McGreevy,WSN,Miles Mikolas,2.6101,2.4972,5.1073,0.4814,v1.0
+2026-04-08,ATL,Grant Holmes,LAA,Reid Detmers,2.6393,2.6091,5.2484,0.4951,v1.0
+2026-04-08,ARI,Ryne Nelson,NYM,David Peterson,2.3493,2.0630,4.4123,0.4474,v1.0
+2026-04-08,CHC,Colin Rea,TBR,Joe Boyle,2.5287,2.7446,5.2733,0.5347,v1.0
+2026-04-08,CIN,Brady Singer,MIA,Eury Pérez,1.9055,2.6081,4.5136,0.6253,v1.0
+2026-04-08,ATH,Luis Severino,NYY,Will Warren,2.6805,2.5672,5.2477,0.4817,v1.0
+2026-04-08,DET,Framber Valdez,MIN,Bailey Ober,2.7985,2.0746,4.8731,0.3780,v1.0
