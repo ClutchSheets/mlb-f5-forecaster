@@ -140,8 +140,8 @@ def main():
 
     odds = build_odds_dict(events)
 
-    from datetime import datetime, timezone
-    fetched_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    from datetime import datetime, timezone, timedelta
+    fetched_at = (datetime.now(timezone.utc) - timedelta(hours=4)).strftime("%Y-%m-%d %I:%M %p EDT")
     payload = {"date": str(date.today()), "fetched_at": fetched_at, "games": odds, "books": BOOKS}
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
