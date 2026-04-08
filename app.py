@@ -163,7 +163,9 @@ if page == "Today's Forecasts":
         line = max(line, 0.5)
         n_combined = r * 2
         p_nb = n_combined / (n_combined + mu_total)
-        cutoff = int(math.floor(line))
+        # P(under) = P(X <= floor(line)), P(over) = P(X >= ceil(line))
+        # For half lines this is exact — no ties possible
+        cutoff = int(math.ceil(line)) - 1
         p_under = float(_nbinom.cdf(cutoff, n_combined, p_nb))
         p_over  = 1 - p_under
         if p_over <= 0 or p_under <= 0:
@@ -322,7 +324,7 @@ if page == "Today's Forecasts":
         if fv_line:
             n_c  = NEGBIN_R * 2
             p_nb = n_c / (n_c + mu_total)
-            fv_over_p = 1 - float(_nbinom.cdf(int(math.floor(float(fv_line))), n_c, p_nb))
+            fv_over_p = 1 - float(_nbinom.cdf(int(math.ceil(float(fv_line))) - 1, n_c, p_nb))
 
         row_bg = "row-odd" if idx % 2 == 0 else "row-even"
 
@@ -356,7 +358,7 @@ if page == "Today's Forecasts":
             f'<td class="nc pr">{r["lambda_away"]:.2f}</td>'
             f'<td class="nc totc" rowspan="2">'
             f'<span class="tot-num">{mu_total:.2f}</span>'
-            f'<span class="xtot-lbl">xTotal</span>'
+            f'<span class="xtot-lbl">xT</span>'
             f'</td>'
             f'<td class="nc wc">{r["winprob_away"]:.1f}%</td>'
             f'<td class="nc fvc model-div">{fv_html(r["fv_away"])}</td>'
@@ -400,19 +402,19 @@ if page == "Today's Forecasts":
         # Data rows
         ".row-odd  td {background:#0d1117}"
         ".row-even td {background:#111620}"
-        ".ar td {padding:8px 10px 2px 10px;border-top:1px solid #21262d;vertical-align:middle}"
-        ".hr td {padding:2px 10px 8px 10px;vertical-align:middle}"
-        ".gr td {height:3px;background:#0d1117;border:none}"
+        ".ar td {padding:5px 10px 1px 10px;border-top:1px solid #21262d;vertical-align:middle}"
+        ".hr td {padding:1px 10px 8px 10px;vertical-align:middle}"
+        ".gr td {height:2px;background:#0d1117;border:none}"
 
         # Team cell
-        ".tc {white-space:nowrap;min-width:200px;text-align:left;padding-left:12px !important}"
+        ".tc {white-space:nowrap;min-width:195px;text-align:left;padding-left:10px !important}"
         ".side-tag {display:inline-block;font-size:0.52rem;font-weight:700;letter-spacing:0.08em;"
             "padding:1px 4px;border-radius:2px;margin-right:6px;vertical-align:middle;"
             "text-transform:uppercase}"
         ".away-tag {background:#0d2f4f;color:#58a6ff}"
         ".home-tag {background:#0f2d1a;color:#3fb950}"
         ".tm {color:#e6edf3;font-weight:500;font-size:0.85rem;vertical-align:middle}"
-        ".sp-name {display:block;color:#484f58;font-size:0.72rem;margin-top:1px;"
+        ".sp-name {display:block;color:#484f58;font-size:0.70rem;margin-top:0px;"
             "margin-left:42px}"
 
         # Time cell
@@ -423,9 +425,9 @@ if page == "Today's Forecasts":
 
         # Model cols
         ".nc {text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}"
-        ".pr {color:#8b949e;min-width:52px;font-size:0.80rem}"
-        ".totc {vertical-align:middle !important;min-width:56px;text-align:center !important;"
-            "padding:4px 10px !important}"
+        ".pr {color:#e6edf3;min-width:52px;font-size:0.85rem;font-weight:700}"
+        ".totc {vertical-align:middle !important;min-width:52px;text-align:right !important;"
+            "padding:2px 10px !important}"
         ".tot-num {display:block;font-size:1.0rem;font-weight:700;color:#e6edf3}"
         ".xtot-lbl {display:block;font-size:0.54rem;color:#484f58;letter-spacing:0.06em;"
             "text-transform:uppercase;margin-top:1px}"
@@ -435,7 +437,7 @@ if page == "Today's Forecasts":
         ".tot-lbl {color:#484f58;font-size:0.74rem;margin-right:2px}"
 
         # Odds colours
-        ".pos {color:#3fb950;font-weight:600}"
+        ".pos {color:#e6edf3;font-weight:500}"
         ".neg {color:#e6edf3;font-weight:500}"
         ".dash {color:#30363d}"
         ".bold {font-weight:700}"
@@ -476,8 +478,14 @@ if page == "Today's Forecasts":
         "</body></html>"
     )
 
+    st.caption(
+        "ℹ️ **Edge %** is calculated using full additive devig on both sides of the book line. "
+        "Green cells = model edge ≥ 3% after removing the hold. "
+        "**ML FV** and **Tot FV** are no-vig fair values derived from your NegBin model. "
+        "Tot FV line = nearest 0.5; juice reflects P(over) vs P(under) from the run distribution."
+    )
     import streamlit.components.v1 as components
-    components.html(html_table, height=max(len(today) * 80 + 55, 400), scrolling=False)
+    components.html(html_table, height=max(len(today) * 65 + 55, 400), scrolling=False)
 
     st.divider()
     st.subheader("Run Distribution (Negative Binomial, r=6.7)")
