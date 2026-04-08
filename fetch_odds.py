@@ -140,7 +140,9 @@ def main():
 
     odds = build_odds_dict(events)
 
-    payload = {"date": str(date.today()), "games": odds, "books": BOOKS}
+    from datetime import datetime, timezone
+    fetched_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    payload = {"date": str(date.today()), "fetched_at": fetched_at, "games": odds, "books": BOOKS}
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)

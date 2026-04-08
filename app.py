@@ -180,10 +180,17 @@ if page == "Today's Forecasts":
 
     forecast_date = csv_df["date"].max()
     st.title(f"MLB F5 Forecasts \u2014 {forecast_date}")
-    odds_date = odds_data.get("date","")
+    odds_date     = odds_data.get("date","")
+    odds_fetched  = odds_data.get("fetched_at","")
+    if odds_fetched:
+        odds_label = f"Odds pulled: {odds_fetched}"
+    elif odds_date:
+        odds_label = f"Odds fetched: {odds_date}"
+    else:
+        odds_label = ""
     st.caption(
         f"Projections from today\u2019s model run. "
-        + (f"Odds fetched: {odds_date}. " if odds_date else "")
+        + (odds_label + ". " if odds_label else "")
         + "Results scored overnight."
     )
 
@@ -443,6 +450,7 @@ if page == "Today's Forecasts":
         ".edge-cell {background:#0f2d1a !important}"
         ".edge-odds {color:#3fb950;font-weight:700;font-size:0.85rem;display:block}"
         ".edge-odds-sm {color:#3fb950;font-weight:700}"
+        ".ts {padding:8px 10px;font-size:0.65rem;color:#484f58;border-top:1px solid #21262d;""font-family:'Inter',system-ui,sans-serif;text-align:right}"
         ".edge-tag {color:#56d364;font-size:0.62rem;font-weight:700;"
             "display:block;margin-top:1px;letter-spacing:0.02em}"
     )
@@ -488,6 +496,7 @@ if page == "Today's Forecasts":
         "</head><body>"
         f"<table class='t'><thead>{section_row}{col_row}</thead>"
         f"<tbody>{rows_html}</tbody></table>"
+        f"<div class='ts'>Odds fetched: {odds_date if odds_date else '—'} &nbsp;·&nbsp; Model run: {forecast_date}</div>"
         "</body></html>"
     )
 
