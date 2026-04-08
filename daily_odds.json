@@ -1,0 +1,157 @@
+{
+  "date": "2026-04-07",
+  "games": {
+    "Chicago Cubs@Tampa Bay Rays": {
+      "away": "Chicago Cubs",
+      "home": "Tampa Bay Rays",
+      "ml": {},
+      "total": {}
+    },
+    "Cincinnati Reds@Miami Marlins": {
+      "away": "Cincinnati Reds",
+      "home": "Miami Marlins",
+      "ml": {},
+      "total": {}
+    },
+    "San Diego Padres@Pittsburgh Pirates": {
+      "away": "San Diego Padres",
+      "home": "Pittsburgh Pirates",
+      "ml": {},
+      "total": {}
+    },
+    "Milwaukee Brewers@Boston Red Sox": {
+      "away": "Milwaukee Brewers",
+      "home": "Boston Red Sox",
+      "ml": {
+        "betrivers": {
+          "home": -360,
+          "away": 225
+        },
+        "betmgm": {
+          "home": -275,
+          "away": 195
+        }
+      },
+      "total": {
+        "fanduel": {
+          "line": 0.5,
+          "over": 126,
+          "under": -168
+        }
+      }
+    },
+    "St. Louis Cardinals@Washington Nationals": {
+      "away": "St. Louis Cardinals",
+      "home": "Washington Nationals",
+      "ml": {
+        "betrivers": {
+          "away": 280,
+          "home": -480
+        },
+        "betmgm": {
+          "away": 310,
+          "home": -475
+        }
+      },
+      "total": {
+        "fanduel": {
+          "line": 4.5,
+          "over": -166,
+          "under": 124
+        },
+        "betmgm": {
+          "line": 5.5,
+          "over": 120,
+          "under": -160
+        }
+      }
+    },
+    "Los Angeles Dodgers@Toronto Blue Jays": {
+      "away": "Los Angeles Dodgers",
+      "home": "Toronto Blue Jays",
+      "ml": {
+        "fanduel": {
+          "away": -4000,
+          "home": 1100
+        },
+        "betrivers": {
+          "away": -10000,
+          "home": 900
+        },
+        "betmgm": {
+          "away": -1200,
+          "home": 575
+        }
+      },
+      "total": {
+        "fanduel": {
+          "line": 2.5,
+          "over": -136,
+          "under": 102
+        }
+      }
+    },
+    "Athletics@New York Yankees": {
+      "away": "Athletics",
+      "home": "New York Yankees",
+      "ml": {
+        "fanduel": {
+          "away": -400,
+          "home": 285
+        },
+        "betrivers": {
+          "away": -420,
+          "home": 245
+        },
+        "betmgm": {
+          "away": -190,
+          "home": 140
+        }
+      },
+      "total": {
+        "fanduel": {
+          "line": 6.5,
+          "over": -102,
+          "under": -128
+        }
+      }
+    },
+    "Detroit Tigers@Minnesota Twins": {
+      "away": "Detroit Tigers",
+      "home": "Minnesota Twins",
+      "ml": {
+        "fanduel": {
+          "away": -220,
+          "home": 168
+        },
+        "betrivers": {
+          "away": -129,
+          "home": -113
+        },
+        "betmgm": {
+          "away": -110,
+          "home": -118
+        }
+      },
+      "total": {
+        "fanduel": {
+          "line": 2.5,
+          "over": -146,
+          "under": 110
+        },
+        "betmgm": {
+          "line": 2.5,
+          "over": 110,
+          "under": -150
+        }
+      }
+    }
+  },
+  "books": [
+    "betonlineag",
+    "betmgm",
+    "betrivers",
+    "draftkings",
+    "fanduel"
+  ]
+}

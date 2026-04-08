@@ -69,188 +69,228 @@ def to_num(s: pd.Series) -> pd.Series:
 # TODAY
 # -----------------------------
 if page == "Today's Forecasts":
-    import os
+    import os, math, json as _json
 
     FORECAST_FILE = "daily_forecast.csv"
+    ODDS_FILE     = "daily_odds.json"
+
+    TEAM_NAME_MAP = {
+        "ARI":"Arizona Diamondbacks","ATL":"Atlanta Braves","BAL":"Baltimore Orioles",
+        "BOS":"Boston Red Sox","CHC":"Chicago Cubs","CWS":"Chicago White Sox",
+        "CHW":"Chicago White Sox","CIN":"Cincinnati Reds","CLE":"Cleveland Guardians",
+        "COL":"Colorado Rockies","DET":"Detroit Tigers","HOU":"Houston Astros",
+        "KCR":"Kansas City Royals","LAA":"Los Angeles Angels","LAD":"Los Angeles Dodgers",
+        "MIA":"Miami Marlins","MIL":"Milwaukee Brewers","MIN":"Minnesota Twins",
+        "NYM":"New York Mets","NYY":"New York Yankees","ATH":"Oakland Athletics",
+        "OAK":"Oakland Athletics","PHI":"Philadelphia Phillies","PIT":"Pittsburgh Pirates",
+        "SDP":"San Diego Padres","SEA":"Seattle Mariners","SFG":"San Francisco Giants",
+        "STL":"St. Louis Cardinals","TBR":"Tampa Bay Rays","TEX":"Texas Rangers",
+        "TOR":"Toronto Blue Jays","WSN":"Washington Nationals",
+    }
+
+    BOOKS = ["betonlineag","betmgm","betrivers","draftkings","fanduel"]
+    BOOK_LABELS = {
+        "betonlineag":"BetOnline",
+        "betmgm":     "BetMGM",
+        "betrivers":  "BetRivers",
+        "draftkings": "DraftKings",
+        "fanduel":    "FanDuel",
+    }
 
     @st.cache_data(ttl=300)
     def load_forecast_csv():
         if not os.path.exists(FORECAST_FILE):
             return pd.DataFrame()
-        fc = pd.read_csv(FORECAST_FILE)
+        fc = pd.read_csv(FORECAST_FILE, encoding="utf-8-sig")
         fc["date"] = fc["date"].astype(str).str.strip()
         return fc
 
-    csv_df = load_forecast_csv()
+    @st.cache_data(ttl=300)
+    def load_odds_json():
+        if not os.path.exists(ODDS_FILE):
+            return {}
+        with open(ODDS_FILE, "r", encoding="utf-8") as f:
+            return _json.load(f)
+
+    def match_odds(games_dict, away_code, home_code):
+        away_full = TEAM_NAME_MAP.get(away_code, "")
+        home_full = TEAM_NAME_MAP.get(home_code, "")
+        for key, data in games_dict.items():
+            a = data.get("away", "")
+            h = data.get("home", "")
+            if away_full.lower() in a.lower() and home_full.lower() in h.lower():
+                return data
+        return None
+
+    def fmt_odds(val):
+        if val is None: return "\u2014"
+        return f"+{val}" if val > 0 else str(val)
+
+    def prob_to_american(p):
+        if p is None or (isinstance(p, float) and math.isnan(p)): return ""
+        p = max(min(p, 0.9999), 0.0001)
+        odds = round(-(p/(1-p))*100) if p >= 0.5 else round(((1-p)/p)*100)
+        return f"+{odds}" if odds > 0 else str(odds)
+
+    def ml_color(val):
+        if val is None: return "color:#444;"
+        return "color:#5cb85c;font-weight:600;" if val > 0 else "color:#c0c0c0;"
+
+    def fv_color(fv_str):
+        if not fv_str: return "color:#444;"
+        return "color:#5cb85c;font-weight:600;" if fv_str.startswith("+") else "color:#c0c0c0;"
+
+    # ── Load data ──────────────────────────────────────────────────
+    csv_df    = load_forecast_csv()
+    odds_data = load_odds_json()
 
     if csv_df.empty:
-        st.warning(f"No forecast file found. Drop daily_forecast.csv next to app.py.")
+        st.warning("No forecast file found. Drop daily_forecast.csv next to app.py.")
         st.stop()
 
     forecast_date = csv_df["date"].max()
-    st.title(f"MLB F5 Forecasts — {forecast_date}")
-    st.caption("Projections from today's model run. Results scored overnight.")
+    st.title(f"MLB F5 Forecasts \u2014 {forecast_date}")
+
+    odds_date = odds_data.get("date", "")
+    if odds_date:
+        st.caption(
+            f"Projections from today's model run. "
+            f"Odds fetched: {odds_date}. Results scored overnight."
+        )
+    else:
+        st.caption("Projections from today's model run. Results scored overnight.")
+        st.info("\u1f4c4 No odds file found. Run 2_push_forecasts.bat to include book odds.")
 
     today = csv_df[csv_df["date"] == forecast_date].copy()
     today.dropna(how="all", inplace=True)
     today = today[today["away_team"].notna() & today["home_team"].notna()]
 
-    if "away_sp" not in today.columns:
-        today["away_sp"] = ""
-    if "home_sp" not in today.columns:
-        today["home_sp"] = ""
+    if "away_sp" not in today.columns: today["away_sp"] = ""
+    if "home_sp" not in today.columns: today["home_sp"] = ""
 
     today["lambda_away"] = to_num(today["lambda_away"]).round(2)
     today["lambda_home"] = to_num(today["lambda_home"]).round(2)
-    today["total_proj"] = to_num(today["total_proj"]).round(2)
+    today["total_proj"]  = to_num(today["total_proj"]).round(2)
 
-    # --- Fair value conversion (no-vig American odds) ---
-    def prob_to_american(p: float) -> str:
-        """Convert win probability to no-vig American odds string."""
-        import math
-        if p is None or (isinstance(p, float) and math.isnan(p)):
-            return ""
-        p = max(min(p, 0.9999), 0.0001)
-        if p >= 0.5:
-            odds = round(-(p / (1 - p)) * 100)
-        else:
-            odds = round(((1 - p) / p) * 100)
-        return f"+{odds}" if odds > 0 else str(odds)
-
-    raw_wp_home = to_num(today["winprob_home"])   # 0–1 range, before *100
+    raw_wp_home = to_num(today["winprob_home"])
     raw_wp_away = 1 - raw_wp_home
-
     today["winprob_away"] = (raw_wp_away * 100).round(1)
     today["winprob_home"] = (raw_wp_home * 100).round(1)
     today["fv_away"] = raw_wp_away.apply(prob_to_american)
     today["fv_home"] = raw_wp_home.apply(prob_to_american)
-
-    # Sort by home win prob descending before rendering
     today = today.sort_values("winprob_home", ascending=False).reset_index(drop=True)
 
-    def fv_color(fv_str):
-        """Green for underdog (+), muted for favourite (-)."""
-        if fv_str.startswith("+"):
-            return "color:#4caf50;font-weight:600;"
-        return "color:#aaa;font-weight:600;"
+    games_dict = odds_data.get("games", {})
+    has_odds   = bool(games_dict)
+
+    # ── Build table ────────────────────────────────────────────────
+    book_headers = ""
+    if has_odds:
+        for bk in BOOKS:
+            book_headers += (
+                f'<th class="bk-head" colspan="3">{BOOK_LABELS[bk]}</th>'
+            )
 
     rows_html = ""
     for _, r in today.iterrows():
-        proj_total = to_num(pd.Series([r["total_proj"]])).iloc[0]
-        proj_total_str = f"{proj_total:.2f}" if not pd.isna(proj_total) else "—"
+        away_code = r["away_team"]
+        home_code = r["home_team"]
+        total_str = f"{r['total_proj']:.2f}" if not pd.isna(r["total_proj"]) else "\u2014"
+        game      = match_odds(games_dict, away_code, home_code) if has_odds else None
 
-        away_runs = to_num(pd.Series([r["lambda_away"]])).iloc[0]
-        home_runs = to_num(pd.Series([r["lambda_home"]])).iloc[0]
+        away_bk = home_bk = ""
+        if has_odds:
+            for bk in BOOKS:
+                ml  = (game or {}).get("ml",    {}).get(bk, {})
+                tot = (game or {}).get("total", {}).get(bk, {})
+                a_ml  = ml.get("away")
+                h_ml  = ml.get("home")
+                over  = tot.get("over")
+                under = tot.get("under")
+                line  = tot.get("line", "\u2014")
+                away_bk += (
+                    f'<td class="bk-ml" style="{ml_color(a_ml)}">{fmt_odds(a_ml)}</td>'
+                    f'<td class="bk-line">{line}</td>'
+                    f'<td class="bk-ou ov">{fmt_odds(over)}</td>'
+                )
+                home_bk += (
+                    f'<td class="bk-ml" style="{ml_color(h_ml)}">{fmt_odds(h_ml)}</td>'
+                    f'<td class="bk-line"></td>'
+                    f'<td class="bk-ou un">{fmt_odds(under)}</td>'
+                )
 
-        rows_html += f"""
-        <tr class="away-row">
-            <td class="team-cell">
-                <span class="badge away-badge">A</span>
-                <strong>{r['away_team']}</strong>
-            </td>
-            <td class="sp-cell">{r.get('away_sp','')}</td>
-            <td class="num-cell">{away_runs:.2f}</td>
-            <td class="num-cell total-cell" rowspan="2">{proj_total_str}</td>
-            <td class="num-cell">{r['winprob_away']:.1f}%</td>
-            <td class="num-cell" style="{fv_color(r['fv_away'])}">{r['fv_away']}</td>
-        </tr>
-        <tr class="home-row">
-            <td class="team-cell">
-                <span class="badge home-badge">H</span>
-                <strong>{r['home_team']}</strong>
-            </td>
-            <td class="sp-cell">{r.get('home_sp','')}</td>
-            <td class="num-cell">{home_runs:.2f}</td>
-            <td class="num-cell">{r['winprob_home']:.1f}%</td>
-            <td class="num-cell" style="{fv_color(r['fv_home'])}">{r['fv_home']}</td>
-        </tr>
-        <tr class="spacer-row"><td colspan="6"></td></tr>
-        """
+        rows_html += (
+            '<tr class="ar">'
+            f'<td class="tc"><span class="badge ab">A</span><strong>{away_code}</strong></td>'
+            f'<td class="sc">{r.get("away_sp","")}</td>'
+            f'<td class="nc pr">{r["lambda_away"]:.2f}</td>'
+            f'<td class="nc totc" rowspan="2">{total_str}</td>'
+            f'<td class="nc wc">{r["winprob_away"]:.1f}%</td>'
+            f'<td class="nc fvc" style="{fv_color(r["fv_away"])}">{r["fv_away"]}</td>'
+            f'{away_bk}</tr>'
+            '<tr class="hr">'
+            f'<td class="tc"><span class="badge hb">H</span><strong>{home_code}</strong></td>'
+            f'<td class="sc">{r.get("home_sp","")}</td>'
+            f'<td class="nc pr">{r["lambda_home"]:.2f}</td>'
+            f'<td class="nc wc">{r["winprob_home"]:.1f}%</td>'
+            f'<td class="nc fvc" style="{fv_color(r["fv_home"])}">{r["fv_home"]}</td>'
+            f'{home_bk}</tr>'
+            '<tr class="gr"><td colspan="99"></td></tr>'
+        )
 
-    html_table = f"""
-    <style>
-        .f5-table {{
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-            font-family: sans-serif;
-        }}
-        .f5-table th {{
-            text-align: left;
-            padding: 6px 12px;
-            border-bottom: 2px solid #333;
-            color: #888;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }}
-        .f5-table th.num-th {{
-            text-align: right;
-        }}
-        .away-row td {{
-            padding: 8px 12px 3px 12px;
-            border-top: 1px solid #2a2a2a;
-        }}
-        .home-row td {{
-            padding: 3px 12px 8px 12px;
-        }}
-        .spacer-row td {{
-            height: 4px;
-            background: #111;
-        }}
-        .team-cell {{
-            white-space: nowrap;
-        }}
-        .sp-cell {{
-            color: #999;
-            font-size: 0.82rem;
-            min-width: 160px;
-        }}
-        .num-cell {{
-            text-align: right;
-            font-variant-numeric: tabular-nums;
-            min-width: 80px;
-        }}
-        .total-cell {{
-            vertical-align: middle;
-            font-size: 1rem;
-            font-weight: 700;
-            color: #ddd;
-        }}
-        .badge {{
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border-radius: 3px;
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-align: center;
-            line-height: 18px;
-            margin-right: 6px;
-        }}
-        .away-badge {{ background:#1e3a5f; color:#7ab3ef; }}
-        .home-badge {{ background:#1a3a1a; color:#6fcf6f; }}
-    </style>
+    css = (
+        "* {box-sizing:border-box;margin:0;padding:0}"
+        "body {background:transparent;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}"
+        ".t {width:100%;border-collapse:collapse;font-size:0.86rem;color:#ddd}"
+        ".t thead tr {border-bottom:2px solid #383838}"
+        ".t th {padding:6px 8px;color:#666;font-size:0.67rem;font-weight:600;"
+            "text-transform:uppercase;letter-spacing:0.05em;text-align:right;white-space:nowrap}"
+        ".t th.la {text-align:left}"
+        ".bk-head {border-left:2px solid #303030;color:#555 !important;"
+            "text-align:center !important;font-size:0.64rem !important}"
+        ".ar td {padding:9px 8px 3px 8px;border-top:1px solid #282828;vertical-align:bottom}"
+        ".hr td {padding:3px 8px 9px 8px;vertical-align:top}"
+        ".gr td {height:5px;background:#181818}"
+        ".tc {white-space:nowrap;min-width:68px;text-align:left}"
+        ".sc {color:#aaa;font-size:0.80rem;min-width:140px;text-align:left}"
+        ".nc {text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}"
+        ".pr {color:#bbb;min-width:56px}"
+        ".totc {vertical-align:middle !important;font-size:1.0rem;font-weight:700;"
+            "color:#eee;min-width:54px}"
+        ".wc {color:#ccc;min-width:50px}"
+        ".fvc {min-width:58px;font-weight:600}"
+        ".bk-ml {border-left:2px solid #2a2a2a;min-width:50px;text-align:right;"
+            "font-variant-numeric:tabular-nums;white-space:nowrap}"
+        ".bk-line {min-width:34px;text-align:center;color:#555;font-size:0.74rem}"
+        ".bk-ou {min-width:44px;text-align:right;font-size:0.77rem;"
+            "font-variant-numeric:tabular-nums;white-space:nowrap}"
+        ".ov {color:#7ab3ef}"
+        ".un {color:#e08080}"
+        ".badge {display:inline-block;width:16px;height:16px;border-radius:3px;"
+            "font-size:0.58rem;font-weight:700;text-align:center;line-height:16px;"
+            "margin-right:6px;vertical-align:middle}"
+        ".ab {background:#1b3556;color:#6fa8dc}"
+        ".hb {background:#1a3320;color:#6dbd6d}"
+        "strong {color:#f0f0f0;font-size:0.90rem}"
+    )
 
-    <table class="f5-table">
-        <thead>
-            <tr>
-                <th>Team</th>
-                <th>Starting Pitcher</th>
-                <th class="num-th">Proj F5 Runs</th>
-                <th class="num-th">F5 Total</th>
-                <th class="num-th">Win %</th>
-                <th class="num-th">Fair Value</th>
-            </tr>
-        </thead>
-        <tbody>
-            {rows_html}
-        </tbody>
-    </table>
-    """
+    base_th = (
+        "<th class='la'>Team</th>"
+        "<th class='la'>Starting Pitcher</th>"
+        "<th>Proj Runs</th>"
+        "<th>F5 Total</th>"
+        "<th>Win %</th>"
+        "<th>Model FV</th>"
+    )
+
+    html_table = (
+        f"<!DOCTYPE html><html><head><style>{css}</style></head><body>"
+        f"<table class='t'><thead><tr>{base_th}{book_headers}</tr></thead>"
+        f"<tbody>{rows_html}</tbody></table></body></html>"
+    )
 
     import streamlit.components.v1 as components
-    components.html(html_table, height=max(len(today) * 90, 400), scrolling=False)
+    components.html(html_table, height=max(len(today) * 95 + 60, 400), scrolling=False)
 
     st.divider()
     st.subheader("Run Distribution (Negative Binomial, r=6.7)")
