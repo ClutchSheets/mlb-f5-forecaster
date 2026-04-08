@@ -99,11 +99,11 @@ if page == "Today's Forecasts":
         "betrivers":   "BetRivers",
     }
     BOOK_COLORS = {
-        "betonlineag": "#e03030",
+        "betonlineag": "#e8a020",
         "fanduel":     "#1493ff",
         "draftkings":  "#53d337",
         "betmgm":      "#c8a84b",
-        "betrivers":   "#e8a020",
+        "betrivers":   "#e03030",
     }
 
     NEGBIN_R = 6.7
@@ -157,8 +157,9 @@ if page == "Today's Forecasts":
     def total_fv(mu_total, r=NEGBIN_R):
         if mu_total is None or (isinstance(mu_total,float) and math.isnan(mu_total)):
             return "", "", ""
-        # Round to nearest 0.5 — 3.4 -> 3.5, 3.6 -> 3.5, 3.75 -> 4.0
         line = round(mu_total * 2) / 2
+        if mu_total <= line:
+            line -= 0.5
         line = max(line, 0.5)
         n_combined = r * 2
         p_nb = n_combined / (n_combined + mu_total)
@@ -207,120 +208,260 @@ if page == "Today's Forecasts":
     games_dict = odds_data.get("games", {})
     has_odds   = bool(games_dict)
 
+    # ── Book header cells ──────────────────────────────────────────
     book_th = ""
     if has_odds:
         for bk in BOOKS:
             col = BOOK_COLORS.get(bk, "#666")
             lbl = BOOK_LABELS.get(bk, bk)
             book_th += (
-                f'<th class="bk-head" colspan="2" style="border-top:2px solid {col}">'
+                f'<th class="bk-head" colspan="2" style="border-top:4px solid {col}">'
                 f'{lbl}</th>'
             )
 
+    # ── Devig + edge helpers ───────────────────────────────────────
+    def american_to_prob(odds):
+        if odds is None: return None
+        return 100/(odds+100) if odds > 0 else (-odds)/(-odds+100)
+
+    def devig_additive(p1, p2):
+        if p1 is None or p2 is None: return None, None
+        hold = p1 + p2
+        if hold <= 0: return None, None
+        return p1/hold, p2/hold
+
+    def ml_edge(model_p, book_this, book_other):
+        if None in (model_p, book_this, book_other): return None
+        p1 = american_to_prob(book_this)
+        p2 = american_to_prob(book_other)
+        dv, _ = devig_additive(p1, p2)
+        if dv is None: return None
+        return (model_p - dv) * 100
+
+    def tot_edge(p_over_model, over_odds, under_odds, side):
+        if None in (p_over_model, over_odds, under_odds): return None
+        p_ov = american_to_prob(over_odds)
+        p_un = american_to_prob(under_odds)
+        dv_ov, _ = devig_additive(p_ov, p_un)
+        if dv_ov is None: return None
+        edge = (p_over_model - dv_ov) * 100
+        return edge if side == "over" else -edge
+
+    EDGE_MIN = 3.0
+
+    def ml_cell(book_odds, model_p, other_odds):
+        if book_odds is None:
+            return "<td class='bk-ml empty'></td>"
+        txt = f"+{book_odds}" if book_odds > 0 else str(book_odds)
+        edge = ml_edge(model_p, book_odds, other_odds)
+        if edge is not None and edge >= EDGE_MIN:
+            return (
+                f'<td class="bk-ml edge-cell">'
+                f'<span class="edge-odds">{txt}</span>'
+                f'<span class="edge-tag">+{edge:.1f}%</span>'
+                f'</td>'
+            )
+        cls = "pos" if book_odds > 0 else "neg"
+        return f'<td class="bk-ml"><span class="{cls}">{txt}</span></td>'
+
+    def tot_cell(ou_odds, other_odds, line, side, p_over_model):
+        if ou_odds is None or line is None:
+            return "<td class='bk-tot empty'></td>"
+        ls   = f"{line}"
+        txt  = f"+{ou_odds}" if ou_odds > 0 else str(ou_odds)
+        pre  = "o" if side == "over" else "u"
+        edge = tot_edge(p_over_model, 
+                        ou_odds if side=="over" else other_odds,
+                        other_odds if side=="over" else ou_odds,
+                        side)
+        if edge is not None and edge >= EDGE_MIN:
+            return (
+                f'<td class="bk-tot edge-cell">'
+                f'<span class="tot-lbl">{pre}{ls}</span>'
+                f'<span class="edge-odds-sm">{txt}</span>'
+                f'<span class="edge-tag">+{edge:.1f}%</span>'
+                f'</td>'
+            )
+        cls = "pos" if ou_odds > 0 else "neg"
+        return (
+            f'<td class="bk-tot">'
+            f'<span class="tot-lbl">{pre}{ls}</span>'
+            f'<span class="{cls} ou-pr">{txt}</span>'
+            f'</td>'
+        )
+
+    # ── Row builder ────────────────────────────────────────────────
     rows_html = ""
-    for _, r in today.iterrows():
-        away_code = r["away_team"]
-        home_code = r["home_team"]
-        away_full = TEAM_FULL.get(away_code, away_code)
-        home_full = TEAM_FULL.get(home_code, home_code)
-        mu_total  = r["total_proj"]
+    for idx, (_, r) in enumerate(today.iterrows()):
+        away_code   = r["away_team"]
+        home_code   = r["home_team"]
+        away_full   = TEAM_FULL.get(away_code, away_code)
+        home_full   = TEAM_FULL.get(home_code, home_code)
+        away_sp     = str(r.get("away_sp","") or "").strip()
+        home_sp     = str(r.get("home_sp","") or "").strip()
+        mu_total    = r["total_proj"]
+        model_p_away = float(r["winprob_away"]) / 100
+        model_p_home = float(r["winprob_home"]) / 100
 
         game     = match_odds(games_dict, away_code, home_code) if has_odds else None
         gametime = (game or {}).get("commence_edt", "")
 
-        fv_line, fv_over, fv_under = total_fv(mu_total)
-        fv_total_away = f"o{fv_line}&nbsp;{fv_html(fv_over)}"  if fv_line else "\u2014"
-        fv_total_home = f"u{fv_line}&nbsp;{fv_html(fv_under)}" if fv_line else "\u2014"
+        # Total FV via NegBin
+        fv_line, fv_over_str, fv_under_str = total_fv(mu_total)
+        fv_total_away = (
+            f'<span class="tot-lbl">o{fv_line}</span>\u00a0{fv_html(fv_over_str)}'
+            if fv_line else "\u2014"
+        )
+        fv_total_home = (
+            f'<span class="tot-lbl">u{fv_line}</span>\u00a0{fv_html(fv_under_str)}'
+            if fv_line else "\u2014"
+        )
 
+        # P(over) for edge calc
+        fv_over_p = None
+        if fv_line:
+            n_c  = NEGBIN_R * 2
+            p_nb = n_c / (n_c + mu_total)
+            fv_over_p = 1 - float(_nbinom.cdf(int(math.floor(float(fv_line))), n_c, p_nb))
+
+        row_bg = "row-odd" if idx % 2 == 0 else "row-even"
+
+        # Book cells
         away_bk = home_bk = ""
         if has_odds:
             for bk in BOOKS:
                 ml   = (game or {}).get("ml",    {}).get(bk, {})
                 tot  = (game or {}).get("total", {}).get(bk, {})
-                a_ml = ml.get("away")
-                h_ml = ml.get("home")
+                a_ml  = ml.get("away")
+                h_ml  = ml.get("home")
                 over  = tot.get("over")
                 under = tot.get("under")
                 line  = tot.get("line")
-                ls    = f"{line}" if line is not None else "\u2014"
-                away_bk += (
-                    f'<td class="bk-ml">{fmt_ml(a_ml)}</td>'
-                    f'<td class="bk-tot">o{ls}&nbsp;{fmt_ou(over)}</td>'
-                )
-                home_bk += (
-                    f'<td class="bk-ml">{fmt_ml(h_ml)}</td>'
-                    f'<td class="bk-tot">u{ls}&nbsp;{fmt_ou(under)}</td>'
-                )
+                away_bk += ml_cell(a_ml, model_p_away, h_ml)
+                away_bk += tot_cell(over, under, line, "over", fv_over_p)
+                home_bk += ml_cell(h_ml, model_p_home, a_ml)
+                home_bk += tot_cell(under, over, line, "under", fv_over_p)
 
         rows_html += (
-            '<tr class="ar">'
-            f'<td class="tc"><span class="badge ab">A</span><span class="tm">{away_full}</span></td>'
-            f'<td class="time-cell" rowspan="2">{gametime}<br><span class="edt">EDT</span></td>'
+            f'<tr class="ar {row_bg}">'
+            f'<td class="tc">'
+            f'<span class="side-tag away-tag">Away</span>'
+            f'<span class="tm">{away_full}</span>'
+            + (f'<span class="sp-name">{away_sp}</span>' if away_sp else '')
+            + f'</td>'
+            f'<td class="time-cell" rowspan="2">'
+            f'<span class="gt">{gametime}</span>'
+            f'<span class="edt">EDT</span>'
+            f'</td>'
             f'<td class="nc pr">{r["lambda_away"]:.2f}</td>'
-            f'<td class="nc totc" rowspan="2">{mu_total:.2f}</td>'
+            f'<td class="nc totc" rowspan="2">'
+            f'<span class="tot-num">{mu_total:.2f}</span>'
+            f'<span class="xtot-lbl">xTotal</span>'
+            f'</td>'
             f'<td class="nc wc">{r["winprob_away"]:.1f}%</td>'
-            f'<td class="nc fvc">{fv_html(r["fv_away"])}</td>'
+            f'<td class="nc fvc model-div">{fv_html(r["fv_away"])}</td>'
             f'<td class="nc fv-tot">{fv_total_away}</td>'
             f'{away_bk}</tr>'
-            '<tr class="hr">'
-            f'<td class="tc"><span class="badge hb">H</span><span class="tm">{home_full}</span></td>'
+            f'<tr class="hr {row_bg}">'
+            f'<td class="tc">'
+            f'<span class="side-tag home-tag">Home</span>'
+            f'<span class="tm">{home_full}</span>'
+            + (f'<span class="sp-name">{home_sp}</span>' if home_sp else '')
+            + f'</td>'
             f'<td class="nc pr">{r["lambda_home"]:.2f}</td>'
             f'<td class="nc wc">{r["winprob_home"]:.1f}%</td>'
-            f'<td class="nc fvc">{fv_html(r["fv_home"])}</td>'
+            f'<td class="nc fvc model-div">{fv_html(r["fv_home"])}</td>'
             f'<td class="nc fv-tot">{fv_total_home}</td>'
             f'{home_bk}</tr>'
-            '<tr class="gr"><td colspan="99"></td></tr>'
+            f'<tr class="gr"><td colspan="99"></td></tr>'
         )
 
+    # ── CSS ────────────────────────────────────────────────────────
     css = (
         "* {box-sizing:border-box;margin:0;padding:0}"
         "body {background:#0d1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}"
         ".t {width:100%;border-collapse:collapse;font-size:0.82rem;color:#bbb}"
-        ".t thead tr {border-bottom:2px solid #21262d}"
-        ".t th {padding:7px 10px;color:#8b949e;font-size:0.62rem;font-weight:700;"
-            "text-transform:uppercase;letter-spacing:0.07em;text-align:right;white-space:nowrap;"
-            "background:#161b22;border-bottom:2px solid #30363d}"
+
+        # Header
+        ".t thead tr {border-bottom:3px solid #30363d}"
+        ".t th {padding:9px 10px;color:#c9d1d9;font-size:0.62rem;font-weight:700;"
+            "text-transform:uppercase;letter-spacing:0.07em;text-align:right;"
+            "white-space:nowrap;background:#161b22;border-bottom:3px solid #30363d}"
         ".t th.la {text-align:left}"
-        ".model-div {border-left:3px solid #30363d !important}"
+
+        # Model section divider
+        ".model-div {border-left:3px solid #388bfd !important}"
+
+        # Book headers
         ".bk-head {border-left:3px solid #30363d;text-align:center !important;"
-            "font-size:0.65rem !important;letter-spacing:0.04em !important;"
-            "padding:8px 6px !important;color:#c9d1d9 !important;background:#161b22 !important}"
-        ".ar td {padding:7px 10px 2px 10px;border-top:1px solid #21262d;vertical-align:middle}"
-        ".hr td {padding:2px 10px 7px 10px;vertical-align:middle}"
-        ".gr td {height:1px;background:#21262d}"
-        ".tc {white-space:nowrap;min-width:180px;text-align:left}"
-        ".tm {color:#e6edf3;font-weight:500;font-size:0.84rem}"
-        ".time-cell {text-align:center;color:#8b949e;font-size:0.78rem;"
-            "font-weight:600;white-space:nowrap;min-width:60px;vertical-align:middle !important}"
-        ".edt {font-size:0.60rem;color:#484f58;display:block}"
+            "font-size:0.66rem !important;letter-spacing:0.05em !important;"
+            "padding:9px 8px !important;color:#c9d1d9 !important;background:#161b22 !important}"
+
+        # Data rows
+        ".row-odd  td {background:#0d1117}"
+        ".row-even td {background:#111620}"
+        ".ar td {padding:8px 10px 2px 10px;border-top:1px solid #21262d;vertical-align:middle}"
+        ".hr td {padding:2px 10px 8px 10px;vertical-align:middle}"
+        ".gr td {height:3px;background:#0d1117;border:none}"
+
+        # Team cell
+        ".tc {white-space:nowrap;min-width:200px;text-align:left;padding-left:12px !important}"
+        ".side-tag {display:inline-block;font-size:0.52rem;font-weight:700;letter-spacing:0.08em;"
+            "padding:1px 4px;border-radius:2px;margin-right:6px;vertical-align:middle;"
+            "text-transform:uppercase}"
+        ".away-tag {background:#0d2f4f;color:#58a6ff}"
+        ".home-tag {background:#0f2d1a;color:#3fb950}"
+        ".tm {color:#e6edf3;font-weight:500;font-size:0.85rem;vertical-align:middle}"
+        ".sp-name {display:block;color:#484f58;font-size:0.72rem;margin-top:1px;"
+            "margin-left:42px}"
+
+        # Time cell
+        ".time-cell {text-align:center;white-space:nowrap;min-width:58px;"
+            "vertical-align:middle !important}"
+        ".gt {display:block;color:#8b949e;font-size:0.80rem;font-weight:600}"
+        ".edt {display:block;font-size:0.58rem;color:#484f58;margin-top:1px}"
+
+        # Model cols
         ".nc {text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}"
         ".pr {color:#8b949e;min-width:52px;font-size:0.80rem}"
-        ".totc {vertical-align:middle !important;font-size:0.92rem;font-weight:700;"
-            "color:#e6edf3;min-width:44px;text-align:right}"
+        ".totc {vertical-align:middle !important;min-width:56px;text-align:center !important;"
+            "padding:4px 10px !important}"
+        ".tot-num {display:block;font-size:1.0rem;font-weight:700;color:#e6edf3}"
+        ".xtot-lbl {display:block;font-size:0.54rem;color:#484f58;letter-spacing:0.06em;"
+            "text-transform:uppercase;margin-top:1px}"
         ".wc {color:#8b949e;min-width:46px;font-size:0.80rem}"
-        ".fvc {min-width:52px;font-weight:700;font-size:0.84rem}"
+        ".fvc {min-width:54px;font-weight:700;font-size:0.85rem}"
         ".fv-tot {min-width:90px;font-size:0.78rem;text-align:right}"
+        ".tot-lbl {color:#484f58;font-size:0.74rem;margin-right:2px}"
+
+        # Odds colours
         ".pos {color:#3fb950;font-weight:600}"
         ".neg {color:#e6edf3;font-weight:500}"
         ".dash {color:#30363d}"
         ".bold {font-weight:700}"
         ".ou-pr {font-size:0.76rem}"
-        ".bk-ml {border-left:3px solid #21262d;min-width:52px;text-align:right;"
-            "font-variant-numeric:tabular-nums;font-size:0.82rem;white-space:nowrap}"
-        ".bk-tot {min-width:80px;text-align:left;font-size:0.74rem;"
-            "color:#484f58;padding-left:6px;white-space:nowrap}"
-        ".badge {display:inline-block;width:16px;height:16px;border-radius:3px;"
-            "font-size:0.56rem;font-weight:700;text-align:center;line-height:16px;"
-            "margin-right:7px;vertical-align:middle}"
-        ".ab {background:#0d2f4f;color:#58a6ff}"
-        ".hb {background:#0f2d1a;color:#3fb950}"
+
+        # Book cols
+        ".bk-ml {border-left:3px solid #21262d;min-width:54px;text-align:right;"
+            "font-variant-numeric:tabular-nums;font-size:0.83rem;white-space:nowrap;"
+            "padding-right:6px !important}"
+        ".bk-tot {min-width:86px;text-align:left;font-size:0.74rem;"
+            "padding-left:6px !important;white-space:nowrap}"
+        ".empty {opacity:0}"
+
+        # Edge highlighting — green cell glow
+        ".edge-cell {background:#0f2d1a !important;position:relative}"
+        ".edge-odds {color:#3fb950;font-weight:700;font-size:0.85rem}"
+        ".edge-odds-sm {color:#3fb950;font-weight:700;font-size:0.78rem;margin:0 2px}"
+        ".edge-tag {display:block;font-size:0.58rem;color:#56d364;font-weight:700;"
+            "letter-spacing:0.04em;margin-top:1px}"
     )
 
     base_th = (
-        "<th class='la'>Team</th>"
+        "<th class='la' style='min-width:200px'>Team / Pitcher</th>"
         "<th style='text-align:center'>Time</th>"
         "<th>Proj Runs</th>"
-        "<th>F5 Total</th>"
+        "<th style='text-align:center'>xTotal</th>"
         "<th>Win %</th>"
         "<th class='model-div'>ML FV</th>"
         "<th>Tot FV</th>"
@@ -336,7 +477,7 @@ if page == "Today's Forecasts":
     )
 
     import streamlit.components.v1 as components
-    components.html(html_table, height=max(len(today) * 72 + 55, 400), scrolling=False)
+    components.html(html_table, height=max(len(today) * 80 + 55, 400), scrolling=False)
 
     st.divider()
     st.subheader("Run Distribution (Negative Binomial, r=6.7)")
