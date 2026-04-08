@@ -496,7 +496,7 @@ if page == "Today's Forecasts":
         "Green cells = \u22653% edge after full additive devig vs book line."
     )
     import streamlit.components.v1 as components
-    components.html(html_table, height=max(len(today) * 58 + 80, 400), scrolling=False)
+    components.html(html_table, height=max(len(today) * 70 + 120, 400), scrolling=True)
 
     st.divider()
     st.subheader("Run Distribution (Negative Binomial, r=6.7)")
