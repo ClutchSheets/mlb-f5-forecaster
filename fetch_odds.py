@@ -1,38 +1,38 @@
 """
-fetch_odds.py
-=============
-Fetches F5 ML + F5 totals from The Odds API for today's MLB slate
-and writes daily_odds.json.
-
-Uses /events endpoint to get today's game IDs, then calls
-/events/{eventId}/odds per game for h2h_1st_5_innings + totals_1st_5_innings.
-
-Credit cost: (num_games x 2) per day. Typically ~20 credits for a full slate.
-
-Called by 2_push_forecasts.bat — not by the app.
+fetch_odds.py — ClutchSheets F5
+Fetches F5 ML + totals per event, stores commence_time for display.
+2 credits per game (~20/day for full slate).
+Called by 2_push_forecasts.bat only.
 """
 
-import os
-import json
-import requests
-from datetime import date, timezone, datetime
+import os, json, requests
+from datetime import date, datetime, timezone, timedelta
 
 ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "d31971f20a2edb069b228e828826815a")
 
 BOOKS = [
-    "betonlineag",  # BetOnline
-    "betmgm",       # BetMGM
-    "betrivers",    # BetRivers
-    "draftkings",   # DraftKings
-    "fanduel",      # FanDuel
+    "betonlineag",
+    "fanduel",
+    "draftkings",
+    "betmgm",
+    "betrivers",
 ]
 
 OUTPUT_FILE = "daily_odds.json"
 BASE_URL    = "https://api.the-odds-api.com/v4/sports/baseball_mlb"
 
 
-def get_events() -> list:
-    """Get today's MLB event IDs."""
+def to_edt(iso_str):
+    """Convert ISO UTC string to EDT time string e.g. '7:05 PM'."""
+    try:
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        edt = dt - timedelta(hours=4)
+        return edt.strftime("%-I:%M %p")
+    except Exception:
+        return ""
+
+
+def get_events():
     r = requests.get(
         f"{BASE_URL}/events",
         params={"apiKey": ODDS_API_KEY, "regions": "us"},
@@ -40,16 +40,12 @@ def get_events() -> list:
     )
     r.raise_for_status()
     today = date.today().isoformat()
-    events = [
-        e for e in r.json()
-        if e.get("commence_time", "")[:10] == today
-    ]
+    events = [e for e in r.json() if e.get("commence_time","")[:10] == today]
     print(f"  Found {len(events)} games today")
     return events
 
 
-def get_event_odds(event_id: str, away: str, home: str, market: str) -> dict:
-    """Fetch odds for a single event and market."""
+def get_event_odds(event_id, market):
     r = requests.get(
         f"{BASE_URL}/events/{event_id}/odds",
         params={
@@ -65,56 +61,61 @@ def get_event_odds(event_id: str, away: str, home: str, market: str) -> dict:
     return r.json()
 
 
-def build_odds_dict(events: list) -> dict:
+def build_odds_dict(events):
     games = {}
     total_calls = 0
 
     for event in events:
-        event_id = event["id"]
-        away     = event["away_team"]
-        home     = event["home_team"]
-        key      = f"{away}@{home}"
+        eid   = event["id"]
+        away  = event["away_team"]
+        home  = event["home_team"]
+        ctime = event.get("commence_time", "")
+        key   = f"{away}@{home}"
 
-        games[key] = {"away": away, "home": home, "ml": {}, "total": {}}
+        games[key] = {
+            "away":         away,
+            "home":         home,
+            "commence_edt": to_edt(ctime),
+            "ml":           {},
+            "total":        {},
+        }
 
-        # ── F5 Moneyline ──
+        # F5 ML
         try:
-            data = get_event_odds(event_id, away, home, "h2h_1st_5_innings")
+            data = get_event_odds(eid, "h2h_1st_5_innings")
             total_calls += 1
             for bm in data.get("bookmakers", []):
                 bk = bm["key"]
                 for mkt in bm.get("markets", []):
-                    if mkt["key"] != "h2h_1st_5_innings":
-                        continue
+                    if mkt["key"] != "h2h_1st_5_innings": continue
                     entry = {}
                     for o in mkt["outcomes"]:
                         side = "away" if o["name"] == away else "home"
                         entry[side] = int(o["price"])
                     games[key]["ml"][bk] = entry
         except Exception as e:
-            print(f"  [WARN] ML failed for {away}@{home}: {e}")
+            print(f"  [WARN] ML {away}@{home}: {e}")
 
-        # ── F5 Totals ──
+        # F5 Total
         try:
-            data = get_event_odds(event_id, away, home, "totals_1st_5_innings")
+            data = get_event_odds(eid, "totals_1st_5_innings")
             total_calls += 1
             for bm in data.get("bookmakers", []):
                 bk = bm["key"]
                 for mkt in bm.get("markets", []):
-                    if mkt["key"] != "totals_1st_5_innings":
-                        continue
+                    if mkt["key"] != "totals_1st_5_innings": continue
                     entry = {}
                     for o in mkt["outcomes"]:
                         if o["name"] == "Over":
-                            entry["line"]  = o.get("point")
-                            entry["over"]  = int(o["price"])
+                            entry["line"] = o.get("point")
+                            entry["over"] = int(o["price"])
                         else:
                             entry["under"] = int(o["price"])
                     games[key]["total"][bk] = entry
         except Exception as e:
-            print(f"  [WARN] Totals failed for {away}@{home}: {e}")
+            print(f"  [WARN] Tot {away}@{home}: {e}")
 
-        print(f"  [OK] {away} @ {home}")
+        print(f"  [OK] {away} @ {home}  {to_edt(ctime)} EDT")
 
     print(f"  Total API calls: {total_calls}")
     return games
@@ -122,7 +123,7 @@ def build_odds_dict(events: list) -> dict:
 
 def main():
     if ODDS_API_KEY == "YOUR_KEY_HERE":
-        print("[ERROR] Open fetch_odds.py and replace YOUR_KEY_HERE with your key.")
+        print("[ERROR] Replace YOUR_KEY_HERE with your Odds API key.")
         return
 
     print(f"Fetching F5 odds for {date.today()} ...")
@@ -139,11 +140,7 @@ def main():
 
     odds = build_odds_dict(events)
 
-    payload = {
-        "date":  str(date.today()),
-        "games": odds,
-        "books": BOOKS,
-    }
+    payload = {"date": str(date.today()), "games": odds, "books": BOOKS}
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
