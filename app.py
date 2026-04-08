@@ -184,18 +184,18 @@ if page == "Today's Forecasts":
     has_odds   = bool(games_dict)
 
     # ── Build table ────────────────────────────────────────────────
+    # ── Unabated-style compact layout ─────────────────────────────
+    # Header: ML | Total per book (2 cols each)
     book_headers = ""
     if has_odds:
         for bk in BOOKS:
-            book_headers += (
-                f'<th class="bk-head" colspan="3">{BOOK_LABELS[bk]}</th>'
-            )
+            book_headers += f'<th class="bk-head" colspan="2">{BOOK_LABELS[bk]}</th>'
 
     rows_html = ""
     for _, r in today.iterrows():
         away_code = r["away_team"]
         home_code = r["home_team"]
-        total_str = f"{r['total_proj']:.2f}" if not pd.isna(r["total_proj"]) else "\u2014"
+        total_str = f"{r['total_proj']:.1f}" if not pd.isna(r["total_proj"]) else "\u2014"
         game      = match_odds(games_dict, away_code, home_code) if has_odds else None
 
         away_bk = home_bk = ""
@@ -208,20 +208,20 @@ if page == "Today's Forecasts":
                 over  = tot.get("over")
                 under = tot.get("under")
                 line  = tot.get("line", "\u2014")
+                # Away row: ML | o{line} over_price
                 away_bk += (
                     f'<td class="bk-ml" style="{ml_color(a_ml)}">{fmt_odds(a_ml)}</td>'
-                    f'<td class="bk-line">{line}</td>'
-                    f'<td class="bk-ou ov">{fmt_odds(over)}</td>'
+                    f'<td class="bk-tot ov">o{line}&nbsp;<span class="ou-pr">{fmt_odds(over)}</span></td>'
                 )
+                # Home row: ML | u{line} under_price
                 home_bk += (
                     f'<td class="bk-ml" style="{ml_color(h_ml)}">{fmt_odds(h_ml)}</td>'
-                    f'<td class="bk-line"></td>'
-                    f'<td class="bk-ou un">{fmt_odds(under)}</td>'
+                    f'<td class="bk-tot un">u{line}&nbsp;<span class="ou-pr">{fmt_odds(under)}</span></td>'
                 )
 
         rows_html += (
             '<tr class="ar">'
-            f'<td class="tc"><span class="badge ab">A</span><strong>{away_code}</strong></td>'
+            f'<td class="tc"><span class="badge ab">A</span><span class="tm">{away_code}</span></td>'
             f'<td class="sc">{r.get("away_sp","")}</td>'
             f'<td class="nc pr">{r["lambda_away"]:.2f}</td>'
             f'<td class="nc totc" rowspan="2">{total_str}</td>'
@@ -229,7 +229,7 @@ if page == "Today's Forecasts":
             f'<td class="nc fvc" style="{fv_color(r["fv_away"])}">{r["fv_away"]}</td>'
             f'{away_bk}</tr>'
             '<tr class="hr">'
-            f'<td class="tc"><span class="badge hb">H</span><strong>{home_code}</strong></td>'
+            f'<td class="tc"><span class="badge hb">H</span><span class="tm">{home_code}</span></td>'
             f'<td class="sc">{r.get("home_sp","")}</td>'
             f'<td class="nc pr">{r["lambda_home"]:.2f}</td>'
             f'<td class="nc wc">{r["winprob_home"]:.1f}%</td>'
@@ -240,38 +240,49 @@ if page == "Today's Forecasts":
 
     css = (
         "* {box-sizing:border-box;margin:0;padding:0}"
-        "body {background:transparent;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}"
-        ".t {width:100%;border-collapse:collapse;font-size:0.86rem;color:#ddd}"
-        ".t thead tr {border-bottom:2px solid #383838}"
-        ".t th {padding:6px 8px;color:#666;font-size:0.67rem;font-weight:600;"
-            "text-transform:uppercase;letter-spacing:0.05em;text-align:right;white-space:nowrap}"
+        "body {background:#0e1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}"
+        ".t {width:100%;border-collapse:collapse;font-size:0.82rem;color:#ccc}"
+
+        # Header
+        ".t thead tr {border-bottom:2px solid #2d2d2d}"
+        ".t th {padding:5px 8px;color:#555;font-size:0.62rem;font-weight:700;"
+            "text-transform:uppercase;letter-spacing:0.06em;text-align:right;white-space:nowrap}"
         ".t th.la {text-align:left}"
-        ".bk-head {border-left:2px solid #303030;color:#555 !important;"
-            "text-align:center !important;font-size:0.64rem !important}"
-        ".ar td {padding:9px 8px 3px 8px;border-top:1px solid #282828;vertical-align:bottom}"
-        ".hr td {padding:3px 8px 9px 8px;vertical-align:top}"
-        ".gr td {height:5px;background:#181818}"
-        ".tc {white-space:nowrap;min-width:68px;text-align:left}"
-        ".sc {color:#aaa;font-size:0.80rem;min-width:140px;text-align:left}"
+        ".bk-head {border-left:3px solid #1e1e1e;color:#4a4a4a !important;"
+            "text-align:center !important;padding:5px 4px !important}"
+
+        # Rows — tight like Unabated
+        ".ar td {padding:6px 8px 2px 8px;border-top:1px solid #1e1e1e;vertical-align:middle}"
+        ".hr td {padding:2px 8px 6px 8px;vertical-align:middle}"
+        ".gr td {height:3px;background:#0e1117}"
+
+        # Team + SP
+        ".tc {white-space:nowrap;min-width:62px;text-align:left}"
+        ".tm {color:#e0e0e0;font-weight:600;font-size:0.84rem;letter-spacing:0.02em}"
+        ".sc {color:#666;font-size:0.76rem;min-width:130px;text-align:left}"
+
+        # Model columns
         ".nc {text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}"
-        ".pr {color:#bbb;min-width:56px}"
-        ".totc {vertical-align:middle !important;font-size:1.0rem;font-weight:700;"
-            "color:#eee;min-width:54px}"
-        ".wc {color:#ccc;min-width:50px}"
-        ".fvc {min-width:58px;font-weight:600}"
-        ".bk-ml {border-left:2px solid #2a2a2a;min-width:50px;text-align:right;"
-            "font-variant-numeric:tabular-nums;white-space:nowrap}"
-        ".bk-line {min-width:34px;text-align:center;color:#555;font-size:0.74rem}"
-        ".bk-ou {min-width:44px;text-align:right;font-size:0.77rem;"
-            "font-variant-numeric:tabular-nums;white-space:nowrap}"
-        ".ov {color:#7ab3ef}"
-        ".un {color:#e08080}"
-        ".badge {display:inline-block;width:16px;height:16px;border-radius:3px;"
-            "font-size:0.58rem;font-weight:700;text-align:center;line-height:16px;"
-            "margin-right:6px;vertical-align:middle}"
+        ".pr {color:#888;min-width:52px;font-size:0.80rem}"
+        ".totc {vertical-align:middle !important;font-size:0.95rem;font-weight:700;"
+            "color:#e0e0e0;min-width:50px;text-align:right}"
+        ".wc {color:#999;min-width:46px;font-size:0.80rem}"
+        ".fvc {min-width:54px;font-weight:700;font-size:0.82rem}"
+
+        # Book columns — Unabated style
+        ".bk-ml {border-left:3px solid #1e1e1e;min-width:46px;text-align:right;"
+            "font-variant-numeric:tabular-nums;font-weight:600;font-size:0.82rem;white-space:nowrap}"
+        ".bk-tot {min-width:72px;text-align:left;font-size:0.74rem;color:#555;padding-left:4px}"
+        ".ou-pr {font-size:0.72rem}"
+        ".ov .ou-pr {color:#5a8fc4}"
+        ".un .ou-pr {color:#b06060}"
+
+        # Badges
+        ".badge {display:inline-block;width:15px;height:15px;border-radius:2px;"
+            "font-size:0.55rem;font-weight:700;text-align:center;line-height:15px;"
+            "margin-right:5px;vertical-align:middle}"
         ".ab {background:#1b3556;color:#6fa8dc}"
         ".hb {background:#1a3320;color:#6dbd6d}"
-        "strong {color:#f0f0f0;font-size:0.90rem}"
     )
 
     base_th = (
@@ -284,13 +295,16 @@ if page == "Today's Forecasts":
     )
 
     html_table = (
-        f"<!DOCTYPE html><html><head><style>{css}</style></head><body>"
+        "<!DOCTYPE html><html><head>"
+        f"<style>{css}</style>"
+        "</head><body>"
         f"<table class='t'><thead><tr>{base_th}{book_headers}</tr></thead>"
-        f"<tbody>{rows_html}</tbody></table></body></html>"
+        f"<tbody>{rows_html}</tbody></table>"
+        "</body></html>"
     )
 
     import streamlit.components.v1 as components
-    components.html(html_table, height=max(len(today) * 95 + 60, 400), scrolling=False)
+    components.html(html_table, height=max(len(today) * 68 + 50, 400), scrolling=False)
 
     st.divider()
     st.subheader("Run Distribution (Negative Binomial, r=6.7)")
