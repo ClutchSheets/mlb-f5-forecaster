@@ -1,16 +1,16 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-08,SDP,Michael King,PIT,Mitch Keller,2.2917,2.5715,4.8632,0.5478,v1.0
-2026-04-08,KCR,Cole Ragans,CLE,Joey Cantillo,2.0516,2.2479,4.2995,0.5368,v1.0
-2026-04-08,MIL,Shane Drohan,BOS,Sonny Gray,2.7272,2.5667,5.2939,0.4743,v1.0
-2026-04-08,BAL,Kyle Bradish,CHW,Sean Burke,3.1315,2.3439,5.4753,0.3784,v1.0
-2026-04-08,SEA,Bryan Woo,TEX,MacKenzie Gore,2.3618,1.8762,4.2380,0.4086,v1.0
-2026-04-08,LAD,Shohei Ohtani,TOR,Dylan Cease,2.9817,1.8178,4.7995,0.3060,v1.0
-2026-04-08,HOU,Cristian Javier,COL,Michael Lorenzen,3.1264,2.5422,5.6686,0.4116,v1.0
-2026-04-08,PHI,Aaron Nola,SFG,Tyler Mahle,2.0217,2.6235,4.6452,0.6055,v1.0
-2026-04-08,STL,Michael McGreevy,WSN,Miles Mikolas,2.6101,2.4972,5.1073,0.4814,v1.0
-2026-04-08,ATL,Grant Holmes,LAA,Reid Detmers,2.6393,2.6091,5.2484,0.4951,v1.0
-2026-04-08,ARI,Ryne Nelson,NYM,David Peterson,2.3493,2.0630,4.4123,0.4474,v1.0
-2026-04-08,CHC,Colin Rea,TBR,Joe Boyle,2.5287,2.7446,5.2733,0.5347,v1.0
-2026-04-08,CIN,Brady Singer,MIA,Eury Pérez,1.9055,2.6081,4.5136,0.6253,v1.0
-2026-04-08,ATH,Luis Severino,NYY,Will Warren,2.6805,2.5672,5.2477,0.4817,v1.0
-2026-04-08,DET,Framber Valdez,MIN,Bailey Ober,2.7985,2.0746,4.8731,0.3780,v1.0
+2026-04-09,CIN,Rhett Lowder,MIA,Max Meyer,2.3561,2.2824,4.6384,0.4869,v1.0
+2026-04-09,ATH,Jeffrey Springs,NYY,Ryan Weathers,2.3214,2.6325,4.9539,0.5524,v1.0
+2026-04-09,DET,Jack Flaherty,MIN,Mick Abel,2.2915,2.8998,5.1913,0.5982,v1.0
+2026-04-09,ARI,Eduardo Rodriguez,NYM,Nolan McLean,2.1971,3.1681,5.3651,0.6510,v1.0
+2026-04-09,CHW,Anthony Kay,KCR,Seth Lugo,2.3432,1.9850,4.3281,0.4334,v1.0
+2026-04-09,COL,Jimmy Herget,SDP,Randy Vásquez,1.5285,2.5424,4.0708,0.6916,v1.0
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
