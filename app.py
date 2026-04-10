@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import sqlite3
 import os
@@ -151,26 +152,24 @@ def render_games_table(df, odds_lookup):
         for b in BOOKS
     )
 
-    # Inject table CSS via st.html (not stripped like st.markdown)
-    st.html(f"""<style>
-      .cs-table{{width:100%;border-collapse:collapse;font-family:sans-serif;
-                 background:{BG_DARK};border-radius:8px;overflow:hidden}}
-      .cs-table th{{background:{BG_DARK}}}
-      .cs-table tr.away-row{{background:{BG_ROW}}}
-      .cs-table tr.home-row{{background:{BG_ALT}}}
-      .cs-table tr.away-row:hover,.cs-table tr.home-row:hover{{filter:brightness(1.15)}}
-      .edge{{background:{GREEN};border-radius:3px;padding:1px 6px;
-             white-space:nowrap;display:inline-block;font-weight:600;color:#fff}}
-      .edge small{{display:block;font-size:0.75em;font-weight:400;opacity:0.9}}
-      .game-num{{color:{SUBTEXT};font-size:0.8em}}
-      .team-name{{font-weight:600;color:{TEXT}}}
-      .sp-name{{color:{SUBTEXT};font-size:0.78em}}
-      .fv{{color:#7ec8e3;font-size:0.9em;font-weight:600}}
-      .odds{{color:{TEXT};font-size:0.9em}}
-      .dash{{color:{SUBTEXT}}}
-    </style>""")
+    css = f"""
+      <style>
+        body{{margin:0;padding:0;background:transparent}}
+        table{{width:100%;border-collapse:collapse;font-family:sans-serif;
+               background:{BG_DARK};border-radius:8px;overflow:hidden}}
+        th{{background:{BG_DARK};color:{SUBTEXT};font-size:0.75em;
+            letter-spacing:0.05em;padding:8px 12px;border-bottom:1px solid {BORDER}}}
+        tr.away-row{{background:{BG_ROW}}}
+        tr.home-row{{background:{BG_ALT}}}
+        tr.away-row:hover,tr.home-row:hover{{filter:brightness(1.15)}}
+        .edge{{background:{GREEN};border-radius:3px;padding:1px 6px;
+               white-space:nowrap;display:inline-block;font-weight:600;color:#fff}}
+        .edge small{{display:block;font-size:0.75em;font-weight:400;opacity:0.9}}
+        td{{padding:8px 12px;border-bottom:1px solid {BORDER}}}
+      </style>
+    """
 
-    html = f"""<table class='cs-table'>
+    html = css + f"""<table>
       <thead>
         <tr>
           <th style='padding:8px 6px;text-align:center;color:{SUBTEXT};font-size:0.75em;
@@ -276,7 +275,9 @@ def render_games_table(df, odds_lookup):
         """
 
     html += "</tbody></table>"
-    st.markdown(html, unsafe_allow_html=True)
+    # Estimate height: ~70px per game pair + 50px header
+    height = len(df) * 72 + 55
+    components.html(html, height=height, scrolling=False)
 
 # ── Performance tab ───────────────────────────────────────────────────────────
 def render_performance(hist: pd.DataFrame):
@@ -436,7 +437,7 @@ def render_performance(hist: pd.DataFrame):
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
     # Tighten default top padding and restore title
-    st.html("<style>.block-container{padding-top:0.5rem!important}</style>")
+    st.markdown("<style>.block-container{padding-top:0.5rem!important}</style>", unsafe_allow_html=True)
     st.markdown(
         "<h2 style='color:#1a7a3a;margin:0 0 4px 0'>⚾ ClutchSheets F5 Baseball Forecaster</h2>",
         unsafe_allow_html=True
