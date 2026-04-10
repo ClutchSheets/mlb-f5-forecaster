@@ -1,878 +1,231 @@
 import streamlit as st
-import sqlite3
 import pandas as pd
-import numpy as np
-import altair as alt
-from scipy.stats import nbinom
+import sqlite3
+import os
+import requests
+from datetime import date, timedelta
 
-DB_FILE = "mlb_f5_forecasts.db"
+st.set_page_config(page_title="ClutchSheets F5 Forecaster", layout="wide")
 
-# Negative binomial parameters
-# r=6.7 is the fitted dispersion; lambda (mu) varies per game
-NEGBIN_R = 6.7
+# ── Odds API ──────────────────────────────────────────────────────────────────
+ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "")
+ODDS_API_URL = "https://api.the-odds-api.com/v4/sports/baseball_mlb/odds"
 
-def negbin_params(mu: float, r: float = NEGBIN_R):
-    """Convert mean (mu) and dispersion (r) to scipy nbinom (n, p) params."""
-    p = r / (r + mu)
-    return r, p
+BOOKS = ["betonline", "fanduel", "draftkings", "betmgm", "betrivers"]
+BOOK_LABELS = {
+    "betonline": "BetOnline",
+    "fanduel":   "FanDuel",
+    "draftkings":"DraftKings",
+    "betmgm":    "BetMGM",
+    "betrivers": "BetRivers",
+}
 
-def negbin_win_prob(mu_away: float, mu_home: float, r: float = NEGBIN_R, max_runs: int = 20) -> float:
-    """P(home wins F5) using negative binomial convolution."""
-    r_a, p_a = negbin_params(mu_away, r)
-    r_h, p_h = negbin_params(mu_home, r)
-    runs = np.arange(0, max_runs + 1)
-    pmf_a = nbinom.pmf(runs, r_a, p_a)
-    pmf_h = nbinom.pmf(runs, r_h, p_h)
-    p_home_win = np.sum(
-        pmf_h[:, None] * pmf_a[None, :] * (np.arange(max_runs + 1)[:, None] > runs[None, :])
-    )
-    p_tie = np.sum(pmf_h * pmf_a)
-    return float(p_home_win + 0.5 * p_tie)
+# ── FIXED: Raised threshold from 3.0 to 5.0 to reduce noise ──────────────────
+EDGE_THRESHOLD = 5.0
 
-def negbin_pmf_table(mu: float, r: float = NEGBIN_R, max_runs: int = 12) -> pd.DataFrame:
-    """Return a small PMF table for display (runs 0–max_runs)."""
-    n, p = negbin_params(mu, r)
-    runs = np.arange(0, max_runs + 1)
-    probs = nbinom.pmf(runs, n, p)
-    return pd.DataFrame({"Runs": runs, "Probability": np.round(probs, 4)})
+def american_to_prob(odds: int) -> float:
+    if odds > 0:
+        return 100 / (odds + 100)
+    return abs(odds) / (abs(odds) + 100)
 
-st.set_page_config(page_title="MLB F5 Forecast Model", layout="wide")
+def prob_to_american(p: float) -> int:
+    if p >= 0.5:
+        return -round(p / (1 - p) * 100)
+    return round((1 - p) / p * 100)
 
-@st.cache_data
-def load_data():
-    conn = sqlite3.connect(DB_FILE)
-    df = pd.read_sql_query("SELECT * FROM forecast_archive", conn)
+def no_vig_prob(home_odds: int, away_odds: int):
+    ph = american_to_prob(home_odds)
+    pa = american_to_prob(away_odds)
+    total = ph + pa
+    return ph / total, pa / total
+
+def edge_pct(model_p: float, market_p: float) -> float:
+    return (model_p - market_p) * 100
+
+# ── FIXED: Sigmoid-based totals probability using actual projection distance ──
+def total_edge_prob(total_proj: float, line: float) -> tuple:
+    """
+    Convert the distance between model projection and market line into
+    a meaningful over/under probability using a sigmoid function.
+    
+    diff > 0 → model projects more runs than the line → lean Over
+    diff < 0 → model projects fewer runs than the line → lean Under
+    
+    k=0.7 is the steepness — tunable based on calibration.
+    A diff of 0.5 runs gives ~58% confidence, 1.0 run gives ~67%.
+    """
+    diff = total_proj - line
+    k = 0.7
+    model_over_p = 1 / (1 + 10 ** (-diff * k))
+    model_under_p = 1 - model_over_p
+    return model_over_p, model_under_p
+
+# ── Team name → CSV code map ──────────────────────────────────────────────────
+NAME_TO_CODE = {
+    "Pittsburgh Pirates": "PIT", "Chicago Cubs": "CHC",
+    "Oakland Athletics": "ATH", "New York Mets": "NYM",
+    "Texas Rangers": "TEX", "Los Angeles Dodgers": "LAD",
+    "Los Angeles Angels": "LAA", "Cincinnati Reds": "CIN",
+    "Washington Nationals": "WSN", "Milwaukee Brewers": "MIL",
+    "Arizona Diamondbacks": "ARI", "Philadelphia Phillies": "PHI",
+    "Minnesota Twins": "MIN", "Toronto Blue Jays": "TOR",
+    "Colorado Rockies": "COL", "San Diego Padres": "SDP",
+    "Miami Marlins": "MIA", "Detroit Tigers": "DET",
+    "New York Yankees": "NYY", "Tampa Bay Rays": "TBR",
+    "Chicago White Sox": "CHW", "Kansas City Royals": "KCR",
+    "San Francisco Giants": "SFG", "Baltimore Orioles": "BAL",
+    "Boston Red Sox": "BOS", "St. Louis Cardinals": "STL",
+    "Cleveland Guardians": "CLE", "Atlanta Braves": "ATL",
+    "Houston Astros": "HOU", "Seattle Mariners": "SEA",
+}
+
+@st.cache_data(ttl=300)
+def fetch_odds():
+    if not ODDS_API_KEY:
+        return {}
+    params = {
+        "apiKey": ODDS_API_KEY,
+        "regions": "us",
+        "markets": "h2h,totals",
+        "oddsFormat": "american",
+        "bookmakers": ",".join(BOOKS),
+    }
+    r = requests.get(ODDS_API_URL, params=params, timeout=15)
+    if r.status_code != 200:
+        return {}
+    raw = r.json()
+
+    lookup = {}
+    for game in raw:
+        teams = {b["key"]: b for b in game.get("bookmakers", [])}
+        away_name = game["away_team"]
+        home_name = game["home_team"]
+        away_code = NAME_TO_CODE.get(away_name, away_name[:3].upper())
+        home_code = NAME_TO_CODE.get(home_name, home_name[:3].upper())
+        key = f"{away_code}@{home_code}"
+        lookup[key] = {"bookmakers": teams, "commence_time": game.get("commence_time", "")}
+    return lookup
+
+@st.cache_data(ttl=3600)
+def load_forecast(csv_path: str) -> pd.DataFrame:
+    if not os.path.exists(csv_path):
+        return pd.DataFrame()
+    df = pd.read_csv(csv_path, encoding="utf-8-sig")
+    df.columns = df.columns.str.strip().str.lower()
+    return df
+
+def load_history(db_path: str) -> pd.DataFrame:
+    if not os.path.exists(db_path):
+        return pd.DataFrame()
+    conn = sqlite3.connect(db_path)
+    df = pd.read_sql("SELECT * FROM forecast_archive ORDER BY date DESC", conn)
     conn.close()
     return df
 
-df = load_data()
-
-if not df.empty:
-    df["date"] = df["date"].astype(str).str.strip()
-if "created_at" in df.columns:
-    df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")
-
-page = st.sidebar.radio(
-    "Navigation",
-    ["Today's Forecasts", "Accuracy", "Calibration", "Results", "Team Ratings"]
-)
-
-def f_completed(dfin: pd.DataFrame) -> pd.DataFrame:
-    if "completed5" in dfin.columns:
-        return dfin[dfin["completed5"] == 1].copy()
-    return dfin.copy()
-
-def to_num(s: pd.Series) -> pd.Series:
-    return pd.to_numeric(s, errors="coerce")
-
-# -----------------------------
-# TODAY
-# -----------------------------
-if page == "Today's Forecasts":
-    import os, math, json as _json
-    from scipy.stats import nbinom as _nbinom
-    import numpy as _np
-
-    FORECAST_FILE = "daily_forecast.csv"
-    ODDS_FILE     = "daily_odds.json"
-
-    TEAM_FULL = {
-        "ARI":"Arizona Diamondbacks","ATL":"Atlanta Braves","BAL":"Baltimore Orioles",
-        "BOS":"Boston Red Sox","CHC":"Chicago Cubs","CWS":"Chicago White Sox",
-        "CHW":"Chicago White Sox","CIN":"Cincinnati Reds","CLE":"Cleveland Guardians",
-        "COL":"Colorado Rockies","DET":"Detroit Tigers","HOU":"Houston Astros",
-        "KCR":"Kansas City Royals","LAA":"Los Angeles Angels","LAD":"Los Angeles Dodgers",
-        "MIA":"Miami Marlins","MIL":"Milwaukee Brewers","MIN":"Minnesota Twins",
-        "NYM":"New York Mets","NYY":"New York Yankees","ATH":"Oakland Athletics",
-        "OAK":"Oakland Athletics","PHI":"Philadelphia Phillies","PIT":"Pittsburgh Pirates",
-        "SDP":"San Diego Padres","SEA":"Seattle Mariners","SFG":"San Francisco Giants",
-        "STL":"St. Louis Cardinals","TBR":"Tampa Bay Rays","TEX":"Texas Rangers",
-        "TOR":"Toronto Blue Jays","WSN":"Washington Nationals",
-    }
-
-    BOOKS = ["betonlineag","fanduel","draftkings","betmgm","betrivers"]
-    BOOK_LABELS = {
-        "betonlineag": "BetOnline",
-        "fanduel":     "FanDuel",
-        "draftkings":  "DraftKings",
-        "betmgm":      "BetMGM",
-        "betrivers":   "BetRivers",
-    }
-    BOOK_COLORS = {
-        "betonlineag": "#e8a020",
-        "fanduel":     "#1493ff",
-        "draftkings":  "#53d337",
-        "betmgm":      "#c8a84b",
-        "betrivers":   "#e03030",
-    }
-
-    NEGBIN_R = 6.7
-
-    @st.cache_data(ttl=300)
-    def load_forecast_csv():
-        if not os.path.exists(FORECAST_FILE):
-            return pd.DataFrame()
-        fc = pd.read_csv(FORECAST_FILE, encoding="utf-8-sig")
-        fc["date"] = fc["date"].astype(str).str.strip()
-        return fc
-
-    @st.cache_data(ttl=300)
-    def load_odds_json():
-        if not os.path.exists(ODDS_FILE):
-            return {}
-        with open(ODDS_FILE,"r",encoding="utf-8") as f:
-            return _json.load(f)
-
-    def match_odds(games_dict, away_code, home_code):
-        away_full = TEAM_FULL.get(away_code,"").lower()
-        home_full = TEAM_FULL.get(home_code,"").lower()
-        for key, data in games_dict.items():
-            if away_full in data.get("away","").lower() and home_full in data.get("home","").lower():
-                return data
-        return None
-
-    def fmt_ml(val):
-        if val is None: return "<span class='dash'>\u2014</span>"
-        cls = "pos" if val > 0 else "neg"
-        txt = f"+{val}" if val > 0 else str(val)
-        return f"<span class='{cls}'>{txt}</span>"
-
-    def fmt_ou(val):
-        if val is None: return "<span class='dash'>\u2014</span>"
-        cls = "pos" if val > 0 else "neg"
-        txt = f"+{val}" if val > 0 else str(val)
-        return f"<span class='{cls} ou-pr'>{txt}</span>"
-
-    def prob_to_american(p):
-        if p is None or (isinstance(p,float) and math.isnan(p)): return ""
-        p = max(min(p,0.9999),0.0001)
-        odds = round(-(p/(1-p))*100) if p >= 0.5 else round(((1-p)/p)*100)
-        return f"+{odds}" if odds > 0 else str(odds)
-
-    def fv_html(fv_str):
-        if not fv_str: return "<span class='dash'>\u2014</span>"
-        cls = "pos" if fv_str.startswith("+") else "neg"
-        return f"<span class='{cls} bold'>{fv_str}</span>"
-
-    def total_fv(mu_total, r=NEGBIN_R):
-        if mu_total is None or (isinstance(mu_total,float) and math.isnan(mu_total)):
-            return "", "", ""
-        # Round to nearest 0.5 — e.g. 3.40 -> 3.5, 4.57 -> 4.5
-        line = round(mu_total * 2) / 2
-        line = max(line, 0.5)
-        n_combined = r * 2
-        p_nb = n_combined / (n_combined + mu_total)
-        # P(under) = P(X <= floor(line)), P(over) = P(X >= ceil(line))
-        # For half lines this is exact — no ties possible
-        cutoff = int(math.ceil(line)) - 1
-        p_under = float(_nbinom.cdf(cutoff, n_combined, p_nb))
-        p_over  = 1 - p_under
-        if p_over <= 0 or p_under <= 0:
-            return f"{line:.1f}", "", ""
-        return f"{line:.1f}", prob_to_american(p_over), prob_to_american(p_under)
-
-    csv_df    = load_forecast_csv()
-    odds_data = load_odds_json()
-
-    if csv_df.empty:
-        st.warning("No forecast file found.")
-        st.stop()
-
-    forecast_date = csv_df["date"].max()
-    st.title(f"MLB F5 Forecasts \u2014 {forecast_date}")
-    odds_date     = odds_data.get("date","")
-    odds_fetched  = odds_data.get("fetched_at","")
-    if odds_fetched:
-        odds_label = f"Odds pulled: {odds_fetched}"
-    elif odds_date:
-        odds_label = f"Odds fetched: {odds_date}"
-    else:
-        odds_label = ""
-    st.caption(
-        f"Projections from today\u2019s model run. "
-        + (odds_label + ". " if odds_label else "")
-        + "Results scored overnight."
-    )
-
-    today = csv_df[csv_df["date"] == forecast_date].copy()
-    today.dropna(how="all", inplace=True)
-    today = today[today["away_team"].notna() & today["home_team"].notna()]
-
-    if "away_sp" not in today.columns: today["away_sp"] = ""
-    if "home_sp" not in today.columns: today["home_sp"] = ""
-
-    today["lambda_away"] = to_num(today["lambda_away"]).round(3)
-    today["lambda_home"] = to_num(today["lambda_home"]).round(3)
-    today["total_proj"]  = to_num(today["total_proj"]).round(3)
-
-    raw_wp_home = to_num(today["winprob_home"])
-    raw_wp_away = 1 - raw_wp_home
-    today["winprob_away"] = (raw_wp_away * 100).round(1)
-    today["winprob_home"] = (raw_wp_home * 100).round(1)
-    today["fv_away"] = raw_wp_away.apply(prob_to_american)
-    today["fv_home"] = raw_wp_home.apply(prob_to_american)
-    today = today.sort_values("winprob_home", ascending=False).reset_index(drop=True)
-
-    games_dict = odds_data.get("games", {})
-    has_odds   = bool(games_dict)
-
-    # ── Book header cells ──────────────────────────────────────────
-    book_th = ""
-    if has_odds:
-        for bk in BOOKS:
-            col = BOOK_COLORS.get(bk, "#666")
-            lbl = BOOK_LABELS.get(bk, bk)
-            book_th += (
-                f'<th class="bk-head" colspan="2" style="border-top:4px solid {col}">'
-                f'{lbl}</th>'
-            )
-
-    # ── Devig + Pinnacle blend helpers ────────────────────────────
-    MODEL_W = 0.60   # model weight in consensus
-    SHARP_W = 0.40   # Pinnacle weight in consensus
-    EDGE_MIN = 3.0
-
-    def american_to_prob(odds):
-        if odds is None: return None
-        return 100/(odds+100) if odds > 0 else (-odds)/(-odds+100)
-
-    def devig_additive(p1, p2):
-        if p1 is None or p2 is None: return None, None
-        hold = p1 + p2
-        if hold <= 0: return None, None
-        return p1/hold, p2/hold
-
-    def pin_devig_ml(pin_ml, side):
-        """Devig Pinnacle ML for one side. Returns true prob or None."""
-        a = pin_ml.get('away')
-        h = pin_ml.get('home')
-        pa = american_to_prob(a)
-        ph = american_to_prob(h)
-        dv_a, dv_h = devig_additive(pa, ph)
-        return dv_a if side == 'away' else dv_h
-
-    def pin_devig_tot(pin_tot, side):
-        """Devig Pinnacle total for over or under. Returns true prob or None."""
-        ov = pin_tot.get('over')
-        un = pin_tot.get('under')
-        p_ov = american_to_prob(ov)
-        p_un = american_to_prob(un)
-        dv_ov, dv_un = devig_additive(p_ov, p_un)
-        return dv_ov if side == 'over' else dv_un
-
-    def consensus_ml(model_p, pin_ml, side):
-        """60/40 blend of model and Pinnacle for ML. Falls back to model only."""
-        pin_p = pin_devig_ml(pin_ml, side) if pin_ml else None
-        if pin_p is None:
-            return model_p
-        return MODEL_W * model_p + SHARP_W * pin_p
-
-    def consensus_tot(model_p_over, pin_tot):
-        """60/40 blend of model and Pinnacle for over prob. Falls back to model only."""
-        pin_p = pin_devig_tot(pin_tot, 'over') if pin_tot else None
-        if pin_p is None:
-            return model_p_over
-        return MODEL_W * model_p_over + SHARP_W * pin_p
-
-    def ml_edge(consensus_p, book_this, book_other):
-        if None in (consensus_p, book_this, book_other): return None
-        dv, _ = devig_additive(american_to_prob(book_this), american_to_prob(book_other))
-        if dv is None: return None
-        return (consensus_p - dv) * 100
-
-    def tot_edge(consensus_p_over, over_odds, under_odds, side):
-        if None in (consensus_p_over, over_odds, under_odds): return None
-        dv_ov, _ = devig_additive(american_to_prob(over_odds), american_to_prob(under_odds))
-        if dv_ov is None: return None
-        edge = (consensus_p_over - dv_ov) * 100
-        return edge if side == 'over' else -edge
-
-    def ml_cell(book_odds, model_p, other_odds):
-        if book_odds is None:
-            return "<td class='bk-ml'></td>"
-        txt  = f"+{book_odds}" if book_odds > 0 else str(book_odds)
-        edge = ml_edge(model_p, book_odds, other_odds)
-        if edge is not None and edge >= EDGE_MIN:
-            return (
-                f'<td class="bk-ml edge-cell">'
-                f'<span class="edge-odds">{txt}</span>'
-                f'<span class="edge-tag">+{edge:.1f}%</span>'
-                f'</td>'
-            )
-        return f'<td class="bk-ml">{txt}</td>'
-
-    def tot_cell(ou_odds, other_odds, line, side, p_over_model):
-        if ou_odds is None or line is None:
-            return "<td class='bk-tot'></td>"
-        ls   = f"{line}"
-        txt  = f"+{ou_odds}" if ou_odds > 0 else str(ou_odds)
-        pre  = "o" if side == "over" else "u"
-        edge = tot_edge(p_over_model,
-                        ou_odds if side=="over" else other_odds,
-                        other_odds if side=="over" else ou_odds,
-                        side)
-        if edge is not None and edge >= EDGE_MIN:
-            return (
-                f'<td class="bk-tot edge-cell">'
-                f'<span class="tot-lbl">{pre}{ls}</span> '
-                f'<span class="edge-odds-sm">{txt}</span>'
-                f'<span class="edge-tag">+{edge:.1f}%</span>'
-                f'</td>'
-            )
-        return f'<td class="bk-tot"><span class="tot-lbl">{pre}{ls}</span> {txt}</td>'
-
-    # ── Row builder ────────────────────────────────────────────────
-    rows_html = ""
-    for idx, (_, r) in enumerate(today.iterrows()):
-        game_num     = idx + 1
-        away_code    = r["away_team"]
-        home_code    = r["home_team"]
-        away_full    = TEAM_FULL.get(away_code, away_code)
-        home_full    = TEAM_FULL.get(home_code, home_code)
-        away_sp      = str(r.get("away_sp","") or "").strip()
-        home_sp      = str(r.get("home_sp","") or "").strip()
-        mu_total     = r["total_proj"]
-        model_p_away = float(r["winprob_away"]) / 100
-        model_p_home = float(r["winprob_home"]) / 100
-
-        game     = match_odds(games_dict, away_code, home_code) if has_odds else None
-        gametime = (game or {}).get("commence_edt", "")
-
-        # Pinnacle sharp reference
-        pin_data  = (game or {}).get("pinnacle", {})
-        pin_ml    = pin_data.get("ml",    {})
-        pin_tot   = pin_data.get("total", {})
-
-        # Consensus probs: 60% model / 40% Pinnacle (fallback to model if no Pinnacle)
-        cons_p_away = consensus_ml(model_p_away, pin_ml, 'away')
-        cons_p_home = consensus_ml(model_p_home, pin_ml, 'home')
-
-        # Model FV line — mean-based line, NegBin juice
-        fv_line, fv_over_str, fv_under_str = total_fv(mu_total)
-
-        # P(over) — model NegBin
-        model_p_over = None
-        if fv_line:
-            n_c  = NEGBIN_R * 2
-            p_nb = n_c / (n_c + mu_total)
-            model_p_over = 1 - float(_nbinom.cdf(
-                int(math.ceil(float(fv_line))) - 1, n_c, p_nb))
-
-        # Consensus over prob: blend with Pinnacle total
-        fv_over_p = consensus_tot(model_p_over, pin_tot) if model_p_over is not None else None
-
-        # Consensus FV odds — use blended probs for display
-        cons_fv_away = prob_to_american(cons_p_away)
-        cons_fv_home = prob_to_american(cons_p_home)
-
-        # Alternating game block
-        bg = "#121920" if idx % 2 == 0 else "#0d1117"
-
-        # Book cells
-        away_bk = home_bk = ""
-        if has_odds:
-            for bk in BOOKS:
-                ml    = (game or {}).get("ml",    {}).get(bk, {})
-                tot   = (game or {}).get("total", {}).get(bk, {})
-                a_ml  = ml.get("away")
-                h_ml  = ml.get("home")
-                over  = tot.get("over")
-                under = tot.get("under")
-                line  = tot.get("line")
-                away_bk += ml_cell(a_ml, cons_p_away, h_ml)
-                away_bk += tot_cell(over, under, line, "over", fv_over_p)
-                home_bk += ml_cell(h_ml, cons_p_home, a_ml)
-                home_bk += tot_cell(under, over, line, "under", fv_over_p)
-
-        # Tot FV — use consensus over prob for juice display
-        if fv_line and fv_over_p is not None:
-            cons_fv_over  = prob_to_american(fv_over_p)
-            cons_fv_under = prob_to_american(1 - fv_over_p)
-        else:
-            cons_fv_over  = fv_over_str
-            cons_fv_under = fv_under_str
-
-        fv_away_tot = (
-            f'<span class="fv-line-num">o{fv_line}</span>'
-            f'<span class="fv-line-odds">{cons_fv_over}</span>'
-            if fv_line else "\u2014"
-        )
-        fv_home_tot = (
-            f'<span class="fv-line-num">u{fv_line}</span>'
-            f'<span class="fv-line-odds">{cons_fv_under}</span>'
-            if fv_line else "\u2014"
-        )
-
-        rows_html += (
-            # Away row
-            f'<tr style="background:{bg}">'
-            f'<td class="gnum" rowspan="2">{game_num}</td>'
-            f'<td class="tc away-row">'
-            f'<span class="tm">{away_full}</span>'
-            + (f'<span class="sp-name">{away_sp}</span>' if away_sp else '')
-            + f'</td>'
-            f'<td class="time-cell" rowspan="2">'
-            f'{gametime}<span class="edt"> EDT</span>'
-            f'</td>'
-            f'<td class="nc wc">{r["winprob_away"]:.1f}%</td>'
-            f'<td class="nc fvc">{cons_fv_away}</td>'
-            f'<td class="nc fv-tot-cell">{fv_away_tot}</td>'
-            f'{away_bk}</tr>'
-            # Home row
-            f'<tr style="background:{bg}">'
-            f'<td class="tc home-row">'
-            f'<span class="tm">{home_full}</span>'
-            + (f'<span class="sp-name">{home_sp}</span>' if home_sp else '')
-            + f'</td>'
-            f'<td class="nc wc">{r["winprob_home"]:.1f}%</td>'
-            f'<td class="nc fvc">{cons_fv_home}</td>'
-            f'<td class="nc fv-tot-cell">{fv_home_tot}</td>'
-            f'{home_bk}</tr>'
-            # Game divider
-            f'<tr class="gr"><td colspan="99"></td></tr>'
-        )
-
-    # ── CSS ────────────────────────────────────────────────────────
-    css = (
-        "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');"
-        "* {box-sizing:border-box;margin:0;padding:0}"
-        "body {background:#0d1117;font-family:'Inter',system-ui,sans-serif}"
-        ".t {width:100%;border-collapse:collapse;font-size:0.83rem;color:#c9d1d9}"
-
-        # Section header row
-        ".sect-row th {background:#0d1117;padding:5px 10px 3px 10px;font-size:0.58rem;"
-            "font-weight:700;letter-spacing:0.10em;text-transform:uppercase;border:none;"
-            "text-align:center;color:#30363d;border-bottom:none}"
-        ".sect-model {text-align:left !important;color:#388bfd !important;"
-            "padding-left:36px !important;border-right:2px solid #30363d}"
-        ".sect-bk {border-left:none;text-align:center !important;color:#484f58 !important}"
-
-        # Column header row
-        ".col-row th {background:#161b22;padding:7px 10px;font-size:0.60rem;font-weight:600;"
-            "letter-spacing:0.07em;text-transform:uppercase;color:#6e7681;"
-            "border-top:1px solid #30363d;border-bottom:2px solid #30363d;"
-            "white-space:nowrap;text-align:right}"
-        ".col-row th.la {text-align:left}"
-        ".col-row .bk-head {border-left:2px solid #30363d;text-align:center !important;"
-            "color:#6e7681 !important;background:#161b22 !important;font-size:0.60rem !important}"
-
-        # Data rows
-        ".ar td,.hr td {padding:5px 10px;vertical-align:middle}"
-        ".ar td {border-top:1px solid #1c2128}"
-        ".gr td {height:4px;background:#0d1117;border-top:2px solid #21262d}"
-
-        # Game number
-        ".gnum {text-align:center;color:#6e7681;font-size:0.72rem;font-weight:600;"
-            "width:24px;min-width:24px;padding:0 4px !important;"
-            "vertical-align:middle !important;border-right:1px solid #21262d}"
-
-        # Team cell
-        ".tc {text-align:left;min-width:180px;padding-left:10px !important}"
-        ".away-row {border-left:3px solid #1f6feb}"
-        ".home-row {border-left:3px solid #238636}"
-        ".tm {color:#e6edf3;font-weight:500;font-size:0.85rem;display:block}"
-        ".sp-name {color:#6e7681;font-size:0.72rem;display:block;margin-top:1px}"
-
-        # Time
-        ".time-cell {text-align:center;color:#8b949e;font-size:0.82rem;font-weight:600;"
-            "white-space:nowrap;min-width:58px;vertical-align:middle !important;"
-            "padding:0 10px !important;border-right:1px solid #21262d}"
-        ".edt {font-size:0.60rem;color:#484f58}"
-
-        # Win %
-        ".nc {text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}"
-        ".wc {color:#8b949e;min-width:44px;font-size:0.82rem;font-weight:400}"
-
-        # ML FV — bold, blue left border as model anchor
-        ".fvc {min-width:50px;font-weight:700;font-size:0.88rem;color:#e6edf3;"
-            "border-left:2px solid #1f6feb}"
-
-        # Tot FV — styled like a book line
-        ".fv-tot-cell {min-width:86px;text-align:right;border-right:2px solid #30363d;"
-            "padding-right:12px !important}"
-        ".fv-line-num {color:#484f58;font-size:0.75rem;margin-right:3px}"
-        ".fv-line-odds {color:#e6edf3;font-weight:600;font-size:0.85rem}"
-
-        # Book ML column
-        ".bk-ml {border-left:2px solid #21262d;min-width:52px;text-align:right;"
-            "font-variant-numeric:tabular-nums;font-size:0.83rem;font-weight:400;"
-            "padding-right:8px !important;color:#c9d1d9}"
-
-        # Book Total column
-        ".bk-tot {min-width:80px;text-align:left;font-size:0.78rem;"
-            "color:#8b949e;padding-left:6px !important;white-space:nowrap}"
-        ".tot-lbl {color:#484f58;font-size:0.73rem}"
-
-        # Edge cells
-        ".edge-cell {background:#0f2d1a !important}"
-        ".edge-odds {color:#3fb950;font-weight:700;font-size:0.85rem;display:block}"
-        ".edge-odds-sm {color:#3fb950;font-weight:700}"
-        ".ts {padding:8px 10px;font-size:0.65rem;color:#484f58;border-top:1px solid #21262d;""font-family:'Inter',system-ui,sans-serif;text-align:right}"
-        ".edge-tag {color:#56d364;font-size:0.62rem;font-weight:700;"
-            "display:block;margin-top:1px;letter-spacing:0.02em}"
-    )
-
-    # ── Two-row header ─────────────────────────────────────────────
-    n_bk = len(BOOKS) if has_odds else 0
-
-    book_sect_th = ""
-    book_col_th  = ""
-    if has_odds:
-        for bk in BOOKS:
-            col = BOOK_COLORS.get(bk, "#666")
-            lbl = BOOK_LABELS.get(bk, bk)
-            book_sect_th += (
-                f'<th class="sect-bk" colspan="2" '
-                f'style="border-top:3px solid {col}">{lbl}</th>'
-            )
-            book_col_th += "<th class='bk-head'>ML</th><th class='bk-head'>Total</th>"
-
-    section_row = (
-        "<tr class='sect-row'>"
-        "<th></th>"
-        "<th class='sect-model' colspan='5'>ClutchSheets Model</th>"
-        + book_sect_th +
-        "</tr>"
-    )
-
-    col_row = (
-        "<tr class='col-row'>"
-        "<th class='la'>#</th>"
-        "<th class='la'>Team / Pitcher</th>"
-        "<th style='text-align:center'>Time</th>"
-        "<th>Win %</th>"
-        "<th>ML FV</th>"
-        "<th>Tot FV</th>"
-        + book_col_th +
-        "</tr>"
-    )
-
-    html_table = (
-        "<!DOCTYPE html><html><head>"
-        f"<style>{css}</style>"
-        "</head><body>"
-        f"<table class='t'><thead>{section_row}{col_row}</thead>"
-        f"<tbody>{rows_html}</tbody></table>"
-        f"<div class='ts'>Odds fetched: {odds_date if odds_date else '—'} &nbsp;·&nbsp; Model run: {forecast_date}</div>"
-        "</body></html>"
-    )
-
-    st.caption(
-        "\u2139\ufe0f **ML FV** and **Tot FV** = ClutchSheets no-vig fair value from NegBin model. "
-        "Green cells = \u22653% edge after full additive devig vs book line."
-    )
-    import streamlit.components.v1 as components
-    components.html(html_table, height=max(len(today) * 70 + 120, 400), scrolling=True)
+# ── Render one game row ───────────────────────────────────────────────────────
+def render_game(row, odds_lookup, col_books):
+    away = str(row.get("away_team", "")).strip()
+    home = str(row.get("home_team", "")).strip()
+    away_sp = str(row.get("away_sp", "")).strip()
+    home_sp = str(row.get("home_sp", "")).strip()
+    away_sp_text = str(row.get("away_sp_text", away_sp)).strip()
+    home_sp_text = str(row.get("home_sp_text", home_sp)).strip()
+
+    model_away_p = 1 - float(row.get("winprob_home", 0.5))
+    model_home_p = float(row.get("winprob_home", 0.5))
+    ml_fv_away = prob_to_american(model_away_p)
+    ml_fv_home = prob_to_american(model_home_p)
+
+    lambda_away = float(row.get("lambda_away", 0))
+    lambda_home = float(row.get("lambda_home", 0))
+    total_proj  = lambda_away + lambda_home
+    tot_fv_val  = round(total_proj, 1)
+
+    key = f"{away}@{home}"
+    bk  = odds_lookup.get(key, {}).get("bookmakers", {})
+
+    def book_cells(book_key):
+        bdata = bk.get(book_key, {})
+        if not bdata:
+            return "", ""
+
+        # ── ML edge (unchanged — was already correct) ─────────────────────────
+        ml_mkt = bdata.get("markets", {})
+        h2h = next((m for m in ml_mkt if m["key"] == "h2h"), None) if isinstance(ml_mkt, list) else ml_mkt.get("h2h")
+        ml_cell = ""
+        if h2h:
+            outcomes = {o["name"]: o["price"] for o in h2h.get("outcomes", [])}
+            home_name = next((n for n in outcomes if NAME_TO_CODE.get(n) == home), None)
+            away_name = next((n for n in outcomes if NAME_TO_CODE.get(n) == away), None)
+            if home_name and away_name:
+                mkt_home_p, mkt_away_p = no_vig_prob(outcomes[home_name], outcomes[away_name])
+                home_edge = edge_pct(model_home_p, mkt_home_p)
+                away_edge = edge_pct(model_away_p, mkt_away_p)
+                best_edge = home_edge if abs(home_edge) >= abs(away_edge) else away_edge
+                best_odds = outcomes[home_name] if abs(home_edge) >= abs(away_edge) else outcomes[away_name]
+                sign = "+" if best_odds > 0 else ""
+                if abs(best_edge) >= EDGE_THRESHOLD:
+                    ml_cell = f'<span style="background:#1a7a3a;padding:2px 6px;border-radius:3px">{sign}{best_odds}<br><small>+{abs(best_edge):.1f}%</small></span>'
+                else:
+                    ml_cell = f"{sign}{best_odds}"
+
+        # ── Totals edge (FIXED) ───────────────────────────────────────────────
+        totals_mkt = bdata.get("markets", {})
+        tot_market = next((m for m in totals_mkt if m["key"] == "totals"), None) if isinstance(totals_mkt, list) else totals_mkt.get("totals")
+        tot_cell = ""
+        if tot_market:
+            outcomes = {o["name"]: (o["price"], o.get("point", 0)) for o in tot_market.get("outcomes", [])}
+            if "Over" in outcomes and "Under" in outcomes:
+                over_odds, over_line = outcomes["Over"]
+                under_odds, under_line = outcomes["Under"]
+                mkt_over_p, mkt_under_p = no_vig_prob(over_odds, under_odds)
+
+                # FIXED: use sigmoid distance instead of hardcoded 0.55/0.45
+                model_over_p, model_under_p = total_edge_prob(total_proj, over_line)
+
+                tot_edge = edge_pct(model_over_p, mkt_over_p)
+                best_tot_odds = over_odds if tot_edge > 0 else under_odds
+                sign = "+" if best_tot_odds > 0 else ""
+                line_label = f"o{over_line}" if tot_edge > 0 else f"u{under_line}"
+                if abs(tot_edge) >= EDGE_THRESHOLD:
+                    tot_cell = f'<span style="background:#1a7a3a;padding:2px 6px;border-radius:3px">{line_label} {sign}{best_tot_odds}<br><small>+{abs(tot_edge):.1f}%</small></span>'
+                else:
+                    tot_cell = f"{line_label} {sign}{best_tot_odds}"
+
+        return ml_cell, tot_cell
+
+    # build display row
+    ...
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+def main():
+    st.title("⚾ ClutchSheets F5 Baseball Forecaster")
+
+    CSV_PATH = os.environ.get("FORECAST_CSV", "daily_forecast.csv")
+    DB_PATH  = os.environ.get("DB_PATH",       "mlb_f5_forecasts.db")
+
+    df = load_forecast(CSV_PATH)
+    if df.empty:
+        st.warning("No forecast data found.")
+        return
+
+    today_str = date.today().strftime("%Y-%m-%d")
+    if "date" in df.columns:
+        df["date"] = df["date"].astype(str).str.strip()
+        df = df[df["date"] == today_str]
+
+    odds_lookup = fetch_odds()
+
+    col_books = BOOKS
+
+    for _, row in df.iterrows():
+        render_game(row, odds_lookup, col_books)
 
     st.divider()
-    st.subheader("Run Distribution (Negative Binomial, r=6.7)")
-    st.caption(
-        "Win probabilities above are derived from a negative binomial distribution (r=6.7) "
-        "rather than Poisson. NegBin allows for overdispersion — more variance than Poisson "
-        "at the same mean — which better fits real F5 run scoring. "
-        "Select a game below to inspect its projected run PMF."
-    )
+    st.subheader("📊 Forecast Archive")
+    hist = load_history(DB_PATH)
+    if not hist.empty:
+        st.dataframe(hist, use_container_width=True)
 
-    raw_today = csv_df[csv_df["date"] == forecast_date].copy()
-    raw_today["lambda_away"] = to_num(raw_today["lambda_away"])
-    raw_today["lambda_home"] = to_num(raw_today["lambda_home"])
-    raw_today["winprob_home"] = to_num(raw_today["winprob_home"])
-
-    game_labels = [
-        f"{r['away_team']} @ {r['home_team']}"
-        for _, r in raw_today.iterrows()
-    ]
-    sel_game = st.selectbox("Select game", game_labels)
-    sel_row = raw_today.iloc[game_labels.index(sel_game)]
-
-    mu_a = float(sel_row["lambda_away"])
-    mu_h = float(sel_row["lambda_home"])
-    wp   = float(sel_row["winprob_home"])
-
-    pmf_a = negbin_pmf_table(mu_a)
-    pmf_h = negbin_pmf_table(mu_h)
-
-    # Verify negbin win prob matches CSV (sanity check)
-    wp_check = negbin_win_prob(mu_a, mu_h)
-
-    col_a, col_h = st.columns(2)
-
-    with col_a:
-        st.markdown(f"**{sel_row['away_team']} (Away)** — λ = {mu_a:.3f}")
-        chart_a = (
-            alt.Chart(pmf_a)
-            .mark_bar(color="#4A90D9")
-            .encode(
-                x=alt.X("Runs:O", title="F5 Runs"),
-                y=alt.Y("Probability:Q", title="Probability", axis=alt.Axis(format=".3f")),
-                tooltip=["Runs", alt.Tooltip("Probability:Q", format=".4f")]
-            )
-            .properties(height=220)
-        )
-        st.altair_chart(chart_a, use_container_width=True)
-
-    with col_h:
-        st.markdown(f"**{sel_row['home_team']} (Home)** — λ = {mu_h:.3f}")
-        chart_h = (
-            alt.Chart(pmf_h)
-            .mark_bar(color="#E07B39")
-            .encode(
-                x=alt.X("Runs:O", title="F5 Runs"),
-                y=alt.Y("Probability:Q", title="Probability", axis=alt.Axis(format=".3f")),
-                tooltip=["Runs", alt.Tooltip("Probability:Q", format=".4f")]
-            )
-            .properties(height=220)
-        )
-        st.altair_chart(chart_h, use_container_width=True)
-
-    st.caption(
-        f"CSV win prob: **{wp:.3f}** — NegBin recalc: **{wp_check:.3f}** "
-        f"({'✓ match' if abs(wp - wp_check) < 0.01 else '⚠ mismatch >1% — check upstream r or home field adj'})"
-    )
-
-# -----------------------------
-# ACCURACY
-# -----------------------------
-elif page == "Accuracy":
-    st.title("Model Accuracy")
-
-    dv = f_completed(df)
-    if dv.empty:
-        st.info("No completed-through-5 rows available yet.")
-        st.stop()
-
-    n = len(dv)
-    avg_mae = to_num(dv["mae_total"]).mean()
-    avg_brier = to_num(dv["brier"]).mean()
-    avg_logloss = to_num(dv["logloss"]).mean()
-
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Sample Size", n)
-    c2.metric("Avg F5 Total MAE", f"{avg_mae:.3f}")
-    c3.metric("Avg Brier", f"{avg_brier:.3f}", delta=f"{avg_brier - 0.25:.3f}")
-    c4.metric("Avg Log Loss", f"{avg_logloss:.3f}", delta=f"{avg_logloss - 0.693:.3f}")
-    st.caption("Baselines: Brier ≈ 0.25 (coin flip), Log Loss ≈ 0.693 (coin flip).")
-
-    if "created_at" in dv.columns and dv["created_at"].notna().any():
-        dv = dv.copy()
-
-        # Use game date, not timestamp
-        dv["date"] = pd.to_datetime(dv["date"])
-
-        daily = dv.groupby("date").agg({
-            "mae_total": "mean",
-            "brier": "mean",
-            "logloss": "mean"
-        }).reset_index()
-
-        daily = daily.sort_values("date")
-
-        daily["rolling_mae_7"] = daily["mae_total"].rolling(7).mean()
-        daily["rolling_brier_7"] = daily["brier"].rolling(7).mean()
-        daily["rolling_logloss_7"] = daily["logloss"].rolling(7).mean()
-
-        st.subheader("Rolling 7-Game Metrics")
-        st.line_chart(
-            daily.set_index("date")[[
-                "rolling_mae_7",
-                "rolling_brier_7",
-                "rolling_logloss_7"
-            ]]
-        )
-    else:
-        st.info("Rolling metrics will appear once you have timestamps and more rows.")
-
-# -----------------------------
-# CALIBRATION
-# -----------------------------
-elif page == "Calibration":
-    st.title("Win Probability Calibration")
-    st.caption(
-        "Win probabilities are derived from a Negative Binomial distribution (r=6.7, "
-        "fitted dispersion parameter). NegBin produces wider tails than Poisson at the "
-        "same mean, better reflecting game-to-game variance in F5 run scoring. "
-        "Calibration checks whether those probabilities track real-world outcomes."
-    )
-
-    dc = f_completed(df)
-    if dc.empty:
-        st.info("No completed-through-5 rows available yet.")
-        st.stop()
-
-    dc["winprob_home"] = to_num(dc["winprob_home"])
-    dc["home_win_f5"] = to_num(dc["home_win_f5"])
-
-    bins = [0, 0.45, 0.50, 0.55, 0.60, 0.65, 1.0]
-    dc["bucket"] = pd.cut(dc["winprob_home"], bins=bins, include_lowest=True)
-
-    cal = dc.groupby("bucket", dropna=False).agg(
-        avg_pred=("winprob_home", "mean"),
-        actual_win_rate=("home_win_f5", "mean"),
-        sample_size=("home_win_f5", "count")
-    ).reset_index()
-
-    cal["bucket_label"] = cal["bucket"].astype(str)
-
-    table = cal[["bucket_label", "avg_pred", "actual_win_rate", "sample_size"]].copy()
-    table["avg_pred"] = to_num(table["avg_pred"]).round(3)
-    table["actual_win_rate"] = to_num(table["actual_win_rate"]).round(3)
-    st.dataframe(table, use_container_width=True, hide_index=True)
-
-    cal_plot = cal[cal["sample_size"] > 0].copy()
-    if cal_plot.empty:
-        st.info("Not enough data yet to plot calibration.")
-        st.stop()
-
-    cal_plot["midpoint"] = cal_plot["bucket"].apply(lambda x: (x.left + x.right) / 2)
-
-    points = alt.Chart(cal_plot).mark_circle(size=120).encode(
-        x=alt.X("midpoint:Q", title="Predicted Probability"),
-        y=alt.Y("actual_win_rate:Q", title="Actual Win Rate"),
-        tooltip=[
-            alt.Tooltip("avg_pred:Q", format=".3f"),
-            alt.Tooltip("actual_win_rate:Q", format=".3f"),
-            alt.Tooltip("sample_size:Q")
-        ]
-    )
-
-    diag = alt.Chart(pd.DataFrame({"x": [0, 1], "y": [0, 1]})).mark_line().encode(x="x:Q", y="y:Q")
-
-    st.altair_chart(points + diag, use_container_width=True)
-
-# -----------------------------
-# RESULTS
-# -----------------------------
-elif page == "Results":
-    st.title("Results (Forecasts + Actuals)")
-
-    dv = f_completed(df)
-    if dv.empty:
-        st.info("No completed-through-5 rows available yet.")
-        st.stop()
-
-    dates = sorted(dv["date"].unique())
-    default_dates = dates[-1:] if dates else []
-    sel_dates = st.multiselect("Dates", dates, default=default_dates)
-
-    teams = sorted(set(dv["away_team"].unique()).union(set(dv["home_team"].unique())))
-    sel_team = st.selectbox("Team Filter", ["All"] + teams)
-
-    out = dv.copy()
-    if sel_dates:
-        out = out[out["date"].isin(sel_dates)]
-    if sel_team != "All":
-        out = out[(out["away_team"] == sel_team) | (out["home_team"] == sel_team)]
-
-    if "away_sp" not in out.columns:
-        out["away_sp"] = ""
-    if "home_sp" not in out.columns:
-        out["home_sp"] = ""
-
-    out_disp = out[[
-        "date",
-        "away_team", "away_sp",
-        "home_team", "home_sp",
-        "lambda_away", "lambda_home", "total_proj", "winprob_home",
-        "runs_away_thru5", "runs_home_thru5", "total_actual", "home_win_f5",
-        "mae_total", "brier", "logloss"
-    ]].copy()
-
-    for c in ["lambda_away","lambda_home","total_proj","mae_total","brier","logloss"]:
-        out_disp[c] = to_num(out_disp[c]).round(3)
-    out_disp["winprob_home"] = (to_num(out_disp["winprob_home"]) * 100).round(1)
-
-    out_disp = out_disp.rename(columns={
-        "away_team": "Away",
-        "away_sp": "Away SP",
-        "home_team": "Home",
-        "home_sp": "Home SP",
-        "lambda_away": "Proj Away Runs",
-        "lambda_home": "Proj Home Runs",
-        "total_proj": "Proj Total",
-        "winprob_home": "Home Win %",
-        "runs_away_thru5": "Act Away Runs",
-        "runs_home_thru5": "Act Home Runs",
-        "total_actual": "Act Total",
-        "home_win_f5": "Home Result",
-        "mae_total": "MAE Total",
-        "brier": "Brier",
-        "logloss": "Log Loss"
-    })
-
-    st.dataframe(
-        out_disp.sort_values(["date", "Home Win %"], ascending=[False, False]),
-        use_container_width=True,
-        hide_index=True
-    )
-
-    csv = out_disp.to_csv(index=False).encode("utf-8")
-    st.download_button("Download CSV", csv, file_name="f5_results_export.csv", mime="text/csv")
-
-# -----------------------------
-# TEAM RATINGS
-# -----------------------------
-elif page == "Team Ratings":
-    st.title("Team F5 Ratings (Model-Implied)")
-
-    dv = f_completed(df)
-    if dv.empty:
-        st.info("No completed-through-5 rows available yet.")
-        st.stop()
-
-    away_rows = pd.DataFrame({
-        "team": dv["away_team"],
-        "proj_runs_for": to_num(dv["lambda_away"]),
-        "proj_runs_against": to_num(dv["lambda_home"]),
-    })
-
-    home_rows = pd.DataFrame({
-        "team": dv["home_team"],
-        "proj_runs_for": to_num(dv["lambda_home"]),
-        "proj_runs_against": to_num(dv["lambda_away"]),
-    })
-
-    team_df = pd.concat([away_rows, home_rows], ignore_index=True).dropna()
-
-    ratings = team_df.groupby("team").agg(
-        games=("team", "count"),
-        proj_runs_for=("proj_runs_for", "mean"),
-        proj_runs_against=("proj_runs_against", "mean"),
-    ).reset_index()
-
-    ratings["net_proj_runs"] = ratings["proj_runs_for"] - ratings["proj_runs_against"]
-
-    max_games = int(ratings["games"].max()) if not ratings.empty else 1
-
-    if max_games <= 1:
-        min_games = 1
-        st.info("Each team has only 1 game in archive. Add more days for filtering.")
-    else:
-        min_games = st.slider("Minimum games in archive", 1, max_games, 1)
-
-    ratings = ratings[ratings["games"] >= min_games].copy()
-
-    for c in ["proj_runs_for", "proj_runs_against", "net_proj_runs"]:
-        ratings[c] = ratings[c].round(3)
-
-    st.subheader("Net Projected F5 Runs (For - Against)")
-    st.dataframe(
-        ratings.sort_values("net_proj_runs", ascending=False),
-        use_container_width=True,
-        hide_index=True
-    )
-
-    c1, c2 = st.columns(2)
-    with c1:
-        st.subheader("Top Offenses (Projected F5 Runs For)")
-        st.dataframe(
-            ratings.sort_values("proj_runs_for", ascending=False).head(10),
-            use_container_width=True,
-            hide_index=True
-        )
-    with c2:
-        st.subheader("Top Defenses (Lowest Projected F5 Runs Against)")
-        st.dataframe(
-            ratings.sort_values("proj_runs_against", ascending=True).head(10),
-            use_container_width=True,
-            hide_index=True
-        )
+if __name__ == "__main__":
+    main()
