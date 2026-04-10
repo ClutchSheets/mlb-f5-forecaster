@@ -257,6 +257,9 @@ def render_game(game_num, row, odds_lookup):
 
 # ── Performance tab ───────────────────────────────────────────────────────────
 def render_performance(hist: pd.DataFrame):
+    import plotly.graph_objects as go
+    import numpy as np
+
     st.subheader("📊 Model Performance")
 
     scored = hist[hist["completed5"] == 1].copy() if not hist.empty else pd.DataFrame()
@@ -264,23 +267,148 @@ def render_performance(hist: pd.DataFrame):
         st.info("No scored games yet.")
         return
 
+    scored = scored.sort_values("date")
     total   = len(scored)
     mae     = scored["mae_total"].mean()
     brier   = scored["brier"].mean()
     logloss = scored["logloss"].mean()
-    # direction accuracy: model favoured home (>0.5) and home won (home_win_f5=1)
     scored["model_pick"] = (scored["winprob_home"] >= 0.5).astype(int)
     scored["actual_win"] = (scored["home_win_f5"] == 1.0).astype(int)
     acc = (scored["model_pick"] == scored["actual_win"]).mean() * 100
 
+    # ── Summary metrics ───────────────────────────────────────────────────────
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Games Scored", total)
-    c2.metric("MAE (Runs)",   f"{mae:.3f}")
-    c3.metric("Brier Score",  f"{brier:.4f}")
-    c4.metric("Log Loss",     f"{logloss:.4f}")
-    c5.metric("Direction Acc",f"{acc:.1f}%")
+    c1.metric("Games Scored",  total)
+    c2.metric("MAE (Runs)",    f"{mae:.3f}")
+    c3.metric("Brier Score",   f"{brier:.4f}", help="Lower is better. Coin-flip baseline = 0.25")
+    c4.metric("Log Loss",      f"{logloss:.4f}", help="Lower is better.")
+    c5.metric("Direction Acc", f"{acc:.1f}%")
 
-    st.subheader("📋 Forecast Archive")
+    st.markdown("---")
+
+    # ── Rolling metric charts ─────────────────────────────────────────────────
+    st.markdown("#### 📈 Metrics Over Time")
+
+    scored["game_num"] = range(1, total + 1)
+    scored["roll_mae"]     = scored["mae_total"].expanding().mean()
+    scored["roll_brier"]   = scored["brier"].expanding().mean()
+    scored["roll_logloss"] = scored["logloss"].expanding().mean()
+    label = scored["date"] + " " + scored["away_team"] + "@" + scored["home_team"]
+
+    col_a, col_b = st.columns(2)
+
+    with col_a:
+        fig_mae = go.Figure()
+        fig_mae.add_bar(
+            x=scored["game_num"], y=scored["mae_total"],
+            name="Game MAE", marker_color="rgba(55,138,221,0.4)",
+            hovertext=label, hovertemplate="%{hovertext}<br>MAE: %{y:.2f}<extra></extra>"
+        )
+        fig_mae.add_scatter(
+            x=scored["game_num"], y=scored["roll_mae"],
+            mode="lines", name="Cumulative Avg",
+            line=dict(color="#1a7a3a", width=2)
+        )
+        fig_mae.update_layout(
+            title="MAE — Runs Through 5",
+            xaxis_title="Game #", yaxis_title="MAE",
+            legend=dict(orientation="h", y=-0.2),
+            height=300, margin=dict(t=40, b=40, l=40, r=10),
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)"
+        )
+        st.plotly_chart(fig_mae, use_container_width=True)
+
+    with col_b:
+        fig_bll = go.Figure()
+        fig_bll.add_scatter(
+            x=scored["game_num"], y=scored["roll_brier"],
+            mode="lines+markers", name="Brier (cum avg)",
+            line=dict(color="#1a7a3a", width=2), marker_size=4,
+            hovertext=label, hovertemplate="%{hovertext}<br>Brier: %{y:.4f}<extra></extra>"
+        )
+        fig_bll.add_scatter(
+            x=scored["game_num"], y=scored["roll_logloss"],
+            mode="lines+markers", name="LogLoss (cum avg)",
+            line=dict(color="#d4730a", width=2, dash="dot"), marker_size=4,
+            hovertemplate="LogLoss: %{y:.4f}<extra></extra>"
+        )
+        # coin-flip baselines
+        fig_bll.add_hline(y=0.25, line_dash="dash", line_color="gray",
+                          annotation_text="Brier baseline", annotation_position="top right")
+        fig_bll.update_layout(
+            title="Brier Score & Log Loss",
+            xaxis_title="Game #", yaxis_title="Score",
+            legend=dict(orientation="h", y=-0.2),
+            height=300, margin=dict(t=40, b=40, l=40, r=10),
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)"
+        )
+        st.plotly_chart(fig_bll, use_container_width=True)
+
+    st.markdown("---")
+
+    # ── Calibration chart ─────────────────────────────────────────────────────
+    st.markdown("#### 🎯 Win Probability Calibration")
+    st.caption("Dots should sit on the diagonal. Above = model underconfident (good). Below = overconfident.")
+
+    bins = np.arange(0.30, 0.80, 0.10)
+    cal_rows = []
+    for b in bins:
+        mask = (scored["winprob_home"] >= b) & (scored["winprob_home"] < b + 0.10)
+        subset = scored[mask]
+        if len(subset) > 0:
+            cal_rows.append({
+                "pred":   subset["winprob_home"].mean(),
+                "actual": subset["actual_win"].mean(),
+                "n":      len(subset),
+                "label":  f"{b:.0%}–{b+0.10:.0%}"
+            })
+
+    if cal_rows:
+        cal_df = pd.DataFrame(cal_rows)
+        fig_cal = go.Figure()
+
+        # Perfect calibration diagonal
+        fig_cal.add_scatter(
+            x=[0.30, 0.75], y=[0.30, 0.75],
+            mode="lines", name="Perfect calibration",
+            line=dict(color="gray", dash="dash", width=1)
+        )
+
+        # Calibration dots — sized by sample
+        fig_cal.add_scatter(
+            x=cal_df["pred"], y=cal_df["actual"],
+            mode="markers+text",
+            marker=dict(
+                size=cal_df["n"] * 4 + 8,
+                color="rgba(55,138,221,0.65)",
+                line=dict(color="#185FA5", width=1.5)
+            ),
+            text=cal_df.apply(lambda r: f"n={r['n']}", axis=1),
+            textposition="top center",
+            name="Bucket",
+            hovertemplate=(
+                "<b>%{customdata}</b><br>"
+                "Predicted: %{x:.3f}<br>"
+                "Actual: %{y:.3f}<extra></extra>"
+            ),
+            customdata=cal_df["label"]
+        )
+
+        fig_cal.update_layout(
+            xaxis=dict(title="Predicted win prob", range=[0.25, 0.80], tickformat=".0%"),
+            yaxis=dict(title="Actual win rate",    range=[-0.05, 1.05], tickformat=".0%"),
+            height=380, margin=dict(t=20, b=40, l=50, r=10),
+            legend=dict(orientation="h", y=-0.2),
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)"
+        )
+        st.plotly_chart(fig_cal, use_container_width=True)
+    else:
+        st.info("Not enough scored games for calibration buckets yet.")
+
+    st.markdown("---")
+
+    # ── Archive table ─────────────────────────────────────────────────────────
+    st.markdown("#### 📋 Forecast Archive")
     display_cols = ["date", "away_team", "away_sp", "home_team", "home_sp",
                     "total_proj", "winprob_home", "runs_away_thru5",
                     "runs_home_thru5", "total_actual", "mae_total", "brier", "logloss"]
