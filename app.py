@@ -3,6 +3,8 @@ import pandas as pd
 import sqlite3
 import os
 import requests
+import numpy as np
+import plotly.graph_objects as go
 from datetime import date
 
 st.set_page_config(page_title="ClutchSheets F5 Forecaster", layout="wide")
@@ -115,7 +117,7 @@ def load_history(db_path: str) -> pd.DataFrame:
     conn.close()
     return df
 
-# ── Book cell builder ─────────────────────────────────────────────────────────
+# ── Book cell builder (ML only) ───────────────────────────────────────────────
 def get_book_cells(book_key, bk, away, home, model_away_p, model_home_p, total_proj):
     bdata = bk.get(book_key, {})
     if not bdata:
@@ -123,15 +125,11 @@ def get_book_cells(book_key, bk, away, home, model_away_p, model_home_p, total_p
 
     markets = bdata.get("markets", {})
 
-    # normalise: API returns either a list or a dict depending on version
     if isinstance(markets, list):
-        h2h_market    = next((m for m in markets if m["key"] == "h2h"),    None)
-        totals_market = next((m for m in markets if m["key"] == "totals"), None)
+        h2h_market = next((m for m in markets if m["key"] == "h2h"), None)
     else:
-        h2h_market    = markets.get("h2h")
-        totals_market = markets.get("totals")
+        h2h_market = markets.get("h2h")
 
-    # ── ML cell ──────────────────────────────────────────────────────────────
     ml_cell = ""
     if h2h_market:
         outcomes = {o["name"]: o["price"] for o in h2h_market.get("outcomes", [])}
@@ -157,35 +155,7 @@ def get_book_cells(book_key, bk, away, home, model_away_p, model_home_p, total_p
             else:
                 ml_cell = sign
 
-    # ── Totals cell ───────────────────────────────────────────────────────────
-    tot_cell = ""
-    if totals_market:
-        outcomes = {o["name"]: (o["price"], o.get("point", 0.0))
-                    for o in totals_market.get("outcomes", [])}
-        if "Over" in outcomes and "Under" in outcomes:
-            over_odds,  over_line  = outcomes["Over"]
-            under_odds, under_line = outcomes["Under"]
-            mkt_over_p, _ = no_vig_prob(over_odds, under_odds)
-            # FIXED: sigmoid-based model probability instead of hardcoded 0.55/0.45
-            model_over_p, _ = total_edge_prob(total_proj, over_line)
-            tot_edge = edge_pct(model_over_p, mkt_over_p)
-            if tot_edge > 0:
-                best_tot_odds = over_odds
-                line_label = f"o{over_line}"
-            else:
-                best_tot_odds = under_odds
-                line_label = f"u{under_line}"
-            sign = fmt_american(best_tot_odds)
-            if abs(tot_edge) >= EDGE_THRESHOLD:
-                tot_cell = (
-                    f'<span style="background:#1a7a3a;padding:2px 6px;'
-                    f'border-radius:3px;white-space:nowrap">'
-                    f'{line_label} {sign}<br><small>+{abs(tot_edge):.1f}%</small></span>'
-                )
-            else:
-                tot_cell = f"{line_label} {sign}"
-
-    return ml_cell, tot_cell
+    return ml_cell, ""  # second value kept for unpacking compatibility
 
 # ── Render one game block ─────────────────────────────────────────────────────
 def render_game(game_num, row, odds_lookup):
@@ -214,13 +184,13 @@ def render_game(game_num, row, odds_lookup):
             bk_key, bk, away, home, model_away_p, model_home_p, total_proj
         )
 
-    # column proportions: #, team/pitcher, win%, ml fv, tot fv, 5 books (ml+tot each)
-    col_spec = [0.25, 0.7, 0.4, 0.4, 0.45] + [0.55] * len(BOOKS)
+    # column proportions: #, team/pitcher, win%, ml fv, 5 books (ml only)
+    col_spec = [0.25, 0.7, 0.4, 0.4] + [0.55] * len(BOOKS)
 
     # ── Column headers (only on first game) ───────────────────────────────────
     if game_num == 1:
         hdr = st.columns(col_spec)
-        headers = ["#", "TEAM / PITCHER", "WIN %", "ML FV", "TOT FV"] + \
+        headers = ["#", "TEAM / PITCHER", "WIN %", "ML FV"] + \
                   [BOOK_LABELS[b] for b in BOOKS]
         for col, h in zip(hdr, headers):
             col.markdown(f"<b style='font-size:0.8em;color:#aaa'>{h}</b>",
@@ -235,10 +205,9 @@ def render_game(game_num, row, odds_lookup):
         unsafe_allow_html=True)
     row_away[2].write(f"{model_away_p*100:.1f}%")
     row_away[3].write(ml_fv_away)
-    row_away[4].write(f"o{tot_fv}")
     for i, bk_key in enumerate(BOOKS):
         ml_cell, _ = book_data[bk_key]
-        row_away[5 + i].markdown(ml_cell if ml_cell else "—", unsafe_allow_html=True)
+        row_away[4 + i].markdown(ml_cell if ml_cell else "—", unsafe_allow_html=True)
 
     # ── Home row ──────────────────────────────────────────────────────────────
     row_home = st.columns(col_spec)
@@ -248,18 +217,14 @@ def render_game(game_num, row, odds_lookup):
         unsafe_allow_html=True)
     row_home[2].write(f"{model_home_p*100:.1f}%")
     row_home[3].write(ml_fv_home)
-    row_home[4].write(f"u{tot_fv}")
     for i, bk_key in enumerate(BOOKS):
         _, tot_cell = book_data[bk_key]
-        row_home[5 + i].markdown(tot_cell if tot_cell else "—", unsafe_allow_html=True)
+        row_home[4 + i].markdown(tot_cell if tot_cell else "—", unsafe_allow_html=True)
 
     st.markdown("<hr style='margin:4px 0'>", unsafe_allow_html=True)
 
 # ── Performance tab ───────────────────────────────────────────────────────────
 def render_performance(hist: pd.DataFrame):
-    import plotly.graph_objects as go
-    import numpy as np
-
     st.subheader("📊 Model Performance")
 
     scored = hist[hist["completed5"] == 1].copy() if not hist.empty else pd.DataFrame()
