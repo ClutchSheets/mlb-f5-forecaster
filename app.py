@@ -146,7 +146,7 @@ def render_games_table(df, odds_lookup):
     BORDER  = "#2a2d35"
 
     book_headers = "".join(
-        f"<th style='padding:8px 12px;text-align:center;color:{SUBTEXT};"
+        f"<th style='padding:4px 12px;text-align:center;color:{SUBTEXT};"
         f"font-size:0.75em;letter-spacing:0.05em;border-bottom:1px solid {BORDER}'>"
         f"{BOOK_LABELS[b]}</th>"
         for b in BOOKS
@@ -158,27 +158,27 @@ def render_games_table(df, odds_lookup):
         table{{width:100%;border-collapse:collapse;font-family:sans-serif;
                background:{BG_DARK};border-radius:8px;overflow:hidden}}
         th{{background:{BG_DARK};color:{SUBTEXT};font-size:0.75em;
-            letter-spacing:0.05em;padding:8px 12px;border-bottom:1px solid {BORDER}}}
-        tr.away-row{{background:{BG_ROW}}}
-        tr.home-row{{background:{BG_ALT}}}
-        tr.away-row:hover,tr.home-row:hover{{filter:brightness(1.15)}}
+            letter-spacing:0.05em;padding:4px 12px;border-bottom:1px solid {BORDER}}}
+        tr.game-odd td{{background:{BG_ROW}}}
+        tr.game-even td{{background:{BG_ALT}}}
+        tr.game-odd:hover td,tr.game-even:hover td{{filter:brightness(1.2)}}
         .edge{{background:{GREEN};border-radius:3px;padding:1px 6px;
                white-space:nowrap;display:inline-block;font-weight:600;color:#fff}}
         .edge small{{display:block;font-size:0.75em;font-weight:400;opacity:0.9}}
-        td{{padding:8px 12px;border-bottom:1px solid {BORDER}}}
+        td{{padding:4px 12px;border-bottom:1px solid {BORDER}}}
       </style>
     """
 
     html = css + f"""<table>
       <thead>
         <tr>
-          <th style='padding:8px 6px;text-align:center;color:{SUBTEXT};font-size:0.75em;
+          <th style='padding:4px 6px;text-align:center;color:{SUBTEXT};font-size:0.75em;
                      letter-spacing:0.05em;border-bottom:1px solid {BORDER};width:30px'>#</th>
-          <th style='padding:8px 12px;text-align:left;color:{SUBTEXT};font-size:0.75em;
+          <th style='padding:4px 12px;text-align:left;color:{SUBTEXT};font-size:0.75em;
                      letter-spacing:0.05em;border-bottom:1px solid {BORDER}'>TEAM / PITCHER</th>
-          <th style='padding:8px 12px;text-align:center;color:{SUBTEXT};font-size:0.75em;
+          <th style='padding:4px 12px;text-align:center;color:{SUBTEXT};font-size:0.75em;
                      letter-spacing:0.05em;border-bottom:1px solid {BORDER}'>WIN %</th>
-          <th style='padding:8px 12px;text-align:center;color:{SUBTEXT};font-size:0.75em;
+          <th style='padding:4px 12px;text-align:center;color:{SUBTEXT};font-size:0.75em;
                      letter-spacing:0.05em;border-bottom:1px solid {BORDER}'>ML FV</th>
           {book_headers}
         </tr>
@@ -203,7 +203,7 @@ def render_games_table(df, odds_lookup):
         # Build per-book cell HTML for both sides
         away_cells = ""
         home_cells = ""
-        td_style = f"padding:8px 12px;text-align:center;border-bottom:1px solid {BORDER}"
+        td_style = f"padding:4px 12px;text-align:center;border-bottom:1px solid {BORDER}"
 
         for bk_key in BOOKS:
             away_odds, home_odds = get_book_odds(bk_key, bk, away, home)
@@ -241,33 +241,34 @@ def render_games_table(df, odds_lookup):
                 home_cells += f"<td style='{td_style}'><span style='color:#e0e0e0;font-size:0.9em'>{home_sign}</span></td>"
 
         # Away row — show game number
+        game_class = 'game-odd' if game_num % 2 == 1 else 'game-even'
         html += f"""
-        <tr class='away-row'>
-          <td style='padding:8px 6px;text-align:center;border-bottom:1px solid {BORDER};
+        <tr class='{game_class}'>
+          <td style='padding:4px 6px;text-align:center;border-bottom:1px solid {BORDER};
                      vertical-align:bottom' rowspan='2'>
             <span style='color:#888;font-size:0.8em'>{game_num}</span>
           </td>
-          <td style='padding:8px 12px;border-bottom:1px solid {BORDER}'>
+          <td style='padding:4px 12px;border-bottom:1px solid {BORDER}'>
             <span style='font-weight:600;color:#e0e0e0'>{away}</span><br>
             <span style='color:#888;font-size:0.78em'>{away_sp}</span>
           </td>
-          <td style='padding:8px 12px;text-align:center;border-bottom:1px solid {BORDER}'>
+          <td style='padding:4px 12px;text-align:center;border-bottom:1px solid {BORDER}'>
             <span style='color:#e0e0e0;font-size:0.9em'>{model_away_p*100:.1f}%</span>
           </td>
-          <td style='padding:8px 12px;text-align:center;border-bottom:1px solid {BORDER}'>
+          <td style='padding:4px 12px;text-align:center;border-bottom:1px solid {BORDER}'>
             <span style='color:#7ec8e3;font-size:0.9em;font-weight:600'>{ml_fv_away}</span>
           </td>
           {away_cells}
         </tr>
-        <tr class='home-row'>
-          <td style='padding:8px 12px;border-bottom:2px solid {BORDER}'>
+        <tr class='{game_class}'>
+          <td style='padding:4px 12px;border-bottom:2px solid {BORDER}'>
             <span style='font-weight:600;color:#e0e0e0'>{home}</span><br>
             <span style='color:#888;font-size:0.78em'>{home_sp}</span>
           </td>
-          <td style='padding:8px 12px;text-align:center;border-bottom:2px solid {BORDER}'>
+          <td style='padding:4px 12px;text-align:center;border-bottom:2px solid {BORDER}'>
             <span style='color:#e0e0e0;font-size:0.9em'>{model_home_p*100:.1f}%</span>
           </td>
-          <td style='padding:8px 12px;text-align:center;border-bottom:2px solid {BORDER}'>
+          <td style='padding:4px 12px;text-align:center;border-bottom:2px solid {BORDER}'>
             <span style='color:#7ec8e3;font-size:0.9em;font-weight:600'>{ml_fv_home}</span>
           </td>
           {home_cells}
@@ -276,7 +277,7 @@ def render_games_table(df, odds_lookup):
 
     html += "</tbody></table>"
     # Estimate height: ~70px per game pair + 50px header
-    height = len(df) * 72 + 55
+    height = len(df) * 52 + 45
     components.html(html, height=height, scrolling=False)
 
 # ── Performance tab ───────────────────────────────────────────────────────────
@@ -436,10 +437,15 @@ def render_performance(hist: pd.DataFrame):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    # Tighten default top padding and restore title
-    st.markdown("<style>.block-container{padding-top:0.5rem!important}</style>", unsafe_allow_html=True)
     st.markdown(
-        "<h2 style='color:#1a7a3a;margin:0 0 4px 0'>⚾ ClutchSheets F5 Baseball Forecaster</h2>",
+        """<style>
+        .block-container{padding-top:0.75rem!important}
+        h2{margin-top:0!important}
+        </style>""",
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        "<h2 style='color:#1a7a3a;margin:0 0 6px 0'>⚾ ClutchSheets F5 Baseball Forecaster</h2>",
         unsafe_allow_html=True
     )
 
