@@ -4,13 +4,13 @@ import sqlite3
 import os
 import requests
 import numpy as np
-import plotly.graph_objects as go
+import altair as alt
 from datetime import date
 
 st.set_page_config(page_title="ClutchSheets F5 Forecaster", layout="wide")
 
 # ── Odds API ──────────────────────────────────────────────────────────────────
-ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "")
+ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "d31971f20a2edb069b228e828826815a")
 ODDS_API_URL = "https://api.the-odds-api.com/v4/sports/baseball_mlb/odds"
 
 BOOKS = ["betonline", "fanduel", "draftkings", "betmgm", "betrivers"]
@@ -258,56 +258,57 @@ def render_performance(hist: pd.DataFrame):
     scored["roll_mae"]     = scored["mae_total"].expanding().mean()
     scored["roll_brier"]   = scored["brier"].expanding().mean()
     scored["roll_logloss"] = scored["logloss"].expanding().mean()
-    label = scored["date"] + " " + scored["away_team"] + "@" + scored["home_team"]
 
     col_a, col_b = st.columns(2)
 
     with col_a:
-        fig_mae = go.Figure()
-        fig_mae.add_bar(
-            x=scored["game_num"], y=scored["mae_total"],
-            name="Game MAE", marker_color="rgba(55,138,221,0.4)",
-            hovertext=label, hovertemplate="%{hovertext}<br>MAE: %{y:.2f}<extra></extra>"
+        mae_base = alt.Chart(scored).encode(
+            x=alt.X("game_num:Q", title="Game #")
         )
-        fig_mae.add_scatter(
-            x=scored["game_num"], y=scored["roll_mae"],
-            mode="lines", name="Cumulative Avg",
-            line=dict(color="#1a7a3a", width=2)
+        mae_bars = mae_base.mark_bar(color="#378AD3", opacity=0.4).encode(
+            y=alt.Y("mae_total:Q", title="MAE"),
+            tooltip=["date", "away_team", "home_team",
+                     alt.Tooltip("mae_total:Q", format=".2f", title="MAE")]
         )
-        fig_mae.update_layout(
-            title="MAE — Runs Through 5",
-            xaxis_title="Game #", yaxis_title="MAE",
-            legend=dict(orientation="h", y=-0.2),
-            height=300, margin=dict(t=40, b=40, l=40, r=10),
-            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)"
+        mae_line = mae_base.mark_line(color="#1a7a3a", size=2).encode(
+            y=alt.Y("roll_mae:Q", title="MAE")
         )
-        st.plotly_chart(fig_mae, use_container_width=True)
+        st.altair_chart(
+            (mae_bars + mae_line).properties(title="MAE — Runs Through 5", height=280),
+            use_container_width=True
+        )
 
     with col_b:
-        fig_bll = go.Figure()
-        fig_bll.add_scatter(
-            x=scored["game_num"], y=scored["roll_brier"],
-            mode="lines+markers", name="Brier (cum avg)",
-            line=dict(color="#1a7a3a", width=2), marker_size=4,
-            hovertext=label, hovertemplate="%{hovertext}<br>Brier: %{y:.4f}<extra></extra>"
+        bll_df = scored[["game_num", "date", "away_team", "home_team",
+                          "roll_brier", "roll_logloss"]].melt(
+            id_vars=["game_num", "date", "away_team", "home_team"],
+            value_vars=["roll_brier", "roll_logloss"],
+            var_name="metric", value_name="value"
         )
-        fig_bll.add_scatter(
-            x=scored["game_num"], y=scored["roll_logloss"],
-            mode="lines+markers", name="LogLoss (cum avg)",
-            line=dict(color="#d4730a", width=2, dash="dot"), marker_size=4,
-            hovertemplate="LogLoss: %{y:.4f}<extra></extra>"
+        bll_df["metric"] = bll_df["metric"].map(
+            {"roll_brier": "Brier", "roll_logloss": "LogLoss"}
         )
-        # coin-flip baselines
-        fig_bll.add_hline(y=0.25, line_dash="dash", line_color="gray",
-                          annotation_text="Brier baseline", annotation_position="top right")
-        fig_bll.update_layout(
-            title="Brier Score & Log Loss",
-            xaxis_title="Game #", yaxis_title="Score",
-            legend=dict(orientation="h", y=-0.2),
-            height=300, margin=dict(t=40, b=40, l=40, r=10),
-            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)"
+        bll_line = alt.Chart(bll_df).mark_line(point=True).encode(
+            x=alt.X("game_num:Q", title="Game #"),
+            y=alt.Y("value:Q", title="Score"),
+            color=alt.Color("metric:N", scale=alt.Scale(
+                domain=["Brier", "LogLoss"],
+                range=["#1a7a3a", "#d4730a"]
+            )),
+            strokeDash=alt.condition(
+                alt.datum.metric == "LogLoss",
+                alt.value([4, 4]),
+                alt.value([0])
+            ),
+            tooltip=["metric", alt.Tooltip("value:Q", format=".4f")]
         )
-        st.plotly_chart(fig_bll, use_container_width=True)
+        baseline = alt.Chart(pd.DataFrame({"y": [0.25]})).mark_rule(
+            strokeDash=[4, 4], color="gray"
+        ).encode(y="y:Q")
+        st.altair_chart(
+            (bll_line + baseline).properties(title="Brier Score & Log Loss (cumulative avg)", height=280),
+            use_container_width=True
+        )
 
     st.markdown("---")
 
@@ -330,43 +331,43 @@ def render_performance(hist: pd.DataFrame):
 
     if cal_rows:
         cal_df = pd.DataFrame(cal_rows)
-        fig_cal = go.Figure()
+        diagonal = pd.DataFrame({"x": [0.30, 0.75], "y": [0.30, 0.75]})
 
-        # Perfect calibration diagonal
-        fig_cal.add_scatter(
-            x=[0.30, 0.75], y=[0.30, 0.75],
-            mode="lines", name="Perfect calibration",
-            line=dict(color="gray", dash="dash", width=1)
+        diag_line = alt.Chart(diagonal).mark_line(
+            strokeDash=[4, 4], color="gray"
+        ).encode(
+            x=alt.X("x:Q", title="Predicted win prob",
+                    scale=alt.Scale(domain=[0.25, 0.80]),
+                    axis=alt.Axis(format=".0%")),
+            y=alt.Y("y:Q", title="Actual win rate",
+                    scale=alt.Scale(domain=[-0.05, 1.05]),
+                    axis=alt.Axis(format=".0%"))
         )
 
-        # Calibration dots — sized by sample
-        fig_cal.add_scatter(
-            x=cal_df["pred"], y=cal_df["actual"],
-            mode="markers+text",
-            marker=dict(
-                size=cal_df["n"] * 4 + 8,
-                color="rgba(55,138,221,0.65)",
-                line=dict(color="#185FA5", width=1.5)
-            ),
-            text=cal_df.apply(lambda r: f"n={r['n']}", axis=1),
-            textposition="top center",
-            name="Bucket",
-            hovertemplate=(
-                "<b>%{customdata}</b><br>"
-                "Predicted: %{x:.3f}<br>"
-                "Actual: %{y:.3f}<extra></extra>"
-            ),
-            customdata=cal_df["label"]
+        dots = alt.Chart(cal_df).mark_circle(
+            color="#378AD3", opacity=0.7, stroke="#185FA5", strokeWidth=1.5
+        ).encode(
+            x=alt.X("pred:Q", scale=alt.Scale(domain=[0.25, 0.80]),
+                    axis=alt.Axis(format=".0%"), title="Predicted win prob"),
+            y=alt.Y("actual:Q", scale=alt.Scale(domain=[-0.05, 1.05]),
+                    axis=alt.Axis(format=".0%"), title="Actual win rate"),
+            size=alt.Size("n:Q", scale=alt.Scale(range=[80, 400]), legend=None),
+            tooltip=[
+                alt.Tooltip("label:N", title="Bucket"),
+                alt.Tooltip("pred:Q",   format=".3f", title="Predicted"),
+                alt.Tooltip("actual:Q", format=".3f", title="Actual"),
+                alt.Tooltip("n:Q",      title="Games"),
+            ]
         )
 
-        fig_cal.update_layout(
-            xaxis=dict(title="Predicted win prob", range=[0.25, 0.80], tickformat=".0%"),
-            yaxis=dict(title="Actual win rate",    range=[-0.05, 1.05], tickformat=".0%"),
-            height=380, margin=dict(t=20, b=40, l=50, r=10),
-            legend=dict(orientation="h", y=-0.2),
-            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)"
+        labels = dots.mark_text(dy=-14, fontSize=11, color="gray").encode(
+            text=alt.Text("n:Q", format="d")
         )
-        st.plotly_chart(fig_cal, use_container_width=True)
+
+        st.altair_chart(
+            (diag_line + dots + labels).properties(height=360),
+            use_container_width=True
+        )
     else:
         st.info("Not enough scored games for calibration buckets yet.")
 
