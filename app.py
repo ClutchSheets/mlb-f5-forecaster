@@ -157,8 +157,9 @@ def render_games_table(df, odds_lookup):
         body{{margin:0;padding:0;background:transparent}}
         table{{width:100%;border-collapse:collapse;font-family:sans-serif;
                background:{BG_DARK};border-radius:8px;overflow:hidden}}
-        th{{background:{BG_DARK};color:{SUBTEXT};font-size:0.75em;
-            letter-spacing:0.05em;padding:4px 12px;border-bottom:1px solid {BORDER}}}
+        th{{background:#111418;color:#ffffff;font-size:0.72em;font-weight:700;
+            letter-spacing:0.08em;text-transform:uppercase;
+            padding:10px 12px;border-bottom:2px solid #3a4050}}
         tr.game-odd td{{background:{BG_ROW}}}
         tr.game-even td{{background:{BG_ALT}}}
         tr.game-odd:hover td,tr.game-even:hover td{{filter:brightness(1.2)}}
@@ -169,17 +170,14 @@ def render_games_table(df, odds_lookup):
       </style>
     """
 
+    TH = "padding:10px 12px;font-size:0.72em;font-weight:700;color:#fff;letter-spacing:0.08em;text-transform:uppercase;background:#111418;border-bottom:2px solid #3a4050"
     html = css + f"""<table>
       <thead>
         <tr>
-          <th style='padding:4px 6px;text-align:center;color:{SUBTEXT};font-size:0.75em;
-                     letter-spacing:0.05em;border-bottom:1px solid {BORDER};width:30px'>#</th>
-          <th style='padding:4px 12px;text-align:left;color:{SUBTEXT};font-size:0.75em;
-                     letter-spacing:0.05em;border-bottom:1px solid {BORDER}'>TEAM / PITCHER</th>
-          <th style='padding:4px 12px;text-align:center;color:{SUBTEXT};font-size:0.75em;
-                     letter-spacing:0.05em;border-bottom:1px solid {BORDER}'>WIN %</th>
-          <th style='padding:4px 12px;text-align:center;color:{SUBTEXT};font-size:0.75em;
-                     letter-spacing:0.05em;border-bottom:1px solid {BORDER}'>ML FV</th>
+          <th style='{TH};text-align:center;width:30px'>#</th>
+          <th style='{TH};text-align:left'>TEAM / PITCHER</th>
+          <th style='{TH};text-align:center'>WIN %</th>
+          <th style='{TH};text-align:center'>ML FV</th>
           {book_headers}
         </tr>
       </thead>
@@ -277,7 +275,7 @@ def render_games_table(df, odds_lookup):
 
     html += "</tbody></table>"
     # Estimate height: ~70px per game pair + 50px header
-    height = len(df) * 52 + 45
+    height = len(df) * 64 + 50
     components.html(html, height=height, scrolling=False)
 
 # ── Performance tab ───────────────────────────────────────────────────────────
@@ -439,7 +437,11 @@ def render_performance(hist: pd.DataFrame):
 def main():
     st.markdown(
         """<style>
-        .block-container{padding-top:0.75rem!important}
+        /* Hide Streamlit chrome to reclaim top space */
+        header[data-testid="stHeader"]{display:none!important}
+        #MainMenu{display:none!important}
+        footer{display:none!important}
+        .block-container{padding-top:0.5rem!important;padding-bottom:0!important}
         h2{margin-top:0!important}
         </style>""",
         unsafe_allow_html=True
