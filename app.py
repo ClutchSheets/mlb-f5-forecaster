@@ -117,111 +117,166 @@ def load_history(db_path: str) -> pd.DataFrame:
     conn.close()
     return df
 
-# ── Book cell builder (ML only) ───────────────────────────────────────────────
-def get_book_cells(book_key, bk, away, home, model_away_p, model_home_p, total_proj):
+# ── Per-book odds lookup: returns (away_odds, home_odds) or (None, None) ──────
+def get_book_odds(book_key, bk, away, home):
     bdata = bk.get(book_key, {})
     if not bdata:
-        return "", ""
-
+        return None, None
     markets = bdata.get("markets", {})
+    h2h = next((m for m in markets if m["key"] == "h2h"), None) \
+          if isinstance(markets, list) else markets.get("h2h")
+    if not h2h:
+        return None, None
+    outcomes = {o["name"]: o["price"] for o in h2h.get("outcomes", [])}
+    home_name = next((n for n in outcomes if NAME_TO_CODE.get(n) == home), None)
+    away_name = next((n for n in outcomes if NAME_TO_CODE.get(n) == away), None)
+    if home_name and away_name:
+        return outcomes[away_name], outcomes[home_name]
+    return None, None
 
-    if isinstance(markets, list):
-        h2h_market = next((m for m in markets if m["key"] == "h2h"), None)
-    else:
-        h2h_market = markets.get("h2h")
+# ── Render all games as a single dark HTML table ──────────────────────────────
+def render_games_table(df, odds_lookup):
+    GREEN   = "#1a7a3a"
+    BG_DARK = "#0e1117"
+    BG_ROW  = "#1a1d24"
+    BG_ALT  = "#14171e"
+    TEXT    = "#e0e0e0"
+    SUBTEXT = "#888"
+    BORDER  = "#2a2d35"
 
-    ml_cell = ""
-    if h2h_market:
-        outcomes = {o["name"]: o["price"] for o in h2h_market.get("outcomes", [])}
-        home_name = next((n for n in outcomes if NAME_TO_CODE.get(n) == home), None)
-        away_name = next((n for n in outcomes if NAME_TO_CODE.get(n) == away), None)
-        if home_name and away_name:
-            mkt_home_p, mkt_away_p = no_vig_prob(outcomes[home_name], outcomes[away_name])
-            home_edge = edge_pct(model_home_p, mkt_home_p)
+    book_headers = "".join(
+        f"<th style='padding:8px 12px;text-align:center;color:{SUBTEXT};"
+        f"font-size:0.75em;letter-spacing:0.05em;border-bottom:1px solid {BORDER}'>"
+        f"{BOOK_LABELS[b]}</th>"
+        for b in BOOKS
+    )
+
+    html = f"""
+    <style>
+      .cs-table {{ width:100%;border-collapse:collapse;font-family:sans-serif;
+                   background:{BG_DARK};border-radius:8px;overflow:hidden; }}
+      .cs-table th {{ background:{BG_DARK};position:sticky;top:0;z-index:1; }}
+      .cs-table tr.away-row {{ background:{BG_ROW}; }}
+      .cs-table tr.home-row {{ background:{BG_ALT}; }}
+      .cs-table tr.away-row:hover, .cs-table tr.home-row:hover {{ filter:brightness(1.15); }}
+      .edge {{ background:{GREEN};border-radius:3px;padding:1px 5px;
+               white-space:nowrap;display:inline-block;font-weight:600; }}
+      .edge small {{ display:block;font-size:0.75em;font-weight:400;opacity:0.85; }}
+      .game-num {{ color:{SUBTEXT};font-size:0.8em; }}
+      .team-name {{ font-weight:600;color:{TEXT}; }}
+      .sp-name {{ color:{SUBTEXT};font-size:0.78em; }}
+      .win-pct {{ color:{TEXT};font-size:0.9em; }}
+      .fv {{ color:#7ec8e3;font-size:0.9em;font-weight:600; }}
+      .odds {{ color:{TEXT};font-size:0.9em; }}
+      .dash {{ color:{SUBTEXT}; }}
+    </style>
+    <table class='cs-table'>
+      <thead>
+        <tr>
+          <th style='padding:8px 6px;text-align:center;color:{SUBTEXT};font-size:0.75em;
+                     letter-spacing:0.05em;border-bottom:1px solid {BORDER};width:30px'>#</th>
+          <th style='padding:8px 12px;text-align:left;color:{SUBTEXT};font-size:0.75em;
+                     letter-spacing:0.05em;border-bottom:1px solid {BORDER}'>TEAM / PITCHER</th>
+          <th style='padding:8px 12px;text-align:center;color:{SUBTEXT};font-size:0.75em;
+                     letter-spacing:0.05em;border-bottom:1px solid {BORDER}'>WIN %</th>
+          <th style='padding:8px 12px;text-align:center;color:{SUBTEXT};font-size:0.75em;
+                     letter-spacing:0.05em;border-bottom:1px solid {BORDER}'>ML FV</th>
+          {book_headers}
+        </tr>
+      </thead>
+      <tbody>
+    """
+
+    for game_num, (_, row) in enumerate(df.iterrows(), start=1):
+        away    = str(row.get("away_team", "")).strip()
+        home    = str(row.get("home_team", "")).strip()
+        away_sp = str(row.get("away_sp",   "")).strip()
+        home_sp = str(row.get("home_sp",   "")).strip()
+
+        model_home_p = float(row.get("winprob_home", 0.5))
+        model_away_p = 1 - model_home_p
+        ml_fv_away   = fmt_american(prob_to_american(model_away_p))
+        ml_fv_home   = fmt_american(prob_to_american(model_home_p))
+
+        key = f"{away}@{home}"
+        bk  = odds_lookup.get(key, {}).get("bookmakers", {})
+
+        # Build per-book cell HTML for both sides
+        away_cells = ""
+        home_cells = ""
+        td_style = f"padding:8px 12px;text-align:center;border-bottom:1px solid {BORDER}"
+
+        for bk_key in BOOKS:
+            away_odds, home_odds = get_book_odds(bk_key, bk, away, home)
+
+            if away_odds is None:
+                away_cells += f"<td style='{td_style}'><span class='dash'>—</span></td>"
+                home_cells += f"<td style='{td_style}'><span class='dash'>—</span></td>"
+                continue
+
+            # Calculate edges
+            mkt_away_p, mkt_home_p = no_vig_prob(away_odds, home_odds)
             away_edge = edge_pct(model_away_p, mkt_away_p)
-            if abs(home_edge) >= abs(away_edge):
-                best_edge = home_edge
-                best_odds = outcomes[home_name]
-            else:
-                best_edge = away_edge
-                best_odds = outcomes[away_name]
-            sign = fmt_american(best_odds)
-            if abs(best_edge) >= EDGE_THRESHOLD:
-                ml_cell = (
-                    f'<span style="background:#1a7a3a;padding:2px 6px;'
-                    f'border-radius:3px;white-space:nowrap">'
-                    f'{sign}<br><small>+{abs(best_edge):.1f}%</small></span>'
+            home_edge = edge_pct(model_home_p, mkt_home_p)
+
+            # Away cell
+            away_sign = fmt_american(away_odds)
+            if away_edge >= EDGE_THRESHOLD:
+                away_cells += (
+                    f"<td style='{td_style}'>"
+                    f"<span class='edge'>{away_sign}"
+                    f"<small>+{away_edge:.1f}%</small></span></td>"
                 )
             else:
-                ml_cell = sign
+                away_cells += f"<td style='{td_style}'><span class='odds'>{away_sign}</span></td>"
 
-    return ml_cell, ""  # second value kept for unpacking compatibility
+            # Home cell
+            home_sign = fmt_american(home_odds)
+            if home_edge >= EDGE_THRESHOLD:
+                home_cells += (
+                    f"<td style='{td_style}'>"
+                    f"<span class='edge'>{home_sign}"
+                    f"<small>+{home_edge:.1f}%</small></span></td>"
+                )
+            else:
+                home_cells += f"<td style='{td_style}'><span class='odds'>{home_sign}</span></td>"
 
-# ── Render one game block ─────────────────────────────────────────────────────
-def render_game(game_num, row, odds_lookup):
-    away    = str(row.get("away_team", "")).strip()
-    home    = str(row.get("home_team", "")).strip()
-    away_sp = str(row.get("away_sp",   "")).strip()
-    home_sp = str(row.get("home_sp",   "")).strip()
+        # Away row — show game number
+        html += f"""
+        <tr class='away-row'>
+          <td style='padding:8px 6px;text-align:center;border-bottom:1px solid {BORDER};
+                     vertical-align:bottom' rowspan='2'>
+            <span class='game-num'>{game_num}</span>
+          </td>
+          <td style='padding:8px 12px;border-bottom:1px solid {BORDER}'>
+            <span class='team-name'>{away}</span><br>
+            <span class='sp-name'>{away_sp}</span>
+          </td>
+          <td style='padding:8px 12px;text-align:center;border-bottom:1px solid {BORDER}'>
+            <span class='win-pct'>{model_away_p*100:.1f}%</span>
+          </td>
+          <td style='padding:8px 12px;text-align:center;border-bottom:1px solid {BORDER}'>
+            <span class='fv'>{ml_fv_away}</span>
+          </td>
+          {away_cells}
+        </tr>
+        <tr class='home-row'>
+          <td style='padding:8px 12px;border-bottom:2px solid {BORDER}'>
+            <span class='team-name'>{home}</span><br>
+            <span class='sp-name'>{home_sp}</span>
+          </td>
+          <td style='padding:8px 12px;text-align:center;border-bottom:2px solid {BORDER}'>
+            <span class='win-pct'>{model_home_p*100:.1f}%</span>
+          </td>
+          <td style='padding:8px 12px;text-align:center;border-bottom:2px solid {BORDER}'>
+            <span class='fv'>{ml_fv_home}</span>
+          </td>
+          {home_cells}
+        </tr>
+        """
 
-    model_home_p = float(row.get("winprob_home", 0.5))
-    model_away_p = 1 - model_home_p
-    ml_fv_away   = fmt_american(prob_to_american(model_away_p))
-    ml_fv_home   = fmt_american(prob_to_american(model_home_p))
-
-    lambda_away = float(row.get("lambda_away", 0))
-    lambda_home = float(row.get("lambda_home", 0))
-    total_proj  = lambda_away + lambda_home
-    tot_fv      = round(total_proj, 1)
-
-    key = f"{away}@{home}"
-    bk  = odds_lookup.get(key, {}).get("bookmakers", {})
-
-    # build per-book cells
-    book_data = {}
-    for bk_key in BOOKS:
-        book_data[bk_key] = get_book_cells(
-            bk_key, bk, away, home, model_away_p, model_home_p, total_proj
-        )
-
-    # column proportions: #, team/pitcher, win%, ml fv, 5 books (ml only)
-    col_spec = [0.25, 0.7, 0.4, 0.4] + [0.55] * len(BOOKS)
-
-    # ── Column headers (only on first game) ───────────────────────────────────
-    if game_num == 1:
-        hdr = st.columns(col_spec)
-        headers = ["#", "TEAM / PITCHER", "WIN %", "ML FV"] + \
-                  [BOOK_LABELS[b] for b in BOOKS]
-        for col, h in zip(hdr, headers):
-            col.markdown(f"<b style='font-size:0.8em;color:#aaa'>{h}</b>",
-                         unsafe_allow_html=True)
-        st.markdown("<hr style='margin:2px 0 6px 0'>", unsafe_allow_html=True)
-
-    # ── Away row ──────────────────────────────────────────────────────────────
-    row_away = st.columns(col_spec)
-    row_away[0].markdown(f"**{game_num}**")
-    row_away[1].markdown(
-        f"**{away}**<br><span style='color:gray;font-size:0.8em'>{away_sp}</span>",
-        unsafe_allow_html=True)
-    row_away[2].write(f"{model_away_p*100:.1f}%")
-    row_away[3].write(ml_fv_away)
-    for i, bk_key in enumerate(BOOKS):
-        ml_cell, _ = book_data[bk_key]
-        row_away[4 + i].markdown(ml_cell if ml_cell else "—", unsafe_allow_html=True)
-
-    # ── Home row ──────────────────────────────────────────────────────────────
-    row_home = st.columns(col_spec)
-    row_home[0].write("")
-    row_home[1].markdown(
-        f"**{home}**<br><span style='color:gray;font-size:0.8em'>{home_sp}</span>",
-        unsafe_allow_html=True)
-    row_home[2].write(f"{model_home_p*100:.1f}%")
-    row_home[3].write(ml_fv_home)
-    for i, bk_key in enumerate(BOOKS):
-        _, tot_cell = book_data[bk_key]
-        row_home[4 + i].markdown(tot_cell if tot_cell else "—", unsafe_allow_html=True)
-
-    st.markdown("<hr style='margin:4px 0'>", unsafe_allow_html=True)
+    html += "</tbody></table>"
+    st.markdown(html, unsafe_allow_html=True)
 
 # ── Performance tab ───────────────────────────────────────────────────────────
 def render_performance(hist: pd.DataFrame):
@@ -380,10 +435,18 @@ def render_performance(hist: pd.DataFrame):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    st.markdown(
-        "<h1 style='color:#1a7a3a'>⚾ ClutchSheets F5 Baseball Forecaster</h1>",
-        unsafe_allow_html=True
-    )
+    st.markdown("""
+        <style>
+          /* tighten Streamlit's default top padding */
+          .block-container { padding-top: 1rem !important; }
+        </style>
+        <div style='display:flex;align-items:center;gap:10px;margin-bottom:4px'>
+          <span style='font-size:1.8em'>⚾</span>
+          <span style='font-size:1.6em;font-weight:700;color:#1a7a3a'>
+            ClutchSheets F5 Baseball Forecaster
+          </span>
+        </div>
+    """, unsafe_allow_html=True)
 
     CSV_PATH = os.environ.get("FORECAST_CSV", "daily_forecast.csv")
     DB_PATH  = os.environ.get("DB_PATH",      "mlb_f5_forecasts.db")
@@ -409,8 +472,7 @@ def main():
         if not odds_lookup:
             st.warning("⚠️ No odds data — check ODDS_API_KEY or API quota.")
 
-        for game_num, (_, row) in enumerate(df.iterrows(), start=1):
-            render_game(game_num, row, odds_lookup)
+        render_games_table(df, odds_lookup)
 
     with tab2:
         hist = load_history(DB_PATH)
