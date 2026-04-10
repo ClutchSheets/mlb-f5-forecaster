@@ -1,16 +1,16 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-09,CIN,Rhett Lowder,MIA,Max Meyer,2.3561,2.2824,4.6384,0.4869,v1.0
-2026-04-09,ATH,Jeffrey Springs,NYY,Ryan Weathers,2.3214,2.6325,4.9539,0.5524,v1.0
-2026-04-09,DET,Jack Flaherty,MIN,Mick Abel,2.2915,2.8998,5.1913,0.5982,v1.0
-2026-04-09,ARI,Eduardo Rodriguez,NYM,Nolan McLean,2.1971,3.1681,5.3651,0.6510,v1.0
-2026-04-09,CHW,Anthony Kay,KCR,Seth Lugo,2.3432,1.9850,4.3281,0.4334,v1.0
-2026-04-09,COL,Jimmy Herget,SDP,Randy Vásquez,1.5285,2.5424,4.0708,0.6916,v1.0
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
+2026-04-10,PIT,Carmen Mlodzinski,CHC,Shota Imanaga,2.1488,2.8864,5.0351,0.6213,v1.0
+2026-04-10,ARI,Michael Soroka,PHI,Jesús Luzardo,2.3690,2.6320,5.0010,0.5440,v1.0
+2026-04-10,MIA,Chris Paddack,DET,Keider Montero,2.6192,2.7193,5.3386,0.5160,v1.0
+2026-04-10,LAA,Jack Kochanowicz,CIN,Chase Burns,2.6542,3.2329,5.8871,0.5851,v1.0
+2026-04-10,MIN,Simeon Woods Richardson,TOR,Patrick Corbin,2.3241,2.5763,4.9004,0.5428,v1.0
+2026-04-10,ATH,J.T. Ginn,NYM,Clay Holmes,2.3878,2.9755,5.3633,0.5927,v1.0
+2026-04-10,NYY,Luis Gil,TBR,Steven Matz,2.6417,2.7143,5.3560,0.5115,v1.0
+2026-04-10,SFG,Landen Roupp,BAL,Shane Baz,2.7107,2.7699,5.4806,0.5092,v1.0
+2026-04-10,CLE,Slade Cecconi,ATL,Bryce Elder,2.4997,2.4722,4.9720,0.4954,v1.0
+2026-04-10,CHW,Davis Martin,KCR,Kris Bubic,2.1174,2.1722,4.2896,0.5103,v1.0
+2026-04-10,WSN,Jake Irvin,MIL,Chad Patrick,2.6243,3.0884,5.7127,0.5700,v1.0
+2026-04-10,BOS,Connelly Early,STL,Dustin May,2.7014,2.7020,5.4033,0.5001,v1.0
+2026-04-10,COL,Tomoyuki Sugano,SDP,Walker Buehler,2.4611,2.7148,5.1759,0.5414,v1.0
+2026-04-10,HOU,Tatsuya Imai,SEA,Emerson Hancock,2.4727,2.2589,4.7316,0.4627,v1.0
+2026-04-10,TEX,Kumar Rocker,LAD,Tyler Glasnow,2.5715,3.1406,5.7122,0.5857,v1.0
