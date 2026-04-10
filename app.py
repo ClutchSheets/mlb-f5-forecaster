@@ -3,7 +3,7 @@ import pandas as pd
 import sqlite3
 import os
 import requests
-from datetime import date, timedelta
+from datetime import date
 
 st.set_page_config(page_title="ClutchSheets F5 Forecaster", layout="wide")
 
@@ -13,52 +13,45 @@ ODDS_API_URL = "https://api.the-odds-api.com/v4/sports/baseball_mlb/odds"
 
 BOOKS = ["betonline", "fanduel", "draftkings", "betmgm", "betrivers"]
 BOOK_LABELS = {
-    "betonline": "BetOnline",
-    "fanduel":   "FanDuel",
-    "draftkings":"DraftKings",
-    "betmgm":    "BetMGM",
-    "betrivers": "BetRivers",
+    "betonline":  "BetOnline",
+    "fanduel":    "FanDuel",
+    "draftkings": "DraftKings",
+    "betmgm":     "BetMGM",
+    "betrivers":  "BetRivers",
 }
 
-# ── FIXED: Raised threshold from 3.0 to 5.0 to reduce noise ──────────────────
-EDGE_THRESHOLD = 5.0
+EDGE_THRESHOLD = 5.0  # raised from 3.0 to reduce noise
 
+# ── Helpers ───────────────────────────────────────────────────────────────────
 def american_to_prob(odds: int) -> float:
     if odds > 0:
         return 100 / (odds + 100)
     return abs(odds) / (abs(odds) + 100)
 
 def prob_to_american(p: float) -> int:
+    p = max(min(p, 0.9999), 0.0001)
     if p >= 0.5:
         return -round(p / (1 - p) * 100)
     return round((1 - p) / p * 100)
 
-def no_vig_prob(home_odds: int, away_odds: int):
-    ph = american_to_prob(home_odds)
-    pa = american_to_prob(away_odds)
-    total = ph + pa
-    return ph / total, pa / total
+def no_vig_prob(odds_a: int, odds_b: int):
+    pa = american_to_prob(odds_a)
+    pb = american_to_prob(odds_b)
+    total = pa + pb
+    return pa / total, pb / total
 
 def edge_pct(model_p: float, market_p: float) -> float:
     return (model_p - market_p) * 100
 
-# ── FIXED: Sigmoid-based totals probability using actual projection distance ──
-def total_edge_prob(total_proj: float, line: float) -> tuple:
-    """
-    Convert the distance between model projection and market line into
-    a meaningful over/under probability using a sigmoid function.
-    
-    diff > 0 → model projects more runs than the line → lean Over
-    diff < 0 → model projects fewer runs than the line → lean Under
-    
-    k=0.7 is the steepness — tunable based on calibration.
-    A diff of 0.5 runs gives ~58% confidence, 1.0 run gives ~67%.
-    """
+def total_edge_prob(total_proj: float, line: float):
+    """Sigmoid-based probability from projection distance vs line."""
     diff = total_proj - line
     k = 0.7
-    model_over_p = 1 / (1 + 10 ** (-diff * k))
-    model_under_p = 1 - model_over_p
-    return model_over_p, model_under_p
+    over_p = 1 / (1 + 10 ** (-diff * k))
+    return over_p, 1 - over_p
+
+def fmt_american(odds: int) -> str:
+    return f"+{odds}" if odds > 0 else str(odds)
 
 # ── Team name → CSV code map ──────────────────────────────────────────────────
 NAME_TO_CODE = {
@@ -79,6 +72,7 @@ NAME_TO_CODE = {
     "Houston Astros": "HOU", "Seattle Mariners": "SEA",
 }
 
+# ── Data fetching ─────────────────────────────────────────────────────────────
 @st.cache_data(ttl=300)
 def fetch_odds():
     if not ODDS_API_KEY:
@@ -94,19 +88,18 @@ def fetch_odds():
     if r.status_code != 200:
         return {}
     raw = r.json()
-
     lookup = {}
     for game in raw:
-        teams = {b["key"]: b for b in game.get("bookmakers", [])}
+        bmakers = {b["key"]: b for b in game.get("bookmakers", [])}
         away_name = game["away_team"]
         home_name = game["home_team"]
         away_code = NAME_TO_CODE.get(away_name, away_name[:3].upper())
         home_code = NAME_TO_CODE.get(home_name, home_name[:3].upper())
         key = f"{away_code}@{home_code}"
-        lookup[key] = {"bookmakers": teams, "commence_time": game.get("commence_time", "")}
+        lookup[key] = {"bookmakers": bmakers, "commence_time": game.get("commence_time", "")}
     return lookup
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=300)
 def load_forecast(csv_path: str) -> pd.DataFrame:
     if not os.path.exists(csv_path):
         return pd.DataFrame()
@@ -122,110 +115,217 @@ def load_history(db_path: str) -> pd.DataFrame:
     conn.close()
     return df
 
-# ── Render one game row ───────────────────────────────────────────────────────
-def render_game(row, odds_lookup, col_books):
-    away = str(row.get("away_team", "")).strip()
-    home = str(row.get("home_team", "")).strip()
-    away_sp = str(row.get("away_sp", "")).strip()
-    home_sp = str(row.get("home_sp", "")).strip()
-    away_sp_text = str(row.get("away_sp_text", away_sp)).strip()
-    home_sp_text = str(row.get("home_sp_text", home_sp)).strip()
+# ── Book cell builder ─────────────────────────────────────────────────────────
+def get_book_cells(book_key, bk, away, home, model_away_p, model_home_p, total_proj):
+    bdata = bk.get(book_key, {})
+    if not bdata:
+        return "", ""
 
-    model_away_p = 1 - float(row.get("winprob_home", 0.5))
+    markets = bdata.get("markets", {})
+
+    # normalise: API returns either a list or a dict depending on version
+    if isinstance(markets, list):
+        h2h_market    = next((m for m in markets if m["key"] == "h2h"),    None)
+        totals_market = next((m for m in markets if m["key"] == "totals"), None)
+    else:
+        h2h_market    = markets.get("h2h")
+        totals_market = markets.get("totals")
+
+    # ── ML cell ──────────────────────────────────────────────────────────────
+    ml_cell = ""
+    if h2h_market:
+        outcomes = {o["name"]: o["price"] for o in h2h_market.get("outcomes", [])}
+        home_name = next((n for n in outcomes if NAME_TO_CODE.get(n) == home), None)
+        away_name = next((n for n in outcomes if NAME_TO_CODE.get(n) == away), None)
+        if home_name and away_name:
+            mkt_home_p, mkt_away_p = no_vig_prob(outcomes[home_name], outcomes[away_name])
+            home_edge = edge_pct(model_home_p, mkt_home_p)
+            away_edge = edge_pct(model_away_p, mkt_away_p)
+            if abs(home_edge) >= abs(away_edge):
+                best_edge = home_edge
+                best_odds = outcomes[home_name]
+            else:
+                best_edge = away_edge
+                best_odds = outcomes[away_name]
+            sign = fmt_american(best_odds)
+            if abs(best_edge) >= EDGE_THRESHOLD:
+                ml_cell = (
+                    f'<span style="background:#1a7a3a;padding:2px 6px;'
+                    f'border-radius:3px;white-space:nowrap">'
+                    f'{sign}<br><small>+{abs(best_edge):.1f}%</small></span>'
+                )
+            else:
+                ml_cell = sign
+
+    # ── Totals cell ───────────────────────────────────────────────────────────
+    tot_cell = ""
+    if totals_market:
+        outcomes = {o["name"]: (o["price"], o.get("point", 0.0))
+                    for o in totals_market.get("outcomes", [])}
+        if "Over" in outcomes and "Under" in outcomes:
+            over_odds,  over_line  = outcomes["Over"]
+            under_odds, under_line = outcomes["Under"]
+            mkt_over_p, _ = no_vig_prob(over_odds, under_odds)
+            # FIXED: sigmoid-based model probability instead of hardcoded 0.55/0.45
+            model_over_p, _ = total_edge_prob(total_proj, over_line)
+            tot_edge = edge_pct(model_over_p, mkt_over_p)
+            if tot_edge > 0:
+                best_tot_odds = over_odds
+                line_label = f"o{over_line}"
+            else:
+                best_tot_odds = under_odds
+                line_label = f"u{under_line}"
+            sign = fmt_american(best_tot_odds)
+            if abs(tot_edge) >= EDGE_THRESHOLD:
+                tot_cell = (
+                    f'<span style="background:#1a7a3a;padding:2px 6px;'
+                    f'border-radius:3px;white-space:nowrap">'
+                    f'{line_label} {sign}<br><small>+{abs(tot_edge):.1f}%</small></span>'
+                )
+            else:
+                tot_cell = f"{line_label} {sign}"
+
+    return ml_cell, tot_cell
+
+# ── Render one game block ─────────────────────────────────────────────────────
+def render_game(game_num, row, odds_lookup):
+    away    = str(row.get("away_team", "")).strip()
+    home    = str(row.get("home_team", "")).strip()
+    away_sp = str(row.get("away_sp",   "")).strip()
+    home_sp = str(row.get("home_sp",   "")).strip()
+
     model_home_p = float(row.get("winprob_home", 0.5))
-    ml_fv_away = prob_to_american(model_away_p)
-    ml_fv_home = prob_to_american(model_home_p)
+    model_away_p = 1 - model_home_p
+    ml_fv_away   = fmt_american(prob_to_american(model_away_p))
+    ml_fv_home   = fmt_american(prob_to_american(model_home_p))
 
     lambda_away = float(row.get("lambda_away", 0))
     lambda_home = float(row.get("lambda_home", 0))
     total_proj  = lambda_away + lambda_home
-    tot_fv_val  = round(total_proj, 1)
+    tot_fv      = round(total_proj, 1)
 
     key = f"{away}@{home}"
     bk  = odds_lookup.get(key, {}).get("bookmakers", {})
 
-    def book_cells(book_key):
-        bdata = bk.get(book_key, {})
-        if not bdata:
-            return "", ""
+    # build per-book cells
+    book_data = {}
+    for bk_key in BOOKS:
+        book_data[bk_key] = get_book_cells(
+            bk_key, bk, away, home, model_away_p, model_home_p, total_proj
+        )
 
-        # ── ML edge (unchanged — was already correct) ─────────────────────────
-        ml_mkt = bdata.get("markets", {})
-        h2h = next((m for m in ml_mkt if m["key"] == "h2h"), None) if isinstance(ml_mkt, list) else ml_mkt.get("h2h")
-        ml_cell = ""
-        if h2h:
-            outcomes = {o["name"]: o["price"] for o in h2h.get("outcomes", [])}
-            home_name = next((n for n in outcomes if NAME_TO_CODE.get(n) == home), None)
-            away_name = next((n for n in outcomes if NAME_TO_CODE.get(n) == away), None)
-            if home_name and away_name:
-                mkt_home_p, mkt_away_p = no_vig_prob(outcomes[home_name], outcomes[away_name])
-                home_edge = edge_pct(model_home_p, mkt_home_p)
-                away_edge = edge_pct(model_away_p, mkt_away_p)
-                best_edge = home_edge if abs(home_edge) >= abs(away_edge) else away_edge
-                best_odds = outcomes[home_name] if abs(home_edge) >= abs(away_edge) else outcomes[away_name]
-                sign = "+" if best_odds > 0 else ""
-                if abs(best_edge) >= EDGE_THRESHOLD:
-                    ml_cell = f'<span style="background:#1a7a3a;padding:2px 6px;border-radius:3px">{sign}{best_odds}<br><small>+{abs(best_edge):.1f}%</small></span>'
-                else:
-                    ml_cell = f"{sign}{best_odds}"
+    # column proportions: #, team/pitcher, win%, ml fv, tot fv, 5 books (ml+tot each)
+    col_spec = [0.25, 0.7, 0.4, 0.4, 0.45] + [0.55] * len(BOOKS)
 
-        # ── Totals edge (FIXED) ───────────────────────────────────────────────
-        totals_mkt = bdata.get("markets", {})
-        tot_market = next((m for m in totals_mkt if m["key"] == "totals"), None) if isinstance(totals_mkt, list) else totals_mkt.get("totals")
-        tot_cell = ""
-        if tot_market:
-            outcomes = {o["name"]: (o["price"], o.get("point", 0)) for o in tot_market.get("outcomes", [])}
-            if "Over" in outcomes and "Under" in outcomes:
-                over_odds, over_line = outcomes["Over"]
-                under_odds, under_line = outcomes["Under"]
-                mkt_over_p, mkt_under_p = no_vig_prob(over_odds, under_odds)
+    # ── Column headers (only on first game) ───────────────────────────────────
+    if game_num == 1:
+        hdr = st.columns(col_spec)
+        headers = ["#", "TEAM / PITCHER", "WIN %", "ML FV", "TOT FV"] + \
+                  [BOOK_LABELS[b] for b in BOOKS]
+        for col, h in zip(hdr, headers):
+            col.markdown(f"<b style='font-size:0.8em;color:#aaa'>{h}</b>",
+                         unsafe_allow_html=True)
+        st.markdown("<hr style='margin:2px 0 6px 0'>", unsafe_allow_html=True)
 
-                # FIXED: use sigmoid distance instead of hardcoded 0.55/0.45
-                model_over_p, model_under_p = total_edge_prob(total_proj, over_line)
+    # ── Away row ──────────────────────────────────────────────────────────────
+    row_away = st.columns(col_spec)
+    row_away[0].markdown(f"**{game_num}**")
+    row_away[1].markdown(
+        f"**{away}**<br><span style='color:gray;font-size:0.8em'>{away_sp}</span>",
+        unsafe_allow_html=True)
+    row_away[2].write(f"{model_away_p*100:.1f}%")
+    row_away[3].write(ml_fv_away)
+    row_away[4].write(f"o{tot_fv}")
+    for i, bk_key in enumerate(BOOKS):
+        ml_cell, _ = book_data[bk_key]
+        row_away[5 + i].markdown(ml_cell if ml_cell else "—", unsafe_allow_html=True)
 
-                tot_edge = edge_pct(model_over_p, mkt_over_p)
-                best_tot_odds = over_odds if tot_edge > 0 else under_odds
-                sign = "+" if best_tot_odds > 0 else ""
-                line_label = f"o{over_line}" if tot_edge > 0 else f"u{under_line}"
-                if abs(tot_edge) >= EDGE_THRESHOLD:
-                    tot_cell = f'<span style="background:#1a7a3a;padding:2px 6px;border-radius:3px">{line_label} {sign}{best_tot_odds}<br><small>+{abs(tot_edge):.1f}%</small></span>'
-                else:
-                    tot_cell = f"{line_label} {sign}{best_tot_odds}"
+    # ── Home row ──────────────────────────────────────────────────────────────
+    row_home = st.columns(col_spec)
+    row_home[0].write("")
+    row_home[1].markdown(
+        f"**{home}**<br><span style='color:gray;font-size:0.8em'>{home_sp}</span>",
+        unsafe_allow_html=True)
+    row_home[2].write(f"{model_home_p*100:.1f}%")
+    row_home[3].write(ml_fv_home)
+    row_home[4].write(f"u{tot_fv}")
+    for i, bk_key in enumerate(BOOKS):
+        _, tot_cell = book_data[bk_key]
+        row_home[5 + i].markdown(tot_cell if tot_cell else "—", unsafe_allow_html=True)
 
-        return ml_cell, tot_cell
+    st.markdown("<hr style='margin:4px 0'>", unsafe_allow_html=True)
 
-    # build display row
-    ...
+# ── Performance tab ───────────────────────────────────────────────────────────
+def render_performance(hist: pd.DataFrame):
+    st.subheader("📊 Model Performance")
+
+    scored = hist[hist["completed5"] == 1].copy() if not hist.empty else pd.DataFrame()
+    if scored.empty:
+        st.info("No scored games yet.")
+        return
+
+    total   = len(scored)
+    mae     = scored["mae_total"].mean()
+    brier   = scored["brier"].mean()
+    logloss = scored["logloss"].mean()
+    # direction accuracy: model favoured home (>0.5) and home won (home_win_f5=1)
+    scored["model_pick"] = (scored["winprob_home"] >= 0.5).astype(int)
+    scored["actual_win"] = (scored["home_win_f5"] == 1.0).astype(int)
+    acc = (scored["model_pick"] == scored["actual_win"]).mean() * 100
+
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Games Scored", total)
+    c2.metric("MAE (Runs)",   f"{mae:.3f}")
+    c3.metric("Brier Score",  f"{brier:.4f}")
+    c4.metric("Log Loss",     f"{logloss:.4f}")
+    c5.metric("Direction Acc",f"{acc:.1f}%")
+
+    st.subheader("📋 Forecast Archive")
+    display_cols = ["date", "away_team", "away_sp", "home_team", "home_sp",
+                    "total_proj", "winprob_home", "runs_away_thru5",
+                    "runs_home_thru5", "total_actual", "mae_total", "brier", "logloss"]
+    available = [c for c in display_cols if c in scored.columns]
+    st.dataframe(scored[available].sort_values("date", ascending=False),
+                 use_container_width=True)
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    st.title("⚾ ClutchSheets F5 Baseball Forecaster")
+    st.markdown(
+        "<h1 style='color:#1a7a3a'>⚾ ClutchSheets F5 Baseball Forecaster</h1>",
+        unsafe_allow_html=True
+    )
 
     CSV_PATH = os.environ.get("FORECAST_CSV", "daily_forecast.csv")
-    DB_PATH  = os.environ.get("DB_PATH",       "mlb_f5_forecasts.db")
+    DB_PATH  = os.environ.get("DB_PATH",      "mlb_f5_forecasts.db")
 
-    df = load_forecast(CSV_PATH)
-    if df.empty:
-        st.warning("No forecast data found.")
-        return
+    tab1, tab2 = st.tabs(["📅 Today's Games", "📊 Performance"])
 
-    today_str = date.today().strftime("%Y-%m-%d")
-    if "date" in df.columns:
-        df["date"] = df["date"].astype(str).str.strip()
-        df = df[df["date"] == today_str]
+    with tab1:
+        df = load_forecast(CSV_PATH)
+        if df.empty:
+            st.warning("No forecast data found.")
+            return
 
-    odds_lookup = fetch_odds()
+        today_str = date.today().strftime("%Y-%m-%d")
+        if "date" in df.columns:
+            df["date"] = df["date"].astype(str).str.strip()
+            df = df[df["date"] == today_str]
 
-    col_books = BOOKS
+        if df.empty:
+            st.warning(f"No games found for {today_str}.")
+            return
 
-    for _, row in df.iterrows():
-        render_game(row, odds_lookup, col_books)
+        odds_lookup = fetch_odds()
+        if not odds_lookup:
+            st.warning("⚠️ No odds data — check ODDS_API_KEY or API quota.")
 
-    st.divider()
-    st.subheader("📊 Forecast Archive")
-    hist = load_history(DB_PATH)
-    if not hist.empty:
-        st.dataframe(hist, use_container_width=True)
+        for game_num, (_, row) in enumerate(df.iterrows(), start=1):
+            render_game(game_num, row, odds_lookup)
+
+    with tab2:
+        hist = load_history(DB_PATH)
+        render_performance(hist)
+
 
 if __name__ == "__main__":
     main()
