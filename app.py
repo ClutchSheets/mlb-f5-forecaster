@@ -151,26 +151,26 @@ def render_games_table(df, odds_lookup):
         for b in BOOKS
     )
 
-    html = f"""
-    <style>
-      .cs-table {{ width:100%;border-collapse:collapse;font-family:sans-serif;
-                   background:{BG_DARK};border-radius:8px;overflow:hidden; }}
-      .cs-table th {{ background:{BG_DARK};position:sticky;top:0;z-index:1; }}
-      .cs-table tr.away-row {{ background:{BG_ROW}; }}
-      .cs-table tr.home-row {{ background:{BG_ALT}; }}
-      .cs-table tr.away-row:hover, .cs-table tr.home-row:hover {{ filter:brightness(1.15); }}
-      .edge {{ background:{GREEN};border-radius:3px;padding:1px 5px;
-               white-space:nowrap;display:inline-block;font-weight:600; }}
-      .edge small {{ display:block;font-size:0.75em;font-weight:400;opacity:0.85; }}
-      .game-num {{ color:{SUBTEXT};font-size:0.8em; }}
-      .team-name {{ font-weight:600;color:{TEXT}; }}
-      .sp-name {{ color:{SUBTEXT};font-size:0.78em; }}
-      .win-pct {{ color:{TEXT};font-size:0.9em; }}
-      .fv {{ color:#7ec8e3;font-size:0.9em;font-weight:600; }}
-      .odds {{ color:{TEXT};font-size:0.9em; }}
-      .dash {{ color:{SUBTEXT}; }}
-    </style>
-    <table class='cs-table'>
+    # Inject table CSS via st.html (not stripped like st.markdown)
+    st.html(f"""<style>
+      .cs-table{{width:100%;border-collapse:collapse;font-family:sans-serif;
+                 background:{BG_DARK};border-radius:8px;overflow:hidden}}
+      .cs-table th{{background:{BG_DARK}}}
+      .cs-table tr.away-row{{background:{BG_ROW}}}
+      .cs-table tr.home-row{{background:{BG_ALT}}}
+      .cs-table tr.away-row:hover,.cs-table tr.home-row:hover{{filter:brightness(1.15)}}
+      .edge{{background:{GREEN};border-radius:3px;padding:1px 6px;
+             white-space:nowrap;display:inline-block;font-weight:600;color:#fff}}
+      .edge small{{display:block;font-size:0.75em;font-weight:400;opacity:0.9}}
+      .game-num{{color:{SUBTEXT};font-size:0.8em}}
+      .team-name{{font-weight:600;color:{TEXT}}}
+      .sp-name{{color:{SUBTEXT};font-size:0.78em}}
+      .fv{{color:#7ec8e3;font-size:0.9em;font-weight:600}}
+      .odds{{color:{TEXT};font-size:0.9em}}
+      .dash{{color:{SUBTEXT}}}
+    </style>""")
+
+    html = f"""<table class='cs-table'>
       <thead>
         <tr>
           <th style='padding:8px 6px;text-align:center;color:{SUBTEXT};font-size:0.75em;
@@ -210,8 +210,8 @@ def render_games_table(df, odds_lookup):
             away_odds, home_odds = get_book_odds(bk_key, bk, away, home)
 
             if away_odds is None:
-                away_cells += f"<td style='{td_style}'><span class='dash'>—</span></td>"
-                home_cells += f"<td style='{td_style}'><span class='dash'>—</span></td>"
+                away_cells += f"<td style='{td_style}'><span style='color:#888'>—</span></td>"
+                home_cells += f"<td style='{td_style}'><span style='color:#888'>—</span></td>"
                 continue
 
             # Calculate edges
@@ -228,7 +228,7 @@ def render_games_table(df, odds_lookup):
                     f"<small>+{away_edge:.1f}%</small></span></td>"
                 )
             else:
-                away_cells += f"<td style='{td_style}'><span class='odds'>{away_sign}</span></td>"
+                away_cells += f"<td style='{td_style}'><span style='color:#e0e0e0;font-size:0.9em'>{away_sign}</span></td>"
 
             # Home cell
             home_sign = fmt_american(home_odds)
@@ -239,37 +239,37 @@ def render_games_table(df, odds_lookup):
                     f"<small>+{home_edge:.1f}%</small></span></td>"
                 )
             else:
-                home_cells += f"<td style='{td_style}'><span class='odds'>{home_sign}</span></td>"
+                home_cells += f"<td style='{td_style}'><span style='color:#e0e0e0;font-size:0.9em'>{home_sign}</span></td>"
 
         # Away row — show game number
         html += f"""
         <tr class='away-row'>
           <td style='padding:8px 6px;text-align:center;border-bottom:1px solid {BORDER};
                      vertical-align:bottom' rowspan='2'>
-            <span class='game-num'>{game_num}</span>
+            <span style='color:#888;font-size:0.8em'>{game_num}</span>
           </td>
           <td style='padding:8px 12px;border-bottom:1px solid {BORDER}'>
-            <span class='team-name'>{away}</span><br>
-            <span class='sp-name'>{away_sp}</span>
+            <span style='font-weight:600;color:#e0e0e0'>{away}</span><br>
+            <span style='color:#888;font-size:0.78em'>{away_sp}</span>
           </td>
           <td style='padding:8px 12px;text-align:center;border-bottom:1px solid {BORDER}'>
-            <span class='win-pct'>{model_away_p*100:.1f}%</span>
+            <span style='color:#e0e0e0;font-size:0.9em'>{model_away_p*100:.1f}%</span>
           </td>
           <td style='padding:8px 12px;text-align:center;border-bottom:1px solid {BORDER}'>
-            <span class='fv'>{ml_fv_away}</span>
+            <span style='color:#7ec8e3;font-size:0.9em;font-weight:600'>{ml_fv_away}</span>
           </td>
           {away_cells}
         </tr>
         <tr class='home-row'>
           <td style='padding:8px 12px;border-bottom:2px solid {BORDER}'>
-            <span class='team-name'>{home}</span><br>
-            <span class='sp-name'>{home_sp}</span>
+            <span style='font-weight:600;color:#e0e0e0'>{home}</span><br>
+            <span style='color:#888;font-size:0.78em'>{home_sp}</span>
           </td>
           <td style='padding:8px 12px;text-align:center;border-bottom:2px solid {BORDER}'>
-            <span class='win-pct'>{model_home_p*100:.1f}%</span>
+            <span style='color:#e0e0e0;font-size:0.9em'>{model_home_p*100:.1f}%</span>
           </td>
           <td style='padding:8px 12px;text-align:center;border-bottom:2px solid {BORDER}'>
-            <span class='fv'>{ml_fv_home}</span>
+            <span style='color:#7ec8e3;font-size:0.9em;font-weight:600'>{ml_fv_home}</span>
           </td>
           {home_cells}
         </tr>
@@ -435,18 +435,12 @@ def render_performance(hist: pd.DataFrame):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    st.markdown("""
-        <style>
-          /* tighten Streamlit's default top padding */
-          .block-container { padding-top: 1rem !important; }
-        </style>
-        <div style='display:flex;align-items:center;gap:10px;margin-bottom:4px'>
-          <span style='font-size:1.8em'>⚾</span>
-          <span style='font-size:1.6em;font-weight:700;color:#1a7a3a'>
-            ClutchSheets F5 Baseball Forecaster
-          </span>
-        </div>
-    """, unsafe_allow_html=True)
+    # Tighten default top padding and restore title
+    st.html("<style>.block-container{padding-top:0.5rem!important}</style>")
+    st.markdown(
+        "<h2 style='color:#1a7a3a;margin:0 0 4px 0'>⚾ ClutchSheets F5 Baseball Forecaster</h2>",
+        unsafe_allow_html=True
+    )
 
     CSV_PATH = os.environ.get("FORECAST_CSV", "daily_forecast.csv")
     DB_PATH  = os.environ.get("DB_PATH",      "mlb_f5_forecasts.db")
