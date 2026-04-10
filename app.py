@@ -360,12 +360,8 @@ def render_performance(hist: pd.DataFrame):
             ]
         )
 
-        labels = dots.mark_text(dy=-14, fontSize=11, color="gray").encode(
-            text=alt.Text("n:Q", format="d")
-        )
-
         st.altair_chart(
-            (diag_line + dots + labels).properties(height=360),
+            (diag_line + dots).properties(height=360),
             use_container_width=True
         )
     else:
