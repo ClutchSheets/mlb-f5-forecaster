@@ -305,180 +305,100 @@ def format_bucket_label(interval) -> str:
     return f"{left}%–{right}%"
 
 
-def render_close_calibration(df: pd.DataFrame):
-    st.markdown("#### Calibration Against Closing Line (10% Buckets)")
-    st.caption("Blue dots compare your model buckets to average devigged Pinnacle close. The dashed line is perfect agreement with close.")
-
-    calib = df.dropna(subset=["winprob_home", "close_home_prob_devig"]).copy()
-    if calib.empty:
-        st.info("Not enough data for close calibration.")
-        return
-
-    bins = np.linspace(0, 1, 11)
-    calib["bucket"] = pd.cut(calib["winprob_home"], bins=bins, include_lowest=True)
-
-    calib_table = (
-        calib.groupby("bucket", observed=False)
-        .agg(
-            avg_model=("winprob_home", "mean"),
-            avg_close=("close_home_prob_devig", "mean"),
-            count=("close_home_prob_devig", "count"),
-        )
-        .reset_index()
-    )
-
-    calib_table = calib_table[calib_table["count"] > 0].copy()
-    if calib_table.empty:
-        st.info("Not enough populated buckets for close calibration.")
-        return
-
-    calib_table["bucket_label"] = calib_table["bucket"].apply(format_bucket_label)
-
-    diagonal = pd.DataFrame({"x": [0, 1], "y": [0, 1]})
-
-    diag_line = alt.Chart(diagonal).mark_line(
-        strokeDash=[4, 4], color="gray"
-    ).encode(
-        x=alt.X("x:Q", title="Model projected probability", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format=".0%", values=[i / 20 for i in range(21)])),
-        y=alt.Y("y:Q", title="Average devigged Pinnacle close", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format=".0%")),
-    )
-
-    dots = alt.Chart(calib_table).mark_circle(
-        color="#378AD3", opacity=0.85, stroke="#185FA5", strokeWidth=1.5
-    ).encode(
-        x=alt.X("avg_model:Q", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format=".0%", values=[i / 20 for i in range(21)])),
-        y=alt.Y("avg_close:Q", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format=".0%")),
-        size=alt.Size("count:Q", scale=alt.Scale(range=[80, 450]), legend=None),
-        tooltip=[
-            alt.Tooltip("bucket_label:N", title="Bucket"),
-            alt.Tooltip("avg_model:Q", format=".3f", title="Avg model"),
-            alt.Tooltip("avg_close:Q", format=".3f", title="Avg close"),
-            alt.Tooltip("count:Q", title="Games"),
-        ],
-    )
-
-    st.altair_chart((diag_line + dots).properties(height=340), use_container_width=True)
-
-    show_table = calib_table[["bucket_label", "avg_model", "avg_close", "count"]].copy()
-    show_table.columns = ["bucket", "avg_model", "avg_close", "count"]
-    show_table["avg_model"] = show_table["avg_model"].round(4)
-    show_table["avg_close"] = show_table["avg_close"].round(4)
-    st.dataframe(show_table, use_container_width=True)
-
 
 def render_actual_calibration_comparison(df: pd.DataFrame):
     st.markdown("#### Model vs Market Calibration Against Actual Results")
-    st.caption("Blue dots are your model buckets against actual win rate. Purple dots are the market's devigged closing buckets against actual win rate.")
+    st.caption(
+        "Each dot is a 10% probability bucket. "
+        "X-axis = average predicted home win probability in that bucket. "
+        "Y-axis = actual home win rate. "
+        "Dashed diagonal = perfect calibration. "
+        "Points above the line = underconfident; below = overconfident."
+    )
 
     calib = df.dropna(subset=["winprob_home", "close_home_prob_devig", "home_win_f5"]).copy()
     if calib.empty:
         st.info("Not enough data for actual-result calibration.")
         return
 
-    bins = np.linspace(0.5, 1.0, 6)  # 50–60, 60–70, 70–80, 80–90, 90–100
+    bins = np.linspace(0, 1, 11)  # 0-10%, 10-20%, ... 90-100%
 
-    # Model calibration: normalize to model favorite
-    model_df = calib.copy()
-    model_df["pred_prob"] = model_df["winprob_home"]
-    model_df["actual"] = model_df["home_win_f5"]
-
-    model_flip = model_df["pred_prob"] < 0.5
-    model_df.loc[model_flip, "pred_prob"] = 1 - model_df.loc[model_flip, "pred_prob"]
-    model_df.loc[model_flip, "actual"] = 1 - model_df.loc[model_flip, "actual"]
-
-    model_df["bucket"] = pd.cut(model_df["pred_prob"], bins=bins, include_lowest=True)
-    model_table = (
-        model_df.groupby("bucket", observed=False)
-        .agg(
-            avg_pred=("pred_prob", "mean"),
-            actual_win=("actual", "mean"),
-            count=("actual", "count"),
+    def make_bucket_table(prob_col, series_label):
+        tmp = calib[["home_win_f5", prob_col]].copy()
+        tmp["bucket"] = pd.cut(tmp[prob_col], bins=bins, include_lowest=True)
+        tbl = (
+            tmp.groupby("bucket", observed=False)
+            .agg(
+                avg_pred=(prob_col, "mean"),
+                actual_win=("home_win_f5", "mean"),
+                count=("home_win_f5", "count"),
+            )
+            .reset_index()
         )
-        .reset_index()
-    )
-    model_table = model_table[model_table["count"] > 0].copy()
-    model_table["series"] = "Model"
-    model_table["bucket_label"] = model_table["bucket"].apply(format_bucket_label)
+        tbl = tbl[tbl["count"] > 0].copy()
+        tbl["series"] = series_label
+        tbl["bucket_label"] = tbl["bucket"].apply(format_bucket_label)
+        return tbl
 
-    # Market calibration: normalize to market favorite
-    market_df = calib.copy()
-    market_df["pred_prob"] = market_df["close_home_prob_devig"]
-    market_df["actual"] = market_df["home_win_f5"]
-
-    market_flip = market_df["pred_prob"] < 0.5
-    market_df.loc[market_flip, "pred_prob"] = 1 - market_df.loc[market_flip, "pred_prob"]
-    market_df.loc[market_flip, "actual"] = 1 - market_df.loc[market_flip, "actual"]
-
-    market_df["bucket"] = pd.cut(market_df["pred_prob"], bins=bins, include_lowest=True)
-    market_table = (
-        market_df.groupby("bucket", observed=False)
-        .agg(
-            avg_pred=("pred_prob", "mean"),
-            actual_win=("actual", "mean"),
-            count=("actual", "count"),
-        )
-        .reset_index()
-    )
-    market_table = market_table[market_table["count"] > 0].copy()
-    market_table["series"] = "Market Close"
-    market_table["bucket_label"] = market_table["bucket"].apply(format_bucket_label)
+    model_table  = make_bucket_table("winprob_home",          "My Model")
+    market_table = make_bucket_table("close_home_prob_devig", "Pinnacle Closing FV")
 
     combined = pd.concat([model_table, market_table], ignore_index=True)
     if combined.empty:
         st.info("Not enough populated buckets for actual-result calibration.")
         return
 
-    diagonal = pd.DataFrame({"x": [0.5, 1.0], "y": [0.5, 1.0]})
+    diagonal = pd.DataFrame({"x": [0.0, 1.0], "y": [0.0, 1.0]})
 
     diag_line = alt.Chart(diagonal).mark_line(
         strokeDash=[4, 4], color="gray"
     ).encode(
-        x=alt.X(
-            "x:Q",
-            title="Projected probability bucket average",
-            scale=alt.Scale(domain=[0.5, 1.0]),
-            axis=alt.Axis(format=".0%", values=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0]),
-        ),
-        y=alt.Y(
-            "y:Q",
-            title="Actual win rate",
-            scale=alt.Scale(domain=[0.0, 1.0]),
-            axis=alt.Axis(format=".0%"),
-        ),
+        x=alt.X("x:Q", scale=alt.Scale(domain=[0, 1]),
+                axis=alt.Axis(format=".0%", values=[i / 10 for i in range(11)])),
+        y=alt.Y("y:Q", scale=alt.Scale(domain=[0, 1]),
+                axis=alt.Axis(format=".0%", values=[i / 10 for i in range(11)])),
     )
 
     dots = alt.Chart(combined).mark_circle(opacity=0.85, strokeWidth=1.5).encode(
         x=alt.X(
             "avg_pred:Q",
-            scale=alt.Scale(domain=[0.5, 1.0]),
-            axis=alt.Axis(format=".0%", values=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0]),
+            title="Predicted home win probability",
+            scale=alt.Scale(domain=[0, 1]),
+            axis=alt.Axis(format=".0%", values=[i / 10 for i in range(11)]),
         ),
         y=alt.Y(
             "actual_win:Q",
-            scale=alt.Scale(domain=[0.0, 1.0]),
-            axis=alt.Axis(format=".0%"),
+            title="Actual home win rate",
+            scale=alt.Scale(domain=[0, 1]),
+            axis=alt.Axis(format=".0%", values=[i / 10 for i in range(11)]),
         ),
-        size=alt.Size("count:Q", scale=alt.Scale(range=[80, 450]), legend=None),
+        size=alt.Size("count:Q", scale=alt.Scale(range=[80, 500]), legend=None),
         color=alt.Color(
             "series:N",
-            scale=alt.Scale(domain=["Model", "Market Close"], range=["#378AD3", "#7A3FB0"]),
-            legend=alt.Legend(title="")
+            scale=alt.Scale(
+                domain=["My Model", "Pinnacle Closing FV"],
+                range=["#378AD3", "#BA7517"]
+            ),
+            legend=alt.Legend(title="", orient="top-left"),
         ),
         tooltip=[
-            alt.Tooltip("series:N", title="Series"),
+            alt.Tooltip("series:N",       title="Series"),
             alt.Tooltip("bucket_label:N", title="Bucket"),
-            alt.Tooltip("avg_pred:Q", format=".3f", title="Avg projected"),
-            alt.Tooltip("actual_win:Q", format=".3f", title="Actual win rate"),
-            alt.Tooltip("count:Q", title="Games"),
+            alt.Tooltip("avg_pred:Q",     format=".1%", title="Avg predicted"),
+            alt.Tooltip("actual_win:Q",   format=".1%", title="Actual win rate"),
+            alt.Tooltip("count:Q",        title="Games"),
         ],
     )
 
-    st.altair_chart((diag_line + dots).properties(height=360), use_container_width=True)
+    st.altair_chart(
+        (diag_line + dots).properties(height=420),
+        use_container_width=True
+    )
 
     show_table = combined[["series", "bucket_label", "avg_pred", "actual_win", "count"]].copy()
-    show_table.columns = ["series", "bucket", "avg_pred", "actual_win", "count"]
-    show_table["avg_pred"] = show_table["avg_pred"].round(4)
-    show_table["actual_win"] = show_table["actual_win"].round(4)
+    show_table.columns = ["series", "bucket", "avg_pred_%", "actual_win_%", "count"]
+    show_table["avg_pred_%"]   = (show_table["avg_pred_%"]   * 100).round(1)
+    show_table["actual_win_%"] = (show_table["actual_win_%"] * 100).round(1)
     st.dataframe(show_table, use_container_width=True)
 
 
@@ -551,9 +471,6 @@ def render_performance(hist: pd.DataFrame):
 
     st.markdown("---")
     render_accuracy_over_time(scored)
-
-    st.markdown("---")
-    render_close_calibration(scored)
 
     st.markdown("---")
     render_actual_calibration_comparison(scored)
