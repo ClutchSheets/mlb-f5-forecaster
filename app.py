@@ -326,7 +326,7 @@ def render_beating_the_market(df: pd.DataFrame):
     n         = len(plot_df)
 
     # Recent trend: compare last 20 games vs overall avg (or half the sample if < 40 games)
-    window    = min(20, max(5, n // 4))
+    window    = min(50, n)
     recent_df = plot_df.tail(window)
     recent_avg = recent_df["model_vs_close_logloss_devig"].mean()
     trend_diff = recent_avg - avg_delta  # negative = recent is better than overall
