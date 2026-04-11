@@ -371,30 +371,28 @@ def render_actual_calibration_comparison(df: pd.DataFrame):
     st.caption("Blue dots are your model buckets against actual win rate. Purple dots are the market's devigged closing buckets against actual win rate.")
 
     calib = df.dropna(subset=["winprob_home", "close_home_prob_devig", "home_win_f5"]).copy()
-    # --- FAVORITE NORMALIZATION (CRITICAL FIX) ---
-    calib["model_prob"] = calib["winprob_home"]
-    calib["market_prob"] = calib["close_home_prob_devig"]
-    calib["actual"] = calib["home_win_f5"]
-
-    mask = calib["model_prob"] < 0.5
-    calib.loc[mask, "model_prob"] = 1 - calib.loc[mask, "model_prob"]
-    calib.loc[mask, "market_prob"] = 1 - calib.loc[mask, "market_prob"]
-    calib.loc[mask, "actual"] = 1 - calib.loc[mask, "actual"]
-
     if calib.empty:
         st.info("Not enough data for actual-result calibration.")
         return
 
-    bins = np.linspace(0, 1, 11)
+    bins = np.linspace(0.5, 1.0, 6)  # 50–60, 60–70, 70–80, 80–90, 90–100
 
+    # Model calibration: normalize to model favorite
     model_df = calib.copy()
-    model_df["bucket"] = pd.cut(model_df["model_prob"], bins=bins, include_lowest=True)
+    model_df["pred_prob"] = model_df["winprob_home"]
+    model_df["actual"] = model_df["home_win_f5"]
+
+    model_flip = model_df["pred_prob"] < 0.5
+    model_df.loc[model_flip, "pred_prob"] = 1 - model_df.loc[model_flip, "pred_prob"]
+    model_df.loc[model_flip, "actual"] = 1 - model_df.loc[model_flip, "actual"]
+
+    model_df["bucket"] = pd.cut(model_df["pred_prob"], bins=bins, include_lowest=True)
     model_table = (
         model_df.groupby("bucket", observed=False)
         .agg(
-            avg_pred=("model_prob", "mean"),
+            avg_pred=("pred_prob", "mean"),
             actual_win=("actual", "mean"),
-            count=("home_win_f5", "count"),
+            count=("actual", "count"),
         )
         .reset_index()
     )
@@ -402,14 +400,22 @@ def render_actual_calibration_comparison(df: pd.DataFrame):
     model_table["series"] = "Model"
     model_table["bucket_label"] = model_table["bucket"].apply(format_bucket_label)
 
+    # Market calibration: normalize to market favorite
     market_df = calib.copy()
-    market_df["bucket"] = pd.cut(market_df["market_prob"], bins=bins, include_lowest=True)
+    market_df["pred_prob"] = market_df["close_home_prob_devig"]
+    market_df["actual"] = market_df["home_win_f5"]
+
+    market_flip = market_df["pred_prob"] < 0.5
+    market_df.loc[market_flip, "pred_prob"] = 1 - market_df.loc[market_flip, "pred_prob"]
+    market_df.loc[market_flip, "actual"] = 1 - market_df.loc[market_flip, "actual"]
+
+    market_df["bucket"] = pd.cut(market_df["pred_prob"], bins=bins, include_lowest=True)
     market_table = (
         market_df.groupby("bucket", observed=False)
         .agg(
-            avg_pred=("market_prob", "mean"),
+            avg_pred=("pred_prob", "mean"),
             actual_win=("actual", "mean"),
-            count=("home_win_f5", "count"),
+            count=("actual", "count"),
         )
         .reset_index()
     )
@@ -422,18 +428,36 @@ def render_actual_calibration_comparison(df: pd.DataFrame):
         st.info("Not enough populated buckets for actual-result calibration.")
         return
 
-    diagonal = pd.DataFrame({"x": [0, 1], "y": [0, 1]})
+    diagonal = pd.DataFrame({"x": [0.5, 1.0], "y": [0.5, 1.0]})
 
     diag_line = alt.Chart(diagonal).mark_line(
         strokeDash=[4, 4], color="gray"
     ).encode(
-        x=alt.X("x:Q", title="Projected probability bucket average", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format=".0%", values=[i / 20 for i in range(21)])),
-        y=alt.Y("y:Q", title="Actual win rate", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format=".0%")),
+        x=alt.X(
+            "x:Q",
+            title="Projected probability bucket average",
+            scale=alt.Scale(domain=[0.5, 1.0]),
+            axis=alt.Axis(format=".0%", values=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0]),
+        ),
+        y=alt.Y(
+            "y:Q",
+            title="Actual win rate",
+            scale=alt.Scale(domain=[0.0, 1.0]),
+            axis=alt.Axis(format=".0%"),
+        ),
     )
 
     dots = alt.Chart(combined).mark_circle(opacity=0.85, strokeWidth=1.5).encode(
-        x=alt.X("avg_pred:Q", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format=".0%", values=[i / 20 for i in range(21)])),
-        y=alt.Y("actual_win:Q", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format=".0%")),
+        x=alt.X(
+            "avg_pred:Q",
+            scale=alt.Scale(domain=[0.5, 1.0]),
+            axis=alt.Axis(format=".0%", values=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0]),
+        ),
+        y=alt.Y(
+            "actual_win:Q",
+            scale=alt.Scale(domain=[0.0, 1.0]),
+            axis=alt.Axis(format=".0%"),
+        ),
         size=alt.Size("count:Q", scale=alt.Scale(range=[80, 450]), legend=None),
         color=alt.Color(
             "series:N",
