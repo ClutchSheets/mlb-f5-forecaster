@@ -306,12 +306,7 @@ def format_bucket_label(interval) -> str:
 
 
 def render_beating_the_market(df: pd.DataFrame):
-    st.markdown("#### Am I Beating the Market?")
-    st.caption(
-        "Log loss delta = model log loss minus Pinnacle closing log loss, per game. "
-        "Negative = your model priced the outcome better than the market. "
-        "The cumulative line shows whether your edge is growing, shrinking, or flat over time."
-    )
+    st.markdown("#### Model vs Market — Am I Getting Closer?")
 
     if "model_vs_close_logloss_devig" not in df.columns:
         st.info("No closing-line log loss data yet.")
@@ -328,43 +323,87 @@ def render_beating_the_market(df: pd.DataFrame):
     plot_df["game_label"] = plot_df["away_team"] + " @ " + plot_df["home_team"] + " (" + plot_df["date"] + ")"
 
     avg_delta = plot_df["model_vs_close_logloss_devig"].mean()
-    median_delta = plot_df["model_vs_close_logloss_devig"].median()
-    pct_beating = (plot_df["model_vs_close_logloss_devig"] < 0).mean() * 100
-    n = len(plot_df)
+    n         = len(plot_df)
 
-    verdict = "✅ Beating the market" if avg_delta < 0 else "❌ Behind the market"
-    verdict_color = "#1a7a3a" if avg_delta < 0 else "#a33"
+    # Recent trend: compare last 20 games vs overall avg (or half the sample if < 40 games)
+    window    = min(20, max(5, n // 4))
+    recent_df = plot_df.tail(window)
+    recent_avg = recent_df["model_vs_close_logloss_devig"].mean()
+    trend_diff = recent_avg - avg_delta  # negative = recent is better than overall
+
+    # Plain-English headline
+    if avg_delta < 0:
+        overall_txt = f"Overall your model is <b>ahead of the market</b> by {abs(avg_delta):.4f} log loss per game across {n} games."
+    else:
+        overall_txt = f"Overall your model is <b>behind the market</b> by {abs(avg_delta):.4f} log loss per game across {n} games."
+
+    if abs(trend_diff) < 0.005:
+        trend_txt = f"Your last {window} games are flat — performance is holding steady."
+        trend_color = "#666"
+    elif trend_diff < 0:
+        trend_txt = f"Your last {window} games are <b>trending better</b> (recent avg {recent_avg:+.4f} vs overall {avg_delta:+.4f}) — you\'re closing the gap on the market."
+        trend_color = "#1a7a3a"
+    else:
+        trend_txt = f"Your last {window} games are <b>trending worse</b> (recent avg {recent_avg:+.4f} vs overall {avg_delta:+.4f}) — the gap to the market is widening."
+        trend_color = "#a33333"
 
     st.markdown(
-        f"<div style='font-size:1.3em;font-weight:600;color:{verdict_color};margin-bottom:0.5rem'>{verdict}</div>",
+        f"<p style=\"margin:0 0 4px\">{overall_txt}</p>"
+        f"<p style=\"margin:0;color:{trend_color}\">{trend_txt}</p>",
         unsafe_allow_html=True
     )
-
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Games w/ Close Data", n)
-    c2.metric("Avg Log Loss Delta", f"{avg_delta:+.4f}", help="Negative = better than market")
-    c3.metric("Median Log Loss Delta", f"{median_delta:+.4f}")
-    c4.metric("% Games Beating Close", f"{pct_beating:.1f}%")
+    st.caption("Log loss delta = model log loss minus Pinnacle closing log loss. Negative = your model priced the outcome better. Lower is better.")
 
     st.markdown("")
 
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Games Scored", n)
+    c2.metric("Avg Log Loss Delta", f"{avg_delta:+.4f}", help="Negative = better than market")
+    c3.metric(f"Last {window} Games Avg", f"{recent_avg:+.4f}",
+              delta=f"{trend_diff:+.4f} vs overall",
+              delta_color="inverse")
+
+    st.markdown("")
+
+    # Shaded region below zero
+    shade_df = pd.DataFrame({"x": [0, n + 1], "y1": [0, 0], "y2": [-1, -1]})
+    shade = alt.Chart(shade_df).mark_rect(opacity=0.04, color="#1a7a3a").encode(
+        x=alt.X("x:Q"), x2="x:Q",
+        y=alt.Y("y1:Q"), y2="y2:Q"
+    )
+
     zero_line = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(
-        strokeDash=[4, 4], color="gray", opacity=0.6
+        strokeDash=[4, 4], color="gray", opacity=0.5
     ).encode(y="y:Q")
 
-    trend = alt.Chart(plot_df).mark_line(color="#378AD3", strokeWidth=2).encode(
+    # Recent window highlight band
+    recent_band = alt.Chart(pd.DataFrame({
+        "x1": [n - window + 1], "x2": [n + 0.5]
+    })).mark_rect(opacity=0.06, color="#378AD3").encode(
+        x=alt.X("x1:Q"), x2="x2:Q"
+    )
+
+    recent_label = alt.Chart(pd.DataFrame({
+        "x": [n - window / 2], "y": [plot_df["model_vs_close_logloss_devig"].max() * 0.85],
+        "label": [f"Last {window}"]
+    })).mark_text(color="#378AD3", fontSize=11, opacity=0.7).encode(
+        x="x:Q", y="y:Q", text="label:N"
+    )
+
+    trend_line = alt.Chart(plot_df).mark_line(color="#378AD3", strokeWidth=2.5).encode(
         x=alt.X("game_num:Q", title="Game #"),
-        y=alt.Y("cumulative_delta:Q", title="Cumulative avg log loss delta",
-                axis=alt.Axis(format=".4f")),
+        y=alt.Y("cumulative_delta:Q",
+                title="Cumulative avg log loss delta (negative = beating market)",
+                axis=alt.Axis(format=".3f")),
         tooltip=[
-            alt.Tooltip("game_label:N",      title="Game"),
-            alt.Tooltip("cumulative_delta:Q", title="Cumulative avg", format="+.4f"),
-            alt.Tooltip("model_vs_close_logloss_devig:Q", title="This game delta", format="+.4f"),
-            alt.Tooltip("game_num:Q",         title="Game #"),
+            alt.Tooltip("game_label:N",       title="Game"),
+            alt.Tooltip("cumulative_delta:Q",  title="Cumulative avg", format="+.4f"),
+            alt.Tooltip("model_vs_close_logloss_devig:Q", title="This game", format="+.4f"),
+            alt.Tooltip("game_num:Q",          title="Game #"),
         ]
     )
 
-    points = alt.Chart(plot_df).mark_circle(size=35, opacity=0.6).encode(
+    points = alt.Chart(plot_df).mark_circle(size=35, opacity=0.55).encode(
         x=alt.X("game_num:Q"),
         y=alt.Y("model_vs_close_logloss_devig:Q"),
         color=alt.condition(
@@ -373,17 +412,20 @@ def render_beating_the_market(df: pd.DataFrame):
             alt.value("#a33333")
         ),
         tooltip=[
-            alt.Tooltip("game_label:N",      title="Game"),
+            alt.Tooltip("game_label:N",       title="Game"),
             alt.Tooltip("model_vs_close_logloss_devig:Q", title="Log loss delta", format="+.4f"),
             alt.Tooltip("game_num:Q",         title="Game #"),
         ]
     )
 
     st.altair_chart(
-        (zero_line + points + trend).properties(height=380),
+        (zero_line + recent_band + points + trend_line + recent_label).properties(height=400),
         use_container_width=True
     )
-    st.caption("Green dots = model beat the market on that game. Red dots = market was better. Blue line = cumulative average trend.")
+    st.caption(
+        f"Green dots = model beat market that game. Red dots = market was better. "
+        f"Blue line = cumulative average. Blue shaded band = last {window} games."
+    )
 
 
 def render_performance(hist: pd.DataFrame):
@@ -398,22 +440,11 @@ def render_performance(hist: pd.DataFrame):
         st.info("No scored games yet.")
         return
 
-    total = len(scored)
-    close_coverage = scored["close_logloss_devig"].notna().mean() * 100 if "close_logloss_devig" in scored.columns else 0.0
-    avg_logloss_delta = scored["model_vs_close_logloss_devig"].mean() if "model_vs_close_logloss_devig" in scored.columns else np.nan
-    median_logloss_delta = scored["model_vs_close_logloss_devig"].median() if "model_vs_close_logloss_devig" in scored.columns else np.nan
     avg_abs_prob_diff = scored["abs_prob_diff_close"].mean() if "abs_prob_diff_close" in scored.columns else np.nan
-
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Games Scored", total)
-    c2.metric("Close Coverage", f"{close_coverage:.1f}%")
-    c3.metric("Avg Log Loss Delta", f"{avg_logloss_delta:+.4f}" if pd.notna(avg_logloss_delta) else "—")
-    c4.metric("Median Log Loss Delta", f"{median_logloss_delta:+.4f}" if pd.notna(median_logloss_delta) else "—")
-
     st.caption(
-        f"Average absolute probability gap versus close: {avg_abs_prob_diff:.4f}"
+        f"Average absolute probability gap versus Pinnacle close: {avg_abs_prob_diff:.4f}"
         if pd.notna(avg_abs_prob_diff) else
-        "Average absolute probability gap versus close: —"
+        "Average absolute probability gap versus Pinnacle close: —"
     )
 
     st.markdown("---")
@@ -421,16 +452,16 @@ def render_performance(hist: pd.DataFrame):
 
     with st.expander("Outcome-based diagnostics"):
         st.caption("Secondary metrics describing how model probabilities aligned with actual outcomes.")
-        mae = scored["mae_total"].mean() if "mae_total" in scored.columns else np.nan
-        brier = scored["brier"].mean() if "brier" in scored.columns else np.nan
-        model_logloss = scored["logloss"].mean() if "logloss" in scored.columns else np.nan
-        close_logloss = scored["close_logloss_devig"].mean() if "close_logloss_devig" in scored.columns else np.nan
+        mae          = scored["mae_total"].mean()        if "mae_total"          in scored.columns else np.nan
+        brier        = scored["brier"].mean()            if "brier"              in scored.columns else np.nan
+        model_logloss= scored["logloss"].mean()          if "logloss"            in scored.columns else np.nan
+        close_logloss= scored["close_logloss_devig"].mean() if "close_logloss_devig" in scored.columns else np.nan
 
         d1, d2, d3, d4 = st.columns(4)
-        d1.metric("MAE (Runs)", f"{mae:.3f}" if pd.notna(mae) else "—")
-        d2.metric("Brier Score", f"{brier:.4f}" if pd.notna(brier) else "—")
-        d3.metric("Model Log Loss", f"{model_logloss:.4f}" if pd.notna(model_logloss) else "—")
-        d4.metric("Close Log Loss", f"{close_logloss:.4f}" if pd.notna(close_logloss) else "—")
+        d1.metric("MAE (Runs)",      f"{mae:.3f}"         if pd.notna(mae)           else "—")
+        d2.metric("Brier Score",     f"{brier:.4f}"       if pd.notna(brier)         else "—")
+        d3.metric("Model Log Loss",  f"{model_logloss:.4f}" if pd.notna(model_logloss) else "—")
+        d4.metric("Close Log Loss",  f"{close_logloss:.4f}" if pd.notna(close_logloss) else "—")
 
     st.markdown("---")
     st.markdown("#### Closing-Line Comparison Archive")
