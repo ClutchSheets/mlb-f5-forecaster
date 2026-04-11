@@ -371,6 +371,16 @@ def render_actual_calibration_comparison(df: pd.DataFrame):
     st.caption("Blue dots are your model buckets against actual win rate. Purple dots are the market's devigged closing buckets against actual win rate.")
 
     calib = df.dropna(subset=["winprob_home", "close_home_prob_devig", "home_win_f5"]).copy()
+    # --- FAVORITE NORMALIZATION (CRITICAL FIX) ---
+    calib["model_prob"] = calib["winprob_home"]
+    calib["market_prob"] = calib["close_home_prob_devig"]
+    calib["actual"] = calib["home_win_f5"]
+
+    mask = calib["model_prob"] < 0.5
+    calib.loc[mask, "model_prob"] = 1 - calib.loc[mask, "model_prob"]
+    calib.loc[mask, "market_prob"] = 1 - calib.loc[mask, "market_prob"]
+    calib.loc[mask, "actual"] = 1 - calib.loc[mask, "actual"]
+
     if calib.empty:
         st.info("Not enough data for actual-result calibration.")
         return
@@ -378,12 +388,12 @@ def render_actual_calibration_comparison(df: pd.DataFrame):
     bins = np.linspace(0, 1, 11)
 
     model_df = calib.copy()
-    model_df["bucket"] = pd.cut(model_df["winprob_home"], bins=bins, include_lowest=True)
+    model_df["bucket"] = pd.cut(model_df["model_prob"], bins=bins, include_lowest=True)
     model_table = (
         model_df.groupby("bucket", observed=False)
         .agg(
-            avg_pred=("winprob_home", "mean"),
-            actual_win=("home_win_f5", "mean"),
+            avg_pred=("model_prob", "mean"),
+            actual_win=("actual", "mean"),
             count=("home_win_f5", "count"),
         )
         .reset_index()
@@ -393,12 +403,12 @@ def render_actual_calibration_comparison(df: pd.DataFrame):
     model_table["bucket_label"] = model_table["bucket"].apply(format_bucket_label)
 
     market_df = calib.copy()
-    market_df["bucket"] = pd.cut(market_df["close_home_prob_devig"], bins=bins, include_lowest=True)
+    market_df["bucket"] = pd.cut(market_df["market_prob"], bins=bins, include_lowest=True)
     market_table = (
         market_df.groupby("bucket", observed=False)
         .agg(
-            avg_pred=("close_home_prob_devig", "mean"),
-            actual_win=("home_win_f5", "mean"),
+            avg_pred=("market_prob", "mean"),
+            actual_win=("actual", "mean"),
             count=("home_win_f5", "count"),
         )
         .reset_index()
