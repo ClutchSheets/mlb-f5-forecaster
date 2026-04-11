@@ -1,3 +1,4 @@
+import json
 import os
 import sqlite3
 from datetime import date
@@ -12,11 +13,11 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="ClutchSheets F5 Forecaster", layout="wide")
 
 ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "d31971f20a2edb069b228e828826815a")
-ODDS_API_URL = "https://api.the-odds-api.com/v4/sports/baseball_mlb/odds"
+DAILY_ODDS_FILE = os.environ.get("DAILY_ODDS_FILE", "daily_odds.json")
 
-BOOKS = ["betonline", "fanduel", "draftkings", "betmgm", "betrivers"]
+BOOKS = ["betonlineag", "fanduel", "draftkings", "betmgm", "betrivers"]
 BOOK_LABELS = {
-    "betonline": "BetOnline",
+    "betonlineag": "BetOnline",
     "fanduel": "FanDuel",
     "draftkings": "DraftKings",
     "betmgm": "BetMGM",
@@ -73,32 +74,29 @@ def fmt_american(odds: int) -> str:
 
 @st.cache_data(ttl=300)
 def fetch_odds():
-    if not ODDS_API_KEY:
+    """
+    Reads pre-fetched F5 odds from daily_odds.json (written by fetch_odds.py).
+    Returns lookup keyed by "AWAY_CODE@HOME_CODE" with structure:
+      { "ml": {"fanduel": {"away": int, "home": int}, ...},
+        "total": {...},
+        "pinnacle": {"ml": {...}, "total": {...}} }
+    """
+    if not os.path.exists(DAILY_ODDS_FILE):
         return {}
-    params = {
-        "apiKey": ODDS_API_KEY,
-        "regions": "us",
-        "markets": "h2h,totals",
-        "oddsFormat": "american",
-        "bookmakers": ",".join(BOOKS),
-    }
     try:
-        r = requests.get(ODDS_API_URL, params=params, timeout=15)
-        if r.status_code != 200:
-            return {}
-        raw = r.json()
+        with open(DAILY_ODDS_FILE, encoding="utf-8") as f:
+            payload = json.load(f)
     except Exception:
         return {}
 
     lookup = {}
-    for game in raw:
-        bmakers = {b["key"]: b for b in game.get("bookmakers", [])}
-        away_name = game["away_team"]
-        home_name = game["home_team"]
+    for full_key, game in payload.get("games", {}).items():
+        away_name = game.get("away", "")
+        home_name = game.get("home", "")
         away_code = NAME_TO_CODE.get(away_name, away_name[:3].upper())
         home_code = NAME_TO_CODE.get(home_name, home_name[:3].upper())
-        key = f"{away_code}@{home_code}"
-        lookup[key] = {"bookmakers": bmakers, "commence_time": game.get("commence_time", "")}
+        code_key = f"{away_code}@{home_code}"
+        lookup[code_key] = game  # contains ml, total, pinnacle, commence_edt
     return lookup
 
 
@@ -123,20 +121,12 @@ def load_history(db_path: str) -> pd.DataFrame:
     return df
 
 
-def get_book_odds(book_key, bk, away, home):
-    bdata = bk.get(book_key, {})
-    if not bdata:
+def get_book_odds(book_key, game, away, home):
+    """Reads F5 ML odds from daily_odds.json game dict."""
+    entry = game.get("ml", {}).get(book_key)
+    if not entry:
         return None, None
-    markets = bdata.get("markets", {})
-    h2h = next((m for m in markets if m["key"] == "h2h"), None) if isinstance(markets, list) else markets.get("h2h")
-    if not h2h:
-        return None, None
-    outcomes = {o["name"]: o["price"] for o in h2h.get("outcomes", [])}
-    home_name = next((n for n in outcomes if NAME_TO_CODE.get(n) == home), None)
-    away_name = next((n for n in outcomes if NAME_TO_CODE.get(n) == away), None)
-    if home_name and away_name:
-        return outcomes[away_name], outcomes[home_name]
-    return None, None
+    return entry.get("away"), entry.get("home")
 
 
 def render_games_table(df, odds_lookup):
@@ -192,14 +182,14 @@ def render_games_table(df, odds_lookup):
         ml_fv_home = fmt_american(prob_to_american(model_home_p))
 
         key = f"{away}@{home}"
-        bk = odds_lookup.get(key, {}).get("bookmakers", {})
+        game = odds_lookup.get(key, {})
 
         away_cells = ""
         home_cells = ""
         td_style = f"padding:4px 12px;text-align:center;border-bottom:1px solid {BORDER}"
 
         for bk_key in BOOKS:
-            away_odds, home_odds = get_book_odds(bk_key, bk, away, home)
+            away_odds, home_odds = get_book_odds(bk_key, game, away, home)
             if away_odds is None:
                 away_cells += f"<td style='{td_style}'><span style='color:#888'>—</span></td>"
                 home_cells += f"<td style='{td_style}'><span style='color:#888'>—</span></td>"
