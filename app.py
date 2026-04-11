@@ -11,7 +11,7 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="ClutchSheets F5 Forecaster", layout="wide")
 
-ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "d31971f20a2edb069b228e828826815a")
+ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "")
 ODDS_API_URL = "https://api.the-odds-api.com/v4/sports/baseball_mlb/odds"
 
 BOOKS = ["betonline", "fanduel", "draftkings", "betmgm", "betrivers"]
@@ -255,8 +255,79 @@ def render_games_table(df, odds_lookup):
         """
 
     html += "</tbody></table>"
-    height = len(df) * 64 + 50
-    components.html(html, height=height, scrolling=False)
+    height = max(980, len(df) * 78 + 90)
+    components.html(html, height=height, scrolling=True)
+
+
+def prepare_scored_subset(hist: pd.DataFrame) -> pd.DataFrame:
+    if hist.empty or "completed5" not in hist.columns:
+        return pd.DataFrame()
+
+    scored = hist.copy()
+    scored["completed5"] = pd.to_numeric(scored["completed5"], errors="coerce").fillna(0)
+    scored = scored[scored["completed5"] == 1].copy()
+    if scored.empty:
+        return scored
+
+    numeric_cols = [
+        "winprob_home", "home_win_f5", "logloss", "brier", "mae_total",
+        "close_logloss_devig", "model_vs_close_logloss_devig",
+        "home_abs_devig_close_diff", "close_home_prob_devig"
+    ]
+    for col in numeric_cols:
+        if col in scored.columns:
+            scored[col] = pd.to_numeric(scored[col], errors="coerce")
+
+    # Remove invalid extreme probabilities from evaluation
+    if "winprob_home" in scored.columns:
+        scored = scored[(scored["winprob_home"] > 0.05) & (scored["winprob_home"] < 0.95)].copy()
+
+    if "winprob_home" in scored.columns and "close_home_prob_devig" in scored.columns:
+        scored["edge_pct_home_close"] = (scored["winprob_home"] - scored["close_home_prob_devig"]) * 100
+        scored["edge_pct_abs_close"] = scored["edge_pct_home_close"].abs()
+        scored["qualified_5pct"] = scored["edge_pct_abs_close"] >= EDGE_THRESHOLD
+        scored["bet_side_5pct"] = np.where(
+            scored["edge_pct_home_close"] >= EDGE_THRESHOLD, "HOME",
+            np.where(scored["edge_pct_home_close"] <= -EDGE_THRESHOLD, "AWAY", "")
+        )
+    else:
+        scored["edge_pct_home_close"] = np.nan
+        scored["edge_pct_abs_close"] = np.nan
+        scored["qualified_5pct"] = False
+        scored["bet_side_5pct"] = ""
+
+    return scored.sort_values("date").copy()
+
+
+def metric_block(title: str, df: pd.DataFrame, note: str):
+    st.markdown(f"#### {title}")
+    st.caption(note)
+
+    if df.empty:
+        st.info("No games in this subset yet.")
+        return
+
+    total = len(df)
+    close_coverage = df["close_logloss_devig"].notna().mean() * 100 if "close_logloss_devig" in df.columns else 0.0
+    model_logloss = df["logloss"].mean() if "logloss" in df.columns else np.nan
+    close_logloss = df["close_logloss_devig"].mean() if "close_logloss_devig" in df.columns else np.nan
+    delta_vs_close = df["model_vs_close_logloss_devig"].mean() if "model_vs_close_logloss_devig" in df.columns else np.nan
+    beat_close_rate = (df["model_vs_close_logloss_devig"] < 0).mean() * 100 if "model_vs_close_logloss_devig" in df.columns else np.nan
+    avg_abs_devig = df["home_abs_devig_close_diff"].mean() if "home_abs_devig_close_diff" in df.columns else np.nan
+    avg_edge = df["edge_pct_abs_close"].mean() if "edge_pct_abs_close" in df.columns else np.nan
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Games", total)
+    c2.metric("Avg Abs Devig Diff", f"{avg_abs_devig:.4f}" if pd.notna(avg_abs_devig) else "—")
+    c3.metric("Model - Close", f"{delta_vs_close:+.4f}" if pd.notna(delta_vs_close) else "—")
+    c4.metric("Beat Close Rate", f"{beat_close_rate:.1f}%" if pd.notna(beat_close_rate) else "—")
+
+    c5, c6, c7 = st.columns(3)
+    c5.metric("Model Log Loss", f"{model_logloss:.4f}" if pd.notna(model_logloss) else "—")
+    c6.metric("Close Log Loss", f"{close_logloss:.4f}" if pd.notna(close_logloss) else "—")
+    c7.metric("Avg Edge vs Close", f"{avg_edge:.2f}%" if pd.notna(avg_edge) else "—")
+
+    st.caption(f"Close Coverage: {close_coverage:.1f}%")
 
 
 def format_bucket_label(interval) -> str:
@@ -267,12 +338,11 @@ def format_bucket_label(interval) -> str:
     return f"{left}%–{right}%"
 
 
-def render_calibration(scored: pd.DataFrame):
-    st.markdown("---")
-    st.markdown("#### Calibration (10% Buckets)")
-    st.caption("This checks how raw model probabilities tracked actual outcomes across all modeled games. It is not restricted to bet-qualified games.")
+def render_calibration(df: pd.DataFrame, title: str, caption: str):
+    st.markdown(f"#### {title}")
+    st.caption(caption)
 
-    calib = scored.dropna(subset=["winprob_home", "home_win_f5"]).copy()
+    calib = df.dropna(subset=["winprob_home", "home_win_f5"]).copy()
     if calib.empty:
         st.info("Not enough data for calibration.")
         return
@@ -338,102 +408,103 @@ def render_calibration(scored: pd.DataFrame):
     st.dataframe(show_table, use_container_width=True)
 
 
-def render_performance(hist: pd.DataFrame):
-    st.subheader("Pricing Performance")
-    st.caption("These diagnostics cover all modeled games with scored results and closing-line data. They are not limited to games you would have actually bet.")
-
-    if hist.empty or "completed5" not in hist.columns:
-        st.info("No scored games yet.")
-        return
-
-    hist = hist.copy()
-    hist["completed5"] = pd.to_numeric(hist["completed5"], errors="coerce").fillna(0)
-    scored = hist[hist["completed5"] == 1].copy()
-    if scored.empty:
-        st.info("No scored games yet.")
-        return
-
-    if "winprob_home" in scored.columns:
-        scored["winprob_home"] = pd.to_numeric(scored["winprob_home"], errors="coerce")
-        scored = scored[(scored["winprob_home"] > 0.05) & (scored["winprob_home"] < 0.95)].copy()
-
-    if scored.empty:
-        st.info("No valid scored games yet.")
-        return
-
-    for col in [
-        "winprob_home", "home_win_f5", "logloss", "brier", "mae_total",
-        "close_logloss_devig", "model_vs_close_logloss_devig", "home_abs_devig_close_diff"
-    ]:
-        if col in scored.columns:
-            scored[col] = pd.to_numeric(scored[col], errors="coerce")
-
-    scored = scored.sort_values("date")
-    total = len(scored)
-
-    close_coverage = (
-        scored["close_logloss_devig"].notna().mean() * 100
-        if "close_logloss_devig" in scored.columns else 0.0
-    )
-    model_logloss = scored["logloss"].mean() if "logloss" in scored.columns else np.nan
-    close_logloss = scored["close_logloss_devig"].mean() if "close_logloss_devig" in scored.columns else np.nan
-    delta_vs_close = scored["model_vs_close_logloss_devig"].mean() if "model_vs_close_logloss_devig" in scored.columns else np.nan
-    beat_close_rate = (
-        (scored["model_vs_close_logloss_devig"] < 0).mean() * 100
-        if "model_vs_close_logloss_devig" in scored.columns else np.nan
-    )
-    avg_abs_devig = scored["home_abs_devig_close_diff"].mean() if "home_abs_devig_close_diff" in scored.columns else np.nan
-
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
-    c1.metric("Games Scored", total)
-    c2.metric("Close Coverage", f"{close_coverage:.1f}%")
-    c3.metric("Avg Abs Devig Diff", f"{avg_abs_devig:.4f}" if pd.notna(avg_abs_devig) else "—")
-    c4.metric("Model Log Loss", f"{model_logloss:.4f}" if pd.notna(model_logloss) else "—")
-    c5.metric("Close Log Loss", f"{close_logloss:.4f}" if pd.notna(close_logloss) else "—")
-    c6.metric("Model - Close", f"{delta_vs_close:+.4f}" if pd.notna(delta_vs_close) else "—")
-
-    if pd.notna(beat_close_rate):
-        st.caption(f"Beat Close Rate: {beat_close_rate:.1f}%")
-
-    st.markdown("---")
+def render_pricing_over_time(df_all: pd.DataFrame, df_qual: pd.DataFrame):
     st.markdown("#### Pricing Metrics Over Time")
 
-    scored["game_num"] = range(1, total + 1)
+    charts = []
 
-    chart_cols = []
-    if "model_vs_close_logloss_devig" in scored.columns:
-        scored["roll_delta_vs_close"] = scored["model_vs_close_logloss_devig"].expanding().mean()
-        chart_cols.append("roll_delta_vs_close")
-    if "home_abs_devig_close_diff" in scored.columns:
-        scored["roll_abs_devig_diff"] = scored["home_abs_devig_close_diff"].expanding().mean()
-        chart_cols.append("roll_abs_devig_diff")
+    if not df_all.empty and "model_vs_close_logloss_devig" in df_all.columns:
+        all_df = df_all.copy()
+        all_df["game_num"] = range(1, len(all_df) + 1)
+        all_df["roll_delta"] = all_df["model_vs_close_logloss_devig"].expanding().mean()
+        all_df["subset"] = "All scored games"
+        charts.append(all_df[["game_num", "roll_delta", "subset"]])
 
-    if chart_cols:
-        plot_df = scored[["game_num", "date", "away_team", "home_team"] + chart_cols].melt(
-            id_vars=["game_num", "date", "away_team", "home_team"],
-            value_vars=chart_cols,
-            var_name="metric",
-            value_name="value"
+    if not df_qual.empty and "model_vs_close_logloss_devig" in df_qual.columns:
+        qual_df = df_qual.copy()
+        qual_df["game_num"] = range(1, len(qual_df) + 1)
+        qual_df["roll_delta"] = qual_df["model_vs_close_logloss_devig"].expanding().mean()
+        qual_df["subset"] = "5%+ qualified games"
+        charts.append(qual_df[["game_num", "roll_delta", "subset"]])
+
+    if not charts:
+        st.info("Not enough data for pricing chart.")
+        return
+
+    plot_df = pd.concat(charts, ignore_index=True)
+    line = alt.Chart(plot_df).mark_line(point=True).encode(
+        x=alt.X("game_num:Q", title="Game # within subset"),
+        y=alt.Y("roll_delta:Q", title="Cumulative Model - Close"),
+        color=alt.Color("subset:N", title="Subset"),
+        tooltip=["subset", alt.Tooltip("roll_delta:Q", format=".4f"), "game_num"]
+    )
+
+    rules = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(strokeDash=[4, 4], color="gray").encode(y="y:Q")
+    st.altair_chart((line + rules).properties(height=320), use_container_width=True)
+
+
+def render_performance(hist: pd.DataFrame):
+    st.subheader("Pricing Performance")
+    st.caption("This page now shows both all modeled games and a 5%+ qualified-play subset backfilled from the existing DB using model probability versus devigged close.")
+
+    scored = prepare_scored_subset(hist)
+    if scored.empty:
+        st.info("No scored games yet.")
+        return
+
+    qualified = scored[scored["qualified_5pct"]].copy()
+
+    left, right = st.columns(2)
+    with left:
+        metric_block(
+            "All Modeled Games",
+            scored,
+            "Every scored game with valid model probabilities and closing-line data."
         )
-        plot_df["metric"] = plot_df["metric"].map({
-            "roll_delta_vs_close": "Model - Close",
-            "roll_abs_devig_diff": "Abs Devig Diff",
-        })
-
-        line = alt.Chart(plot_df).mark_line(point=True).encode(
-            x=alt.X("game_num:Q", title="Game #"),
-            y=alt.Y("value:Q", title="Value"),
-            color=alt.Color("metric:N"),
-            tooltip=["metric", alt.Tooltip("value:Q", format=".4f"), "date", "away_team", "home_team"]
+    with right:
+        metric_block(
+            "5%+ Qualified Games",
+            qualified,
+            "Backfilled from existing data using absolute difference between model probability and devigged close of at least 5%."
         )
 
-        rules = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(strokeDash=[4, 4], color="gray").encode(y="y:Q")
-        st.altair_chart((line + rules).properties(height=320), use_container_width=True)
+    st.markdown("---")
+    render_pricing_over_time(scored, qualified)
 
-    render_calibration(scored)
+    st.markdown("---")
+    c1, c2 = st.columns(2)
+    with c1:
+        render_calibration(
+            scored,
+            "Calibration — All Modeled Games",
+            "Raw model probabilities versus actual results across all modeled games."
+        )
+    with c2:
+        render_calibration(
+            qualified,
+            "Calibration — 5%+ Qualified Games",
+            "Same calibration view, but only for games that would have qualified under the 5% edge rule."
+        )
+
+    with st.expander("Qualified-play archive"):
+        if qualified.empty:
+            st.info("No 5%+ qualified games yet.")
+        else:
+            display_cols = [
+                "date", "away_team", "home_team", "winprob_home", "close_home_prob_devig",
+                "edge_pct_home_close", "edge_pct_abs_close", "bet_side_5pct",
+                "logloss", "close_logloss_devig", "model_vs_close_logloss_devig"
+            ]
+            available = [c for c in display_cols if c in qualified.columns]
+            show = qualified[available].sort_values("date", ascending=False).copy()
+            if "edge_pct_home_close" in show.columns:
+                show["edge_pct_home_close"] = show["edge_pct_home_close"].round(2)
+            if "edge_pct_abs_close" in show.columns:
+                show["edge_pct_abs_close"] = show["edge_pct_abs_close"].round(2)
+            st.dataframe(show, use_container_width=True)
 
     with st.expander("Outcome-based diagnostics"):
-        st.caption("These are still useful for model quality, but pricing diagnostics above are the primary read for betting purposes.")
+        st.caption("These remain secondary. Betting decisions should be judged more by pricing than by full-slate results.")
         mae = scored["mae_total"].mean() if "mae_total" in scored.columns else np.nan
         brier = scored["brier"].mean() if "brier" in scored.columns else np.nan
 
@@ -447,14 +518,17 @@ def render_performance(hist: pd.DataFrame):
         d3.metric("Direction Acc", f"{acc:.1f}%")
 
     st.markdown("---")
-    st.markdown("#### Forecast Archive")
+    st.markdown("#### Full Forecast Archive")
     display_cols = [
         "date", "away_team", "away_sp", "home_team", "home_sp",
-        "winprob_home", "close_home_prob_devig", "home_abs_devig_close_diff",
-        "logloss", "close_logloss_devig", "model_vs_close_logloss_devig"
+        "winprob_home", "close_home_prob_devig", "edge_pct_abs_close",
+        "qualified_5pct", "logloss", "close_logloss_devig", "model_vs_close_logloss_devig"
     ]
     available = [c for c in display_cols if c in scored.columns]
-    st.dataframe(scored[available].sort_values("date", ascending=False), use_container_width=True)
+    show = scored[available].sort_values("date", ascending=False).copy()
+    if "edge_pct_abs_close" in show.columns:
+        show["edge_pct_abs_close"] = show["edge_pct_abs_close"].round(2)
+    st.dataframe(show, use_container_width=True)
 
 
 def main():
