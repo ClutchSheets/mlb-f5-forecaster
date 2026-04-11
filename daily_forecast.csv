@@ -1,16 +1,16 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-11,ARI,Brandon Pfaadt,PHI,Taijuan Walker,2.6531,2.7091,5.3622,0.5081,v1.0
-2026-04-11,MIA,Janson Junk,DET,Casey Mize,2.6024,2.4461,5.0485,0.4760,v1.0
-2026-04-11,PIT,Braxton Ashcraft,CHC,Edward Cabrera,2.2561,2.6197,4.8758,0.5574,v1.0
-2026-04-11,MIN,Joe Ryan,TOR,Eric Lauer,2.3477,2.3964,4.7441,0.5079,v1.0
-2026-04-11,LAA,George Klassen,CIN,Brandon Williamson,2.5980,2.7710,5.3690,0.5251,v1.0
-2026-04-11,ATH,Jacob Lopez,NYM,Kodai Senga,2.4014,2.7065,5.1079,0.5463,v1.0
-2026-04-11,CHW,Erick Fedde,KCR,Michael Wacha,2.1025,2.3090,4.4115,0.5357,v1.0
-2026-04-11,NYY,Max Fried,TBR,Nick Martinez,2.6073,2.2697,4.8771,0.4467,v1.0
-2026-04-11,WSN,Foster Griffin,MIL,Kyle Harrison,2.7422,2.7838,5.5260,0.5059,v1.0
-2026-04-11,SFG,Logan Webb,BAL,Chris Bassitt,2.6606,2.4621,5.1227,0.4699,v1.0
-2026-04-11,BOS,Ranger Suarez,STL,Kyle Leahy,2.5412,2.5352,5.0764,0.4991,v1.0
-2026-04-11,CLE,Parker Messick,ATL,Martín Pérez,2.3178,2.5032,4.8210,0.5296,v1.0
-2026-04-11,COL,Ryan Feltner,SDP,Germán Márquez,2.6270,2.5618,5.1887,0.4902,v1.0
-2026-04-11,TEX,Jack Leiter,LAD,Emmet Sheehan,2.5197,2.9036,5.4233,0.5551,v1.0
-2026-04-11,HOU,Lance McCullers Jr.,SEA,Luis Castillo,2.1880,2.6517,4.8397,0.5736,v1.0
+2026-04-11,ARI,Brandon Pfaadt,PHI,Taijuan Walker,2.6029,2.7937,5.3966,0.5276,v1.0
+2026-04-11,MIA,Janson Junk,DET,Casey Mize,2.6577,2.4368,5.0945,0.4664,v1.0
+2026-04-11,PIT,Braxton Ashcraft,CHC,Edward Cabrera,2.2965,2.5647,4.8612,0.5425,v1.0
+2026-04-11,MIN,Joe Ryan,TOR,Eric Lauer,2.3348,2.4544,4.7892,0.5192,v1.0
+2026-04-11,LAA,George Klassen,CIN,Brandon Williamson,2.5487,2.7783,5.3270,0.5336,v1.0
+2026-04-11,ATH,Jacob Lopez,NYM,Kodai Senga,2.4050,2.6662,5.0712,0.5399,v1.0
+2026-04-11,CHW,Erick Fedde,KCR,Michael Wacha,2.0678,2.3925,4.4602,0.5555,v1.0
+2026-04-11,NYY,Max Fried,TBR,Nick Martinez,2.5974,2.2073,4.8047,0.4376,v1.0
+2026-04-11,WSN,Foster Griffin,MIL,Kyle Harrison,2.7455,2.7361,5.4816,0.4987,v1.0
+2026-04-11,SFG,Logan Webb,BAL,Chris Bassitt,2.6484,2.5082,5.1565,0.4789,v1.0
+2026-04-11,BOS,Ranger Suarez,STL,Kyle Leahy,2.5580,2.5966,5.1546,0.5058,v1.0
+2026-04-11,CLE,Parker Messick,ATL,Martín Pérez,2.3342,2.5247,4.8589,0.5302,v1.0
+2026-04-11,COL,Ryan Feltner,SDP,Germán Márquez,2.6661,2.5548,5.2209,0.4834,v1.0
+2026-04-11,TEX,Jack Leiter,LAD,Emmet Sheehan,2.5177,2.9523,5.4700,0.5619,v1.0
+2026-04-11,HOU,Lance McCullers Jr.,SEA,Luis Castillo,2.2346,2.6801,4.9148,0.5697,v1.0
