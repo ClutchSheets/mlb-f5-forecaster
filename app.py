@@ -305,186 +305,93 @@ def format_bucket_label(interval) -> str:
     return f"{left}%–{right}%"
 
 
-def render_close_calibration(df: pd.DataFrame):
-    st.markdown("#### Calibration Against Closing Line (10% Buckets)")
-    st.caption("Blue dots compare your model buckets to average devigged Pinnacle close. The dashed line is perfect agreement with close.")
-
-    calib = df.dropna(subset=["winprob_home", "close_home_prob_devig"]).copy()
-    if calib.empty:
-        st.info("Not enough data for close calibration.")
-        return
-
-    bins = np.linspace(0, 1, 11)
-    calib["bucket"] = pd.cut(calib["winprob_home"], bins=bins, include_lowest=True)
-
-    calib_table = (
-        calib.groupby("bucket", observed=False)
-        .agg(
-            avg_model=("winprob_home", "mean"),
-            avg_close=("close_home_prob_devig", "mean"),
-            count=("close_home_prob_devig", "count"),
-        )
-        .reset_index()
-    )
-
-    calib_table = calib_table[calib_table["count"] > 0].copy()
-    if calib_table.empty:
-        st.info("Not enough populated buckets for close calibration.")
-        return
-
-    calib_table["bucket_label"] = calib_table["bucket"].apply(format_bucket_label)
-
-    diagonal = pd.DataFrame({"x": [0, 1], "y": [0, 1]})
-
-    diag_line = alt.Chart(diagonal).mark_line(
-        strokeDash=[4, 4], color="gray"
-    ).encode(
-        x=alt.X("x:Q", title="Model projected probability", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format=".0%", values=[i / 20 for i in range(21)])),
-        y=alt.Y("y:Q", title="Average devigged Pinnacle close", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format=".0%")),
-    )
-
-    dots = alt.Chart(calib_table).mark_circle(
-        color="#378AD3", opacity=0.85, stroke="#185FA5", strokeWidth=1.5
-    ).encode(
-        x=alt.X("avg_model:Q", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format=".0%", values=[i / 20 for i in range(21)])),
-        y=alt.Y("avg_close:Q", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(format=".0%")),
-        size=alt.Size("count:Q", scale=alt.Scale(range=[80, 450]), legend=None),
-        tooltip=[
-            alt.Tooltip("bucket_label:N", title="Bucket"),
-            alt.Tooltip("avg_model:Q", format=".3f", title="Avg model"),
-            alt.Tooltip("avg_close:Q", format=".3f", title="Avg close"),
-            alt.Tooltip("count:Q", title="Games"),
-        ],
-    )
-
-    st.altair_chart((diag_line + dots).properties(height=340), use_container_width=True)
-
-    show_table = calib_table[["bucket_label", "avg_model", "avg_close", "count"]].copy()
-    show_table.columns = ["bucket", "avg_model", "avg_close", "count"]
-    show_table["avg_model"] = show_table["avg_model"].round(4)
-    show_table["avg_close"] = show_table["avg_close"].round(4)
-    st.dataframe(show_table, use_container_width=True)
-
-
-def render_actual_calibration_comparison(df: pd.DataFrame):
-    st.markdown("#### Model vs Market Calibration Against Actual Results")
+def render_beating_the_market(df: pd.DataFrame):
+    st.markdown("#### Am I Beating the Market?")
     st.caption(
-        "Each dot is one game. "
-        "X-axis = predicted home win probability. "
-        "Y-axis = actual outcome (1 = home win, 0 = home loss, 0.5 = tie). "
-        "Dashed diagonal = perfect calibration. "
-        "Points above the line = underconfident; below = overconfident."
+        "Log loss delta = model log loss minus Pinnacle closing log loss, per game. "
+        "Negative = your model priced the outcome better than the market. "
+        "The cumulative line shows whether your edge is growing, shrinking, or flat over time."
     )
 
-    calib = df.dropna(subset=["winprob_home", "close_home_prob_devig", "home_win_f5"]).copy()
-    if calib.empty:
-        st.info("Not enough data for actual-result calibration.")
+    if "model_vs_close_logloss_devig" not in df.columns:
+        st.info("No closing-line log loss data yet.")
         return
 
-    model_rows = calib[["winprob_home", "home_win_f5", "date", "away_team", "home_team"]].copy()
-    model_rows = model_rows.rename(columns={"winprob_home": "pred_prob", "home_win_f5": "actual"})
-    model_rows["series"] = "My Model"
+    plot_df = df.dropna(subset=["model_vs_close_logloss_devig"]).copy()
+    if plot_df.empty:
+        st.info("No closing-line log loss data yet.")
+        return
 
-    market_rows = calib[["close_home_prob_devig", "home_win_f5", "date", "away_team", "home_team"]].copy()
-    market_rows = market_rows.rename(columns={"close_home_prob_devig": "pred_prob", "home_win_f5": "actual"})
-    market_rows["series"] = "Pinnacle Closing FV"
+    plot_df = plot_df.sort_values("date").reset_index(drop=True)
+    plot_df["game_num"] = range(1, len(plot_df) + 1)
+    plot_df["cumulative_delta"] = plot_df["model_vs_close_logloss_devig"].expanding().mean()
+    plot_df["game_label"] = plot_df["away_team"] + " @ " + plot_df["home_team"] + " (" + plot_df["date"] + ")"
 
-    combined = pd.concat([model_rows, market_rows], ignore_index=True)
-    combined["pred_pct"] = (combined["pred_prob"] * 100).round(1)
-    combined["game_label"] = combined["away_team"] + " @ " + combined["home_team"] + " (" + combined["date"] + ")"
+    avg_delta = plot_df["model_vs_close_logloss_devig"].mean()
+    median_delta = plot_df["model_vs_close_logloss_devig"].median()
+    pct_beating = (plot_df["model_vs_close_logloss_devig"] < 0).mean() * 100
+    n = len(plot_df)
 
-    tick_vals = [i / 20 for i in range(21)]  # every 5%
+    verdict = "✅ Beating the market" if avg_delta < 0 else "❌ Behind the market"
+    verdict_color = "#1a7a3a" if avg_delta < 0 else "#a33"
 
-    diagonal = pd.DataFrame({"x": [0.0, 1.0], "y": [0.0, 1.0]})
-
-    diag_line = alt.Chart(diagonal).mark_line(
-        strokeDash=[4, 4], color="gray", opacity=0.6
-    ).encode(
-        x=alt.X("x:Q", scale=alt.Scale(domain=[0, 1]),
-                axis=alt.Axis(format=".0%", values=tick_vals)),
-        y=alt.Y("y:Q", scale=alt.Scale(domain=[-0.05, 1.05]),
-                axis=alt.Axis(format=".0%")),
+    st.markdown(
+        f"<div style='font-size:1.3em;font-weight:600;color:{verdict_color};margin-bottom:0.5rem'>{verdict}</div>",
+        unsafe_allow_html=True
     )
 
-    dots = alt.Chart(combined).mark_circle(size=40, opacity=0.55).encode(
-        x=alt.X(
-            "pred_prob:Q",
-            title="Predicted home win probability",
-            scale=alt.Scale(domain=[0, 1]),
-            axis=alt.Axis(format=".0%", values=tick_vals),
-        ),
-        y=alt.Y(
-            "actual:Q",
-            title="Actual outcome",
-            scale=alt.Scale(domain=[-0.05, 1.05]),
-            axis=alt.Axis(
-                values=[0, 0.5, 1],
-                labelExpr="datum.value === 1 ? 'Win' : datum.value === 0.5 ? 'Tie' : 'Loss'"
-            ),
-        ),
-        color=alt.Color(
-            "series:N",
-            scale=alt.Scale(
-                domain=["My Model", "Pinnacle Closing FV"],
-                range=["#378AD3", "#BA7517"]
-            ),
-            legend=alt.Legend(title="", orient="top-left"),
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Games w/ Close Data", n)
+    c2.metric("Avg Log Loss Delta", f"{avg_delta:+.4f}", help="Negative = better than market")
+    c3.metric("Median Log Loss Delta", f"{median_delta:+.4f}")
+    c4.metric("% Games Beating Close", f"{pct_beating:.1f}%")
+
+    st.markdown("")
+
+    zero_line = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(
+        strokeDash=[4, 4], color="gray", opacity=0.6
+    ).encode(y="y:Q")
+
+    trend = alt.Chart(plot_df).mark_line(color="#378AD3", strokeWidth=2).encode(
+        x=alt.X("game_num:Q", title="Game #"),
+        y=alt.Y("cumulative_delta:Q", title="Cumulative avg log loss delta",
+                axis=alt.Axis(format=".4f")),
+        tooltip=[
+            alt.Tooltip("game_label:N",      title="Game"),
+            alt.Tooltip("cumulative_delta:Q", title="Cumulative avg", format="+.4f"),
+            alt.Tooltip("model_vs_close_logloss_devig:Q", title="This game delta", format="+.4f"),
+            alt.Tooltip("game_num:Q",         title="Game #"),
+        ]
+    )
+
+    points = alt.Chart(plot_df).mark_circle(size=35, opacity=0.6).encode(
+        x=alt.X("game_num:Q"),
+        y=alt.Y("model_vs_close_logloss_devig:Q"),
+        color=alt.condition(
+            alt.datum.model_vs_close_logloss_devig < 0,
+            alt.value("#1a7a3a"),
+            alt.value("#a33333")
         ),
         tooltip=[
-            alt.Tooltip("series:N",     title="Series"),
-            alt.Tooltip("game_label:N", title="Game"),
-            alt.Tooltip("pred_pct:Q",   title="Predicted %", format=".1f"),
-            alt.Tooltip("actual:Q",     title="Outcome"),
-        ],
+            alt.Tooltip("game_label:N",      title="Game"),
+            alt.Tooltip("model_vs_close_logloss_devig:Q", title="Log loss delta", format="+.4f"),
+            alt.Tooltip("game_num:Q",         title="Game #"),
+        ]
     )
 
     st.altair_chart(
-        (diag_line + dots).properties(height=440),
+        (zero_line + points + trend).properties(height=380),
         use_container_width=True
     )
-
-def render_accuracy_over_time(df: pd.DataFrame):
-    st.markdown("#### Model Accuracy Versus Closing Line Over Time")
-
-    if df.empty:
-        st.info("Not enough data for accuracy chart.")
-        return
-
-    plot_df = df.copy()
-    plot_df["game_num"] = range(1, len(plot_df) + 1)
-
-    series = []
-    if "model_vs_close_logloss_devig" in plot_df.columns:
-        plot_df["roll_logloss_delta"] = plot_df["model_vs_close_logloss_devig"].expanding().mean()
-        series.append(
-            plot_df[["game_num", "roll_logloss_delta"]].rename(columns={"roll_logloss_delta": "value"}).assign(metric="Cumulative Log Loss Delta")
-        )
-    if "abs_prob_diff_close" in plot_df.columns:
-        plot_df["roll_abs_prob_diff"] = plot_df["abs_prob_diff_close"].expanding().mean()
-        series.append(
-            plot_df[["game_num", "roll_abs_prob_diff"]].rename(columns={"roll_abs_prob_diff": "value"}).assign(metric="Cumulative Abs Prob Diff")
-        )
-
-    if not series:
-        st.info("Not enough data for accuracy chart.")
-        return
-
-    chart_df = pd.concat(series, ignore_index=True)
-
-    line = alt.Chart(chart_df).mark_line(point=True).encode(
-        x=alt.X("game_num:Q", title="Game #"),
-        y=alt.Y("value:Q", title="Value"),
-        color=alt.Color("metric:N", title="Metric"),
-        tooltip=["metric", alt.Tooltip("value:Q", format=".4f"), "game_num"]
-    )
-
-    rules = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(strokeDash=[4, 4], color="gray").encode(y="y:Q")
-    st.altair_chart((line + rules).properties(height=320), use_container_width=True)
+    st.caption("Green dots = model beat the market on that game. Red dots = market was better. Blue line = cumulative average trend.")
 
 
 def render_performance(hist: pd.DataFrame):
-    st.subheader("Projection Accuracy Versus Pinnacle Close")
-    st.caption("This page grades the model as a pricing engine. It compares your projected probabilities to devigged Pinnacle closing probabilities. It does not measure whether a bet beat the market, because no wager was assumed.")
+    st.subheader("Model vs Market Performance")
+    st.caption(
+        "Grades the model as a pricing engine against devigged Pinnacle closing probabilities. "
+        "Negative log loss delta means your model priced the outcome better than the market."
+    )
 
     scored = prepare_scored_subset(hist)
     if scored.empty:
@@ -493,34 +400,27 @@ def render_performance(hist: pd.DataFrame):
 
     total = len(scored)
     close_coverage = scored["close_logloss_devig"].notna().mean() * 100 if "close_logloss_devig" in scored.columns else 0.0
-    avg_abs_devig = scored["home_abs_devig_close_diff"].mean() if "home_abs_devig_close_diff" in scored.columns else np.nan
-    median_abs_devig = scored["home_abs_devig_close_diff"].median() if "home_abs_devig_close_diff" in scored.columns else np.nan
     avg_logloss_delta = scored["model_vs_close_logloss_devig"].mean() if "model_vs_close_logloss_devig" in scored.columns else np.nan
     median_logloss_delta = scored["model_vs_close_logloss_devig"].median() if "model_vs_close_logloss_devig" in scored.columns else np.nan
     avg_abs_prob_diff = scored["abs_prob_diff_close"].mean() if "abs_prob_diff_close" in scored.columns else np.nan
 
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    c1, c2, c3, c4 = st.columns(4)
     c1.metric("Games Scored", total)
     c2.metric("Close Coverage", f"{close_coverage:.1f}%")
-    c3.metric("Avg Abs Devig Diff", f"{avg_abs_devig:.4f}" if pd.notna(avg_abs_devig) else "—")
-    c4.metric("Median Abs Devig Diff", f"{median_abs_devig:.4f}" if pd.notna(median_abs_devig) else "—")
-    c5.metric("Avg Log Loss Delta", f"{avg_logloss_delta:+.4f}" if pd.notna(avg_logloss_delta) else "—")
-    c6.metric("Median Log Loss Delta", f"{median_logloss_delta:+.4f}" if pd.notna(median_logloss_delta) else "—")
+    c3.metric("Avg Log Loss Delta", f"{avg_logloss_delta:+.4f}" if pd.notna(avg_logloss_delta) else "—")
+    c4.metric("Median Log Loss Delta", f"{median_logloss_delta:+.4f}" if pd.notna(median_logloss_delta) else "—")
 
-    st.caption(f"Average absolute probability gap versus close: {avg_abs_prob_diff:.4f}" if pd.notna(avg_abs_prob_diff) else "Average absolute probability gap versus close: —")
-    st.caption("Smaller absolute probability differences mean the model is pricing closer to Pinnacle close. Log loss delta near zero means the model is tracking close well; positive values mean it is less accurate than close.")
-
-    st.markdown("---")
-    render_accuracy_over_time(scored)
+    st.caption(
+        f"Average absolute probability gap versus close: {avg_abs_prob_diff:.4f}"
+        if pd.notna(avg_abs_prob_diff) else
+        "Average absolute probability gap versus close: —"
+    )
 
     st.markdown("---")
-    render_close_calibration(scored)
-
-    st.markdown("---")
-    render_actual_calibration_comparison(scored)
+    render_beating_the_market(scored)
 
     with st.expander("Outcome-based diagnostics"):
-        st.caption("These remain secondary. They describe how model probabilities aligned with actual outcomes, but the primary goal above is closing-line estimation accuracy.")
+        st.caption("Secondary metrics describing how model probabilities aligned with actual outcomes.")
         mae = scored["mae_total"].mean() if "mae_total" in scored.columns else np.nan
         brier = scored["brier"].mean() if "brier" in scored.columns else np.nan
         model_logloss = scored["logloss"].mean() if "logloss" in scored.columns else np.nan
