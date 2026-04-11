@@ -259,6 +259,14 @@ def render_games_table(df, odds_lookup):
     components.html(html, height=height, scrolling=False)
 
 
+def format_bucket_label(interval) -> str:
+    left = int(round(interval.left * 100))
+    right = int(round(interval.right * 100))
+    if left < 0:
+        left = 0
+    return f"{left}%–{right}%"
+
+
 def render_calibration(scored: pd.DataFrame):
     st.markdown("---")
     st.markdown("#### Calibration (10% Buckets)")
@@ -287,23 +295,34 @@ def render_calibration(scored: pd.DataFrame):
         st.info("Not enough populated buckets for calibration.")
         return
 
+    calib_table["bucket_label"] = calib_table["bucket"].apply(format_bucket_label)
+
     diagonal = pd.DataFrame({"x": [0, 1], "y": [0, 1]})
 
     diag_line = alt.Chart(diagonal).mark_line(
         strokeDash=[4, 4], color="gray"
     ).encode(
-        x=alt.X("x:Q", title="Predicted win probability", axis=alt.Axis(format=".0%")),
+        x=alt.X(
+            "x:Q",
+            title="Predicted win probability",
+            scale=alt.Scale(domain=[0, 1]),
+            axis=alt.Axis(format=".0%", values=[i / 20 for i in range(21)])
+        ),
         y=alt.Y("y:Q", title="Actual win rate", axis=alt.Axis(format=".0%")),
     )
 
     dots = alt.Chart(calib_table).mark_circle(
         color="#378AD3", opacity=0.8, stroke="#185FA5", strokeWidth=1.5
     ).encode(
-        x=alt.X("avg_pred:Q", axis=alt.Axis(format=".0%")),
+        x=alt.X(
+            "avg_pred:Q",
+            scale=alt.Scale(domain=[0, 1]),
+            axis=alt.Axis(format=".0%", values=[i / 20 for i in range(21)])
+        ),
         y=alt.Y("actual_win:Q", axis=alt.Axis(format=".0%")),
         size=alt.Size("count:Q", scale=alt.Scale(range=[80, 450]), legend=None),
         tooltip=[
-            alt.Tooltip("bucket:N", title="Bucket"),
+            alt.Tooltip("bucket_label:N", title="Bucket"),
             alt.Tooltip("avg_pred:Q", format=".3f", title="Avg predicted"),
             alt.Tooltip("actual_win:Q", format=".3f", title="Actual win rate"),
             alt.Tooltip("count:Q", title="Games"),
@@ -312,7 +331,8 @@ def render_calibration(scored: pd.DataFrame):
 
     st.altair_chart((diag_line + dots).properties(height=340), use_container_width=True)
 
-    show_table = calib_table.copy()
+    show_table = calib_table[["bucket_label", "avg_pred", "actual_win", "count"]].copy()
+    show_table.columns = ["bucket", "avg_pred", "actual_win", "count"]
     show_table["avg_pred"] = show_table["avg_pred"].round(4)
     show_table["actual_win"] = show_table["actual_win"].round(4)
     st.dataframe(show_table, use_container_width=True)
@@ -333,10 +353,9 @@ def render_performance(hist: pd.DataFrame):
         st.info("No scored games yet.")
         return
 
-    # Remove invalid model outputs from evaluation
     if "winprob_home" in scored.columns:
         scored["winprob_home"] = pd.to_numeric(scored["winprob_home"], errors="coerce")
-        scored = scored[(scored["winprob_home"] > 0.001) & (scored["winprob_home"] < 0.999)].copy()
+        scored = scored[(scored["winprob_home"] > 0.05) & (scored["winprob_home"] < 0.95)].copy()
 
     if scored.empty:
         st.info("No valid scored games yet.")
