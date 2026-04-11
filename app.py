@@ -11,7 +11,7 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="ClutchSheets F5 Forecaster", layout="wide")
 
-ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "")
+ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "d31971f20a2edb069b228e828826815a")
 ODDS_API_URL = "https://api.the-odds-api.com/v4/sports/baseball_mlb/odds"
 
 BOOKS = ["betonline", "fanduel", "draftkings", "betmgm", "betrivers"]
@@ -259,8 +259,68 @@ def render_games_table(df, odds_lookup):
     components.html(html, height=height, scrolling=False)
 
 
+def render_calibration(scored: pd.DataFrame):
+    st.markdown("---")
+    st.markdown("#### Calibration (10% Buckets)")
+    st.caption("This checks how raw model probabilities tracked actual outcomes across all modeled games. It is not restricted to bet-qualified games.")
+
+    calib = scored.dropna(subset=["winprob_home", "home_win_f5"]).copy()
+    if calib.empty:
+        st.info("Not enough data for calibration.")
+        return
+
+    bins = np.linspace(0, 1, 11)
+    calib["bucket"] = pd.cut(calib["winprob_home"], bins=bins, include_lowest=True)
+
+    calib_table = (
+        calib.groupby("bucket", observed=False)
+        .agg(
+            avg_pred=("winprob_home", "mean"),
+            actual_win=("home_win_f5", "mean"),
+            count=("home_win_f5", "count"),
+        )
+        .reset_index()
+    )
+
+    calib_table = calib_table[calib_table["count"] > 0].copy()
+    if calib_table.empty:
+        st.info("Not enough populated buckets for calibration.")
+        return
+
+    diagonal = pd.DataFrame({"x": [0, 1], "y": [0, 1]})
+
+    diag_line = alt.Chart(diagonal).mark_line(
+        strokeDash=[4, 4], color="gray"
+    ).encode(
+        x=alt.X("x:Q", title="Predicted win probability", axis=alt.Axis(format=".0%")),
+        y=alt.Y("y:Q", title="Actual win rate", axis=alt.Axis(format=".0%")),
+    )
+
+    dots = alt.Chart(calib_table).mark_circle(
+        color="#378AD3", opacity=0.8, stroke="#185FA5", strokeWidth=1.5
+    ).encode(
+        x=alt.X("avg_pred:Q", axis=alt.Axis(format=".0%")),
+        y=alt.Y("actual_win:Q", axis=alt.Axis(format=".0%")),
+        size=alt.Size("count:Q", scale=alt.Scale(range=[80, 450]), legend=None),
+        tooltip=[
+            alt.Tooltip("bucket:N", title="Bucket"),
+            alt.Tooltip("avg_pred:Q", format=".3f", title="Avg predicted"),
+            alt.Tooltip("actual_win:Q", format=".3f", title="Actual win rate"),
+            alt.Tooltip("count:Q", title="Games"),
+        ],
+    )
+
+    st.altair_chart((diag_line + dots).properties(height=340), use_container_width=True)
+
+    show_table = calib_table.copy()
+    show_table["avg_pred"] = show_table["avg_pred"].round(4)
+    show_table["actual_win"] = show_table["actual_win"].round(4)
+    st.dataframe(show_table, use_container_width=True)
+
+
 def render_performance(hist: pd.DataFrame):
     st.subheader("Pricing Performance")
+    st.caption("These diagnostics cover all modeled games with scored results and closing-line data. They are not limited to games you would have actually bet.")
 
     if hist.empty or "completed5" not in hist.columns:
         st.info("No scored games yet.")
@@ -271,6 +331,15 @@ def render_performance(hist: pd.DataFrame):
     scored = hist[hist["completed5"] == 1].copy()
     if scored.empty:
         st.info("No scored games yet.")
+        return
+
+    # Remove invalid model outputs from evaluation
+    if "winprob_home" in scored.columns:
+        scored["winprob_home"] = pd.to_numeric(scored["winprob_home"], errors="coerce")
+        scored = scored[(scored["winprob_home"] > 0.001) & (scored["winprob_home"] < 0.999)].copy()
+
+    if scored.empty:
+        st.info("No valid scored games yet.")
         return
 
     for col in [
@@ -342,7 +411,10 @@ def render_performance(hist: pd.DataFrame):
         rules = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(strokeDash=[4, 4], color="gray").encode(y="y:Q")
         st.altair_chart((line + rules).properties(height=320), use_container_width=True)
 
+    render_calibration(scored)
+
     with st.expander("Outcome-based diagnostics"):
+        st.caption("These are still useful for model quality, but pricing diagnostics above are the primary read for betting purposes.")
         mae = scored["mae_total"].mean() if "mae_total" in scored.columns else np.nan
         brier = scored["brier"].mean() if "brier" in scored.columns else np.nan
 
