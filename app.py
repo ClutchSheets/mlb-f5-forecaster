@@ -279,7 +279,7 @@ def prepare_scored_subset(hist: pd.DataFrame) -> pd.DataFrame:
             scored[col] = pd.to_numeric(scored[col], errors="coerce")
 
     if "winprob_home" in scored.columns:
-        scored = scored[(scored["winprob_home"] > 0.05) & (scored["winprob_home"] < 0.95)].copy()
+        scored = scored[(scored["winprob_home"] > 0.25) & (scored["winprob_home"] < 0.75)].copy()
 
     if "winprob_home" in scored.columns and "close_home_prob_devig" in scored.columns:
         scored["prob_diff_close"] = scored["winprob_home"] - scored["close_home_prob_devig"]
