@@ -1,12 +1,13 @@
+import os
+import sqlite3
+from datetime import date
+
+import altair as alt
+import numpy as np
+import pandas as pd
+import requests
 import streamlit as st
 import streamlit.components.v1 as components
-import pandas as pd
-import sqlite3
-import os
-import requests
-import numpy as np
-import altair as alt
-from datetime import date
 
 st.set_page_config(page_title="ClutchSheets F5 Forecaster", layout="wide")
 
@@ -21,8 +22,25 @@ BOOK_LABELS = {
     "betmgm": "BetMGM",
     "betrivers": "BetRivers",
 }
-
 EDGE_THRESHOLD = 5.0
+
+NAME_TO_CODE = {
+    "Pittsburgh Pirates": "PIT", "Chicago Cubs": "CHC",
+    "Oakland Athletics": "ATH", "Athletics": "ATH", "New York Mets": "NYM",
+    "Texas Rangers": "TEX", "Los Angeles Dodgers": "LAD",
+    "Los Angeles Angels": "LAA", "Cincinnati Reds": "CIN",
+    "Washington Nationals": "WSN", "Milwaukee Brewers": "MIL",
+    "Arizona Diamondbacks": "ARI", "Philadelphia Phillies": "PHI",
+    "Minnesota Twins": "MIN", "Toronto Blue Jays": "TOR",
+    "Colorado Rockies": "COL", "San Diego Padres": "SDP",
+    "Miami Marlins": "MIA", "Detroit Tigers": "DET",
+    "New York Yankees": "NYY", "Tampa Bay Rays": "TBR",
+    "Chicago White Sox": "CHW", "Kansas City Royals": "KCR",
+    "San Francisco Giants": "SFG", "Baltimore Orioles": "BAL",
+    "Boston Red Sox": "BOS", "St. Louis Cardinals": "STL",
+    "Cleveland Guardians": "CLE", "Atlanta Braves": "ATL",
+    "Houston Astros": "HOU", "Seattle Mariners": "SEA",
+}
 
 
 def american_to_prob(odds: int) -> float:
@@ -53,25 +71,6 @@ def fmt_american(odds: int) -> str:
     return f"+{odds}" if odds > 0 else str(odds)
 
 
-NAME_TO_CODE = {
-    "Pittsburgh Pirates": "PIT", "Chicago Cubs": "CHC",
-    "Oakland Athletics": "ATH", "Athletics": "ATH", "New York Mets": "NYM",
-    "Texas Rangers": "TEX", "Los Angeles Dodgers": "LAD",
-    "Los Angeles Angels": "LAA", "Cincinnati Reds": "CIN",
-    "Washington Nationals": "WSN", "Milwaukee Brewers": "MIL",
-    "Arizona Diamondbacks": "ARI", "Philadelphia Phillies": "PHI",
-    "Minnesota Twins": "MIN", "Toronto Blue Jays": "TOR",
-    "Colorado Rockies": "COL", "San Diego Padres": "SDP",
-    "Miami Marlins": "MIA", "Detroit Tigers": "DET",
-    "New York Yankees": "NYY", "Tampa Bay Rays": "TBR",
-    "Chicago White Sox": "CHW", "Kansas City Royals": "KCR",
-    "San Francisco Giants": "SFG", "Baltimore Orioles": "BAL",
-    "Boston Red Sox": "BOS", "St. Louis Cardinals": "STL",
-    "Cleveland Guardians": "CLE", "Atlanta Braves": "ATL",
-    "Houston Astros": "HOU", "Seattle Mariners": "SEA",
-}
-
-
 @st.cache_data(ttl=300)
 def fetch_odds():
     if not ODDS_API_KEY:
@@ -83,10 +82,14 @@ def fetch_odds():
         "oddsFormat": "american",
         "bookmakers": ",".join(BOOKS),
     }
-    r = requests.get(ODDS_API_URL, params=params, timeout=15)
-    if r.status_code != 200:
+    try:
+        r = requests.get(ODDS_API_URL, params=params, timeout=15)
+        if r.status_code != 200:
+            return {}
+        raw = r.json()
+    except Exception:
         return {}
-    raw = r.json()
+
     lookup = {}
     for game in raw:
         bmakers = {b["key"]: b for b in game.get("bookmakers", [])}
@@ -105,6 +108,9 @@ def load_forecast(csv_path: str) -> pd.DataFrame:
         return pd.DataFrame()
     df = pd.read_csv(csv_path, encoding="utf-8-sig")
     df.columns = df.columns.str.strip().str.lower()
+    if "date" in df.columns:
+        parsed = pd.to_datetime(df["date"], errors="coerce")
+        df["date"] = parsed.dt.strftime("%Y-%m-%d")
     return df
 
 
@@ -215,7 +221,7 @@ def render_games_table(df, odds_lookup):
             else:
                 home_cells += f"<td style='{td_style}'><span style='color:#e0e0e0;font-size:0.9em'>{home_sign}</span></td>"
 
-        game_class = 'game-odd' if game_num % 2 == 1 else 'game-even'
+        game_class = "game-odd" if game_num % 2 == 1 else "game-even"
         html += f"""
         <tr class='{game_class}'>
           <td style='padding:4px 6px;text-align:center;border-bottom:1px solid {BORDER};vertical-align:bottom' rowspan='2'>
@@ -260,129 +266,104 @@ def render_performance(hist: pd.DataFrame):
         st.info("No scored games yet.")
         return
 
+    hist = hist.copy()
+    hist["completed5"] = pd.to_numeric(hist["completed5"], errors="coerce").fillna(0)
     scored = hist[hist["completed5"] == 1].copy()
     if scored.empty:
         st.info("No scored games yet.")
         return
 
-    scored = scored.sort_values(["date", "game_pk" if "game_pk" in scored.columns else "date"]).reset_index(drop=True)
-    scored["game_num"] = range(1, len(scored) + 1)
-
     for col in [
-        "winprob_home", "close_home_prob_devig", "model_vs_close_logloss_devig",
-        "close_logloss_devig", "abs_diff_close_devig_home", "logloss", "brier", "mae_total"
+        "winprob_home", "home_win_f5", "logloss", "brier", "mae_total",
+        "close_logloss_devig", "model_vs_close_logloss_devig", "home_abs_devig_close_diff"
     ]:
         if col in scored.columns:
             scored[col] = pd.to_numeric(scored[col], errors="coerce")
 
-    close_ready = scored.dropna(subset=["close_home_prob_devig"]).copy() if "close_home_prob_devig" in scored.columns else pd.DataFrame()
-    ll_ready = scored.dropna(subset=["model_vs_close_logloss_devig", "close_logloss_devig", "logloss"]).copy() if "model_vs_close_logloss_devig" in scored.columns else pd.DataFrame()
+    scored = scored.sort_values("date")
+    total = len(scored)
 
-    total_scored = len(scored)
-    total_with_close = len(close_ready)
-    avg_abs_devig = close_ready["abs_diff_close_devig_home"].mean() if "abs_diff_close_devig_home" in close_ready.columns and not close_ready.empty else np.nan
-    model_logloss = ll_ready["logloss"].mean() if not ll_ready.empty else np.nan
-    close_logloss = ll_ready["close_logloss_devig"].mean() if not ll_ready.empty else np.nan
-    delta_vs_close = ll_ready["model_vs_close_logloss_devig"].mean() if not ll_ready.empty else np.nan
-    beat_close_rate = (ll_ready["model_vs_close_logloss_devig"] < 0).mean() * 100 if not ll_ready.empty else np.nan
+    close_coverage = (
+        scored["close_logloss_devig"].notna().mean() * 100
+        if "close_logloss_devig" in scored.columns else 0.0
+    )
+    model_logloss = scored["logloss"].mean() if "logloss" in scored.columns else np.nan
+    close_logloss = scored["close_logloss_devig"].mean() if "close_logloss_devig" in scored.columns else np.nan
+    delta_vs_close = scored["model_vs_close_logloss_devig"].mean() if "model_vs_close_logloss_devig" in scored.columns else np.nan
+    beat_close_rate = (
+        (scored["model_vs_close_logloss_devig"] < 0).mean() * 100
+        if "model_vs_close_logloss_devig" in scored.columns else np.nan
+    )
+    avg_abs_devig = scored["home_abs_devig_close_diff"].mean() if "home_abs_devig_close_diff" in scored.columns else np.nan
 
     c1, c2, c3, c4, c5, c6 = st.columns(6)
-    c1.metric("Games Scored", total_scored)
-    c2.metric("Games With Close", total_with_close)
-    c3.metric("Avg Abs Devig Diff", "—" if pd.isna(avg_abs_devig) else f"{avg_abs_devig:.4f}")
-    c4.metric("Model Log Loss", "—" if pd.isna(model_logloss) else f"{model_logloss:.4f}")
-    c5.metric("Pinnacle Close Log Loss", "—" if pd.isna(close_logloss) else f"{close_logloss:.4f}")
-    c6.metric("Model - Close", "—" if pd.isna(delta_vs_close) else f"{delta_vs_close:+.4f}")
+    c1.metric("Games Scored", total)
+    c2.metric("Close Coverage", f"{close_coverage:.1f}%")
+    c3.metric("Avg Abs Devig Diff", f"{avg_abs_devig:.4f}" if pd.notna(avg_abs_devig) else "—")
+    c4.metric("Model Log Loss", f"{model_logloss:.4f}" if pd.notna(model_logloss) else "—")
+    c5.metric("Close Log Loss", f"{close_logloss:.4f}" if pd.notna(close_logloss) else "—")
+    c6.metric("Model - Close", f"{delta_vs_close:+.4f}" if pd.notna(delta_vs_close) else "—")
 
-    st.caption("Avg Abs Devig Diff measures how far your home win probability was from the no-vig Pinnacle close. Model - Close below zero means the model beat the closing market on log loss.")
-
-    c7, c8 = st.columns(2)
-    with c7:
-        st.metric("Beat Close Rate", "—" if pd.isna(beat_close_rate) else f"{beat_close_rate:.1f}%")
-    with c8:
-        coverage = (total_with_close / total_scored * 100) if total_scored else np.nan
-        st.metric("Close Coverage", "—" if pd.isna(coverage) else f"{coverage:.1f}%")
+    if pd.notna(beat_close_rate):
+        st.caption(f"Beat Close Rate: {beat_close_rate:.1f}%")
 
     st.markdown("---")
+    st.markdown("#### Pricing Metrics Over Time")
 
-    st.markdown("#### Metrics Over Time")
+    scored["game_num"] = range(1, total + 1)
 
-    if not ll_ready.empty:
-        ll_ready = ll_ready.sort_values(["date", "game_num"]).copy()
-        ll_ready["roll_model_logloss"] = ll_ready["logloss"].expanding().mean()
-        ll_ready["roll_close_logloss"] = ll_ready["close_logloss_devig"].expanding().mean()
-        ll_ready["roll_delta_vs_close"] = ll_ready["model_vs_close_logloss_devig"].expanding().mean()
+    chart_cols = []
+    if "model_vs_close_logloss_devig" in scored.columns:
+        scored["roll_delta_vs_close"] = scored["model_vs_close_logloss_devig"].expanding().mean()
+        chart_cols.append("roll_delta_vs_close")
+    if "home_abs_devig_close_diff" in scored.columns:
+        scored["roll_abs_devig_diff"] = scored["home_abs_devig_close_diff"].expanding().mean()
+        chart_cols.append("roll_abs_devig_diff")
 
-        chart_df = ll_ready[["game_num", "roll_model_logloss", "roll_close_logloss"]].melt(
-            id_vars=["game_num"],
+    if chart_cols:
+        plot_df = scored[["game_num", "date", "away_team", "home_team"] + chart_cols].melt(
+            id_vars=["game_num", "date", "away_team", "home_team"],
+            value_vars=chart_cols,
             var_name="metric",
             value_name="value"
         )
-        chart_df["metric"] = chart_df["metric"].map({
-            "roll_model_logloss": "Model",
-            "roll_close_logloss": "Pinnacle Close",
+        plot_df["metric"] = plot_df["metric"].map({
+            "roll_delta_vs_close": "Model - Close",
+            "roll_abs_devig_diff": "Abs Devig Diff",
         })
 
-        line_chart = alt.Chart(chart_df).mark_line(point=True).encode(
+        line = alt.Chart(plot_df).mark_line(point=True).encode(
             x=alt.X("game_num:Q", title="Game #"),
-            y=alt.Y("value:Q", title="Cumulative Avg Log Loss"),
-            color=alt.Color("metric:N", scale=alt.Scale(domain=["Model", "Pinnacle Close"], range=["#1f77b4", "#d4730a"])),
-            tooltip=["metric", alt.Tooltip("value:Q", format=".4f")]
-        ).properties(height=300, title="Model vs Pinnacle Close Log Loss")
+            y=alt.Y("value:Q", title="Value"),
+            color=alt.Color("metric:N"),
+            tooltip=["metric", alt.Tooltip("value:Q", format=".4f"), "date", "away_team", "home_team"]
+        )
 
-        delta_chart = alt.Chart(ll_ready).mark_line(point=True, color="#7a3db8").encode(
-            x=alt.X("game_num:Q", title="Game #"),
-            y=alt.Y("roll_delta_vs_close:Q", title="Cumulative Avg Delta"),
-            tooltip=[alt.Tooltip("roll_delta_vs_close:Q", format="+.4f")]
-        ).properties(height=300, title="Model - Pinnacle Close Log Loss")
+        rules = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(strokeDash=[4, 4], color="gray").encode(y="y:Q")
+        st.altair_chart((line + rules).properties(height=320), use_container_width=True)
 
-        zero_rule = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(strokeDash=[5, 5], color="gray").encode(y="y:Q")
+    with st.expander("Outcome-based diagnostics"):
+        mae = scored["mae_total"].mean() if "mae_total" in scored.columns else np.nan
+        brier = scored["brier"].mean() if "brier" in scored.columns else np.nan
 
-        col_a, col_b = st.columns(2)
-        with col_a:
-            st.altair_chart(line_chart, use_container_width=True)
-        with col_b:
-            st.altair_chart(delta_chart + zero_rule, use_container_width=True)
-    else:
-        st.info("Closing-line log-loss metrics will appear after grade_closing.py backfills the DB.")
+        scored["model_pick"] = (scored["winprob_home"] >= 0.5).astype(int)
+        scored["actual_win"] = (scored["home_win_f5"] == 1.0).astype(int)
+        acc = (scored["model_pick"] == scored["actual_win"]).mean() * 100
+
+        d1, d2, d3 = st.columns(3)
+        d1.metric("MAE (Runs)", f"{mae:.3f}" if pd.notna(mae) else "—")
+        d2.metric("Brier Score", f"{brier:.4f}" if pd.notna(brier) else "—")
+        d3.metric("Direction Acc", f"{acc:.1f}%")
 
     st.markdown("---")
-
-    if not close_ready.empty and "abs_diff_close_devig_home" in close_ready.columns:
-        close_ready = close_ready.sort_values(["date", "game_num"]).copy()
-        close_ready["roll_abs_devig_diff"] = close_ready["abs_diff_close_devig_home"].expanding().mean()
-
-        abs_chart = alt.Chart(close_ready).mark_bar(color="#378AD3", opacity=0.35).encode(
-            x=alt.X("game_num:Q", title="Game #"),
-            y=alt.Y("abs_diff_close_devig_home:Q", title="Abs Diff"),
-            tooltip=["date", "away_team", "home_team", alt.Tooltip("abs_diff_close_devig_home:Q", format=".4f", title="Abs Devig Diff")]
-        )
-        abs_line = alt.Chart(close_ready).mark_line(color="#1a7a3a", size=2).encode(
-            x="game_num:Q",
-            y=alt.Y("roll_abs_devig_diff:Q", title="Abs Diff")
-        )
-        st.markdown("#### Distance From Pinnacle Close")
-        st.altair_chart((abs_chart + abs_line).properties(height=300, title="Home Win Probability vs Devigged Pinnacle Close"), use_container_width=True)
-
-    st.markdown("---")
-    st.markdown("#### Archive")
-
-    archive_cols = [
-        "date", "away_team", "home_team", "winprob_home",
-        "close_away_odds", "close_home_odds",
-        "close_home_prob_devig", "abs_diff_close_devig_home",
+    st.markdown("#### Forecast Archive")
+    display_cols = [
+        "date", "away_team", "away_sp", "home_team", "home_sp",
+        "winprob_home", "close_home_prob_devig", "home_abs_devig_close_diff",
         "logloss", "close_logloss_devig", "model_vs_close_logloss_devig"
     ]
-    available = [c for c in archive_cols if c in scored.columns]
-    if available:
-        st.dataframe(scored[available].sort_values("date", ascending=False), use_container_width=True, hide_index=True)
-
-    with st.expander("Result-based diagnostics"):
-        result_cols = [c for c in ["date", "away_team", "home_team", "mae_total", "brier", "logloss", "runs_away_thru5", "runs_home_thru5", "total_actual"] if c in scored.columns]
-        if result_cols:
-            st.dataframe(scored[result_cols].sort_values("date", ascending=False), use_container_width=True, hide_index=True)
-        else:
-            st.info("No result-based diagnostics available.")
+    available = [c for c in display_cols if c in scored.columns]
+    st.dataframe(scored[available].sort_values("date", ascending=False), use_container_width=True)
 
 
 def main():
@@ -394,11 +375,11 @@ def main():
         .block-container{padding-top:0.5rem!important;padding-bottom:0!important}
         h2{margin-top:0!important}
         </style>""",
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
     st.markdown(
         "<h2 style='color:#1a7a3a;margin:0 0 6px 0'>⚾ ClutchSheets F5 Baseball Forecaster</h2>",
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
 
     CSV_PATH = os.environ.get("FORECAST_CSV", "daily_forecast.csv")
@@ -410,22 +391,28 @@ def main():
         df = load_forecast(CSV_PATH)
         if df.empty:
             st.warning("No forecast data found.")
-            return
+        else:
+            today_str = date.today().strftime("%Y-%m-%d")
+            slate_df = df.copy()
 
-        today_str = date.today().strftime("%Y-%m-%d")
-        if "date" in df.columns:
-            df["date"] = df["date"].astype(str).str.strip()
-            df = df[df["date"] == today_str]
+            if "date" in slate_df.columns:
+                exact = slate_df[slate_df["date"] == today_str].copy()
+                if exact.empty:
+                    latest_date = slate_df["date"].dropna().max()
+                    if pd.notna(latest_date):
+                        st.warning(f"No games found for {today_str}. Showing latest available slate: {latest_date}.")
+                        slate_df = slate_df[slate_df["date"] == latest_date].copy()
+                    else:
+                        st.warning(f"No games found for {today_str}.")
+                        slate_df = pd.DataFrame()
+                else:
+                    slate_df = exact
 
-        if df.empty:
-            st.warning(f"No games found for {today_str}.")
-            return
-
-        odds_lookup = fetch_odds()
-        if not odds_lookup:
-            st.warning("No odds data. Check ODDS_API_KEY or API quota.")
-
-        render_games_table(df, odds_lookup)
+            if not slate_df.empty:
+                odds_lookup = fetch_odds()
+                if not odds_lookup:
+                    st.warning("⚠️ No odds data — check ODDS_API_KEY or API quota.")
+                render_games_table(slate_df, odds_lookup)
 
     with tab2:
         hist = load_history(DB_PATH)
