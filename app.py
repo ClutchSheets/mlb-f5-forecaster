@@ -23,7 +23,7 @@ BOOK_LABELS = {
     "betmgm": "BetMGM",
     "betrivers": "BetRivers",
 }
-EDGE_THRESHOLD = 5.0
+KELLY_THRESHOLD = 1.5
 
 NAME_TO_CODE = {
     "Pittsburgh Pirates": "PIT", "Chicago Cubs": "CHC",
@@ -66,6 +66,19 @@ def no_vig_prob(odds_a: int, odds_b: int):
 
 def edge_pct(model_p: float, market_p: float) -> float:
     return (model_p - market_p) * 100
+
+
+def american_to_decimal(odds: int) -> float:
+    if odds > 0:
+        return (odds / 100) + 1
+    return (100 / abs(odds)) + 1
+
+
+def adj_kelly(model_p: float, decimal_odds: float, scale: float = 10) -> float:
+    b = decimal_odds - 1
+    if b <= 0:
+        return 0.0
+    return ((b * model_p - (1 - model_p)) / b) * scale
 
 
 def fmt_american(odds: int) -> str:
@@ -195,19 +208,20 @@ def render_games_table(df, odds_lookup):
                 home_cells += f"<td style='{td_style}'><span style='color:#888'>—</span></td>"
                 continue
 
-            mkt_away_p, mkt_home_p = no_vig_prob(away_odds, home_odds)
-            away_edge = edge_pct(model_away_p, mkt_away_p)
-            home_edge = edge_pct(model_home_p, mkt_home_p)
+            away_dec = american_to_decimal(away_odds)
+            home_dec = american_to_decimal(home_odds)
+            away_k = adj_kelly(model_away_p, away_dec)
+            home_k = adj_kelly(model_home_p, home_dec)
 
             away_sign = fmt_american(away_odds)
-            if away_edge >= EDGE_THRESHOLD:
-                away_cells += f"<td style='{td_style}'><span class='edge'>{away_sign}<small>+{away_edge:.1f}%</small></span></td>"
+            if away_k >= KELLY_THRESHOLD:
+                away_cells += f"<td style='{td_style}'><span class='edge'>{away_sign}<small>K:{away_k:.1f}</small></span></td>"
             else:
                 away_cells += f"<td style='{td_style}'><span style='color:#e0e0e0;font-size:0.9em'>{away_sign}</span></td>"
 
             home_sign = fmt_american(home_odds)
-            if home_edge >= EDGE_THRESHOLD:
-                home_cells += f"<td style='{td_style}'><span class='edge'>{home_sign}<small>+{home_edge:.1f}%</small></span></td>"
+            if home_k >= KELLY_THRESHOLD:
+                home_cells += f"<td style='{td_style}'><span class='edge'>{home_sign}<small>K:{home_k:.1f}</small></span></td>"
             else:
                 home_cells += f"<td style='{td_style}'><span style='color:#e0e0e0;font-size:0.9em'>{home_sign}</span></td>"
 
@@ -245,8 +259,9 @@ def render_games_table(df, odds_lookup):
         """
 
     html += "</tbody></table>"
-    height = max(980, len(df) * 78 + 90)
-    components.html(html, height=height, scrolling=True)
+    # 2 rows per game × ~52px per row + 60px header, no internal scrolling
+    height = len(df) * 104 + 60
+    components.html(html, height=height, scrolling=False)
 
 
 def prepare_scored_subset(hist: pd.DataFrame) -> pd.DataFrame:
