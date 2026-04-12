@@ -309,32 +309,32 @@ def render_beating_the_market(df: pd.DataFrame):
 
     plot_df = plot_df.sort_values("date").reset_index(drop=True)
     plot_df["game_num"] = range(1, len(plot_df) + 1)
-    plot_df["cumulative_delta"] = plot_df["model_vs_close_logloss_devig"].expanding().mean()
+    plot_df["cumulative_delta"] = plot_df["model_vs_close_logloss_devig"].expanding().median()
     plot_df["game_label"] = plot_df["away_team"] + " @ " + plot_df["home_team"] + " (" + plot_df["date"] + ")"
 
-    avg_delta = plot_df["model_vs_close_logloss_devig"].mean()
+    avg_delta = plot_df["model_vs_close_logloss_devig"].median()
     n         = len(plot_df)
 
-    # Recent trend: compare last 20 games vs overall avg (or half the sample if < 40 games)
+    # Recent trend: compare last 50 games vs overall median (or half the sample if < 40 games)
     window    = min(50, n)
     recent_df = plot_df.tail(window)
-    recent_avg = recent_df["model_vs_close_logloss_devig"].mean()
+    recent_avg = recent_df["model_vs_close_logloss_devig"].median()
     trend_diff = recent_avg - avg_delta  # negative = recent is better than overall
 
     # Plain-English headline
     if avg_delta < 0:
-        overall_txt = f"Overall your model is <b>ahead of the market</b> by {abs(avg_delta):.4f} log loss per game across {n} games."
+        overall_txt = f"Overall your model is <b>ahead of the market</b> by {abs(avg_delta):.4f} median log loss per game across {n} games."
     else:
-        overall_txt = f"Overall your model is <b>behind the market</b> by {abs(avg_delta):.4f} log loss per game across {n} games."
+        overall_txt = f"Overall your model is <b>behind the market</b> by {abs(avg_delta):.4f} median log loss per game across {n} games."
 
     if abs(trend_diff) < 0.005:
         trend_txt = f"Your last {window} games are flat — performance is holding steady."
         trend_color = "#666"
     elif trend_diff < 0:
-        trend_txt = f"Your last {window} games are <b>trending better</b> (recent avg {recent_avg:+.4f} vs overall {avg_delta:+.4f}) — you\'re closing the gap on the market."
+        trend_txt = f"Your last {window} games are <b>trending better</b> (recent median {recent_avg:+.4f} vs overall {avg_delta:+.4f}) — you\'re closing the gap on the market."
         trend_color = "#1a7a3a"
     else:
-        trend_txt = f"Your last {window} games are <b>trending worse</b> (recent avg {recent_avg:+.4f} vs overall {avg_delta:+.4f}) — the gap to the market is widening."
+        trend_txt = f"Your last {window} games are <b>trending worse</b> (recent median {recent_avg:+.4f} vs overall {avg_delta:+.4f}) — the gap to the market is widening."
         trend_color = "#a33333"
 
     st.markdown(
@@ -342,14 +342,14 @@ def render_beating_the_market(df: pd.DataFrame):
         f"<p style=\"margin:0;color:{trend_color}\">{trend_txt}</p>",
         unsafe_allow_html=True
     )
-    st.caption("Log loss delta = model log loss minus Pinnacle closing log loss. Negative = your model priced the outcome better. Lower is better.")
+    st.caption("Log loss delta = model log loss minus Pinnacle closing log loss. Negative = your model priced the outcome better. Lower is better. Blue line = cumulative median (robust to outliers).")
 
     st.markdown("")
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Games Scored", n)
-    c2.metric("Avg Log Loss Delta", f"{avg_delta:+.4f}", help="Negative = better than market")
-    c3.metric(f"Last {window} Games Avg", f"{recent_avg:+.4f}",
+    c2.metric("Median Log Loss Delta", f"{avg_delta:+.4f}", help="Negative = better than market")
+    c3.metric(f"Last {window} Games Median", f"{recent_avg:+.4f}",
               delta=f"{trend_diff:+.4f} vs overall",
               delta_color="inverse")
 
@@ -387,7 +387,7 @@ def render_beating_the_market(df: pd.DataFrame):
                 axis=alt.Axis(format=".3f")),
         tooltip=[
             alt.Tooltip("game_label:N",       title="Game"),
-            alt.Tooltip("cumulative_delta:Q",  title="Cumulative avg", format="+.4f"),
+            alt.Tooltip("cumulative_delta:Q",  title="Cumulative median", format="+.4f"),
             alt.Tooltip("model_vs_close_logloss_devig:Q", title="This game", format="+.4f"),
             alt.Tooltip("game_num:Q",          title="Game #"),
         ]
@@ -414,7 +414,7 @@ def render_beating_the_market(df: pd.DataFrame):
     )
     st.caption(
         f"Green dots = model beat market that game. Red dots = market was better. "
-        f"Blue line = cumulative average. Blue shaded band = last {window} games."
+        f"Blue line = cumulative median. Blue shaded band = last {window} games."
     )
 
 
