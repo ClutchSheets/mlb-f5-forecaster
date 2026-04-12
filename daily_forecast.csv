@@ -1,16 +1,16 @@
-date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-12,SFG,Adrian Houser,BAL,Cade Povich,3.136,2.309,5.445,0.393,v1.0
-2026-04-12,ARI,Zac Gallen,PHI,Andrew Painter,2.442,2.603,5.044,0.522,v1.0
-2026-04-12,MIN,Taj Bradley,TOR,Max Scherzer,2.815,2.491,5.306,0.457,v1.0
-2026-04-12,LAA,José Soriano,CIN,Andrew Abbott,2.090,2.392,4.482,0.544,v1.0
-2026-04-12,ATH,Aaron Civale,NYM,Freddy Peralta,2.166,2.614,4.780,0.563,v1.0
-2026-04-12,MIA,Sandy Alcantara,DET,Tarik Skubal,1.542,2.426,3.968,0.638,v1.0
-2026-04-12,NYY,Cam Schlittler,TBR,Drew Rasmussen,2.021,2.462,4.483,0.642,v1.0
-2026-04-12,CHW,Grant Taylor,KCR,Noah Cameron,1.908,2.604,4.512,0.601,v1.0
-2026-04-12,WSN,Zack Littell,MIL,Brandon Woodruff,1.980,2.444,4.423,0.569,v1.0
-2026-04-12,BOS,Brayan Bello,STL,Andre Pallante,2.651,2.224,4.875,0.440,v1.0
-2026-04-12,PIT,Bubba Chandler,CHC,Jameson Taillon,2.227,2.537,4.763,0.544,v1.0
-2026-04-12,COL,Kyle Freeland,SDP,Nick Pivetta,1.949,2.563,4.512,0.589,v1.0
-2026-04-12,HOU,TBD,SEA,Logan Gilbert,2.409,2.582,4.991,0.524,v1.0
-2026-04-12,TEX,Jacob deGrom,LAD,Roki Sasaki,3.087,2.251,5.338,0.390,v1.0
-2026-04-12,CLE,Tanner Bibee,ATL,Chris Sale,2.027,2.610,4.637,0.584,v1.0
+﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
+2026-04-12,SFG,Adrian Houser,BAL,Cade Povich,3.0180,2.6099,5.6278,0.4433,v1.0
+2026-04-12,ARI,Zac Gallen,PHI,Andrew Painter,2.3254,2.7746,5.1000,0.5681,v1.0
+2026-04-12,MIN,Taj Bradley,TOR,Max Scherzer,2.4861,2.5713,5.0574,0.5130,v1.0
+2026-04-12,LAA,José Soriano,CIN,Andrew Abbott,2.3366,2.6696,5.0062,0.5514,v1.0
+2026-04-12,ATH,Aaron Civale,NYM,Freddy Peralta,2.2268,2.6964,4.9232,0.5734,v1.0
+2026-04-12,MIA,Sandy Alcantara,DET,Tarik Skubal,2.0161,2.5805,4.5966,0.5935,v1.0
+2026-04-12,NYY,Cam Schlittler,TBR,Drew Rasmussen,2.3326,2.6590,4.9917,0.5505,v1.0
+2026-04-12,CHW,Grant Taylor,KCR,Noah Cameron,2.0428,2.2633,4.3061,0.5389,v1.0
+2026-04-12,WSN,Zack Littell,MIL,Brandon Woodruff,2.5416,2.7615,5.3031,0.5323,v1.0
+2026-04-12,BOS,Brayan Bello,STL,Andre Pallante,2.5754,2.5351,5.1104,0.4939,v1.0
+2026-04-12,PIT,Bubba Chandler,CHC,Jameson Taillon,2.2920,2.6768,4.9688,0.5597,v1.0
+2026-04-12,COL,Kyle Freeland,SDP,Nick Pivetta,2.0237,2.5132,4.5369,0.5821,v1.0
+2026-04-12,HOU,TBD,SEA,Logan Gilbert,2.3841,2.0195,4.4036,0.4370,v1.0
+2026-04-12,TEX,Jacob deGrom,LAD,Roki Sasaki,2.9489,2.8510,5.7999,0.4867,v1.0
+2026-04-12,CLE,Tanner Bibee,ATL,Chris Sale,2.2749,2.6147,4.8896,0.5535,v1.0
