@@ -1,16 +1,16 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-12,SFG,Adrian Houser,BAL,Cade Povich,3.0180,2.6099,5.6278,0.4433,v1.0
-2026-04-12,ARI,Zac Gallen,PHI,Andrew Painter,2.3254,2.7746,5.1000,0.5681,v1.0
-2026-04-12,MIN,Taj Bradley,TOR,Max Scherzer,2.4861,2.5713,5.0574,0.5130,v1.0
-2026-04-12,LAA,José Soriano,CIN,Andrew Abbott,2.3366,2.6696,5.0062,0.5514,v1.0
-2026-04-12,ATH,Aaron Civale,NYM,Freddy Peralta,2.2268,2.6964,4.9232,0.5734,v1.0
-2026-04-12,MIA,Sandy Alcantara,DET,Tarik Skubal,2.0161,2.5805,4.5966,0.5935,v1.0
-2026-04-12,NYY,Cam Schlittler,TBR,Drew Rasmussen,2.3326,2.6590,4.9917,0.5505,v1.0
-2026-04-12,CHW,Grant Taylor,KCR,Noah Cameron,2.0428,2.2633,4.3061,0.5389,v1.0
-2026-04-12,WSN,Zack Littell,MIL,Brandon Woodruff,2.5416,2.7615,5.3031,0.5323,v1.0
-2026-04-12,BOS,Brayan Bello,STL,Andre Pallante,2.5754,2.5351,5.1104,0.4939,v1.0
-2026-04-12,PIT,Bubba Chandler,CHC,Jameson Taillon,2.2920,2.6768,4.9688,0.5597,v1.0
-2026-04-12,COL,Kyle Freeland,SDP,Nick Pivetta,2.0237,2.5132,4.5369,0.5821,v1.0
-2026-04-12,HOU,TBD,SEA,Logan Gilbert,2.3841,2.0195,4.4036,0.4370,v1.0
-2026-04-12,TEX,Jacob deGrom,LAD,Roki Sasaki,2.9489,2.8510,5.7999,0.4867,v1.0
-2026-04-12,CLE,Tanner Bibee,ATL,Chris Sale,2.2749,2.6147,4.8896,0.5535,v1.0
+2026-04-13,HOU,Mike Burrows,SEA,George Kirby,2.2023,2.3040,4.5063,0.5173,v1.0
+2026-04-13,ARI,Ryne Nelson,BAL,Dean Kremer,2.5614,2.4240,4.9854,0.4787,v1.0
+2026-04-13,WSN,Cade Cavalli,PIT,Paul Skenes,2.0404,2.5689,4.6093,0.5874,v1.0
+2026-04-13,CHC,Javier Assad,PHI,Cristopher Sánchez,2.1855,2.4475,4.6330,0.5433,v1.0
+2026-04-13,LAA,Yusei Kikuchi,NYY,Will Warren,2.6439,2.7177,5.3616,0.5107,v1.0
+2026-04-13,MIA,Eury Pérez,ATL,Grant Holmes,2.7367,2.5408,5.2774,0.4711,v1.0
+2026-04-13,BOS,Garrett Crochet,MIN,Bailey Ober,2.6854,2.3146,5.0000,0.4428,v1.0
+2026-04-13,CLE,Gavin Williams,STL,Matthew Liberatore,2.5623,2.5498,5.1121,0.4981,v1.0
+2026-04-13,TEX,Nathan Eovaldi,ATH,Luis Severino,2.5607,2.3225,4.8832,0.4624,v1.0
+2026-04-13,NYM,David Peterson,LAD,Justin Wrobleski,2.7986,2.7715,5.5702,0.4962,v1.0
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
