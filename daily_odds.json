@@ -1,6 +1,6 @@
 {
   "date": "2026-04-14",
-  "fetched_at": "2026-04-14 04:31 PM EDT",
+  "fetched_at": "2026-04-14 04:35 PM EDT",
   "games": {
     "Arizona Diamondbacks@Baltimore Orioles": {
       "away": "Arizona Diamondbacks",
@@ -63,8 +63,8 @@
       "commence_edt": "",
       "ml": {
         "fanduel": {
-          "away": 118,
-          "home": -148
+          "away": 116,
+          "home": -145
         },
         "betonlineag": {
           "away": 120,
@@ -86,8 +86,8 @@
       "total": {
         "fanduel": {
           "line": 5.5,
-          "over": 104,
-          "under": -135
+          "over": 102,
+          "under": -132
         },
         "betonlineag": {
           "line": 5.5,
@@ -134,8 +134,8 @@
           "away": -110
         },
         "betrivers": {
-          "home": -118,
-          "away": -112
+          "home": -121,
+          "away": -110
         }
       },
       "total": {
@@ -151,8 +151,8 @@
         },
         "betmgm": {
           "line": 5.0,
-          "over": -110,
-          "under": -118
+          "over": -102,
+          "under": -125
         }
       },
       "pinnacle": {
@@ -562,8 +562,8 @@
           "home": -102
         },
         "betonlineag": {
-          "away": -126,
-          "home": 106
+          "away": -130,
+          "home": 110
         },
         "draftkings": {
           "away": -125,
