@@ -1,16 +1,16 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-13,HOU,Mike Burrows,SEA,George Kirby,2.2023,2.3040,4.5063,0.5173,v1.0
-2026-04-13,ARI,Ryne Nelson,BAL,Dean Kremer,2.5614,2.4240,4.9854,0.4787,v1.0
-2026-04-13,WSN,Cade Cavalli,PIT,Paul Skenes,2.0404,2.5689,4.6093,0.5874,v1.0
-2026-04-13,CHC,Javier Assad,PHI,Cristopher Sánchez,2.1855,2.4475,4.6330,0.5433,v1.0
-2026-04-13,LAA,Yusei Kikuchi,NYY,Will Warren,2.6439,2.7177,5.3616,0.5107,v1.0
-2026-04-13,MIA,Eury Pérez,ATL,Grant Holmes,2.7367,2.5408,5.2774,0.4711,v1.0
-2026-04-13,BOS,Garrett Crochet,MIN,Bailey Ober,2.6854,2.3146,5.0000,0.4428,v1.0
-2026-04-13,CLE,Gavin Williams,STL,Matthew Liberatore,2.5623,2.5498,5.1121,0.4981,v1.0
-2026-04-13,TEX,Nathan Eovaldi,ATH,Luis Severino,2.5607,2.3225,4.8832,0.4624,v1.0
-2026-04-13,NYM,David Peterson,LAD,Justin Wrobleski,2.7986,2.7715,5.5702,0.4962,v1.0
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
+2026-04-14,ARI,Merrill Kelly,BAL,Trevor Rogers,2.2316,2.3983,4.6299,0.5276,v1.0
+2026-04-14,KCR,Cole Ragans,DET,Framber Valdez,2.2148,2.5675,4.7823,0.5567,v1.0
+2026-04-14,WSN,Miles Mikolas,PIT,Mitch Keller,2.4057,2.6662,5.0719,0.5398,v1.0
+2026-04-14,SFG,Robbie Ray,CIN,Brady Singer,2.6075,2.4886,5.0961,0.4819,v1.0
+2026-04-14,CHC,Riley Martin,PHI,Aaron Nola,2.7000,2.4731,5.1731,0.4660,v1.0
+2026-04-14,LAA,Reid Detmers,NYY,Ryan Weathers,2.5393,2.4211,4.9604,0.4816,v1.0
+2026-04-14,MIA,Max Meyer,ATL,Reynaldo López,2.7658,3.0442,5.8100,0.5376,v1.0
+2026-04-14,BOS,Sonny Gray,MIN,Mick Abel,2.8079,2.5533,5.3612,0.4630,v1.0
+2026-04-14,TBR,Shane McClanahan,CHW,Noah Schultz,2.3107,2.2467,4.5574,0.4892,v1.0
+2026-04-14,TOR,Kevin Gausman,MIL,Jacob Misiorowski,2.4800,2.3695,4.8495,0.4824,v1.0
+2026-04-14,CLE,Joey Cantillo,STL,Michael McGreevy,2.4498,2.5111,4.9609,0.5096,v1.0
+2026-04-14,COL,TBD,HOU,Colton Gordon,2.6182,2.6887,5.3069,0.5103,v1.0
+2026-04-14,SEA,Bryan Woo,SDP,Michael King,2.3837,2.0161,4.3997,0.4365,v1.0
+2026-04-14,TEX,MacKenzie Gore,ATH,Jeffrey Springs,2.3251,2.6012,4.9264,0.5432,v1.0
+2026-04-14,NYM,Nolan McLean,LAD,Yoshinobu Yamamoto,2.2251,2.6896,4.9147,0.5727,v1.0
