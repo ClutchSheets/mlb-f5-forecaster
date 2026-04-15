@@ -496,27 +496,28 @@ def render_performance(hist: pd.DataFrame):
         return
 
     avg_abs_prob_diff = scored["abs_prob_diff_close"].mean() if "abs_prob_diff_close" in scored.columns else np.nan
-    st.caption(
-        f"Average absolute probability gap versus Pinnacle close: {avg_abs_prob_diff:.4f}"
-        if pd.notna(avg_abs_prob_diff) else
-        "Average absolute probability gap versus Pinnacle close: —"
+    model_logloss = scored["logloss"].mean() if "logloss" in scored.columns else np.nan
+    close_logloss = scored["close_logloss_devig"].mean() if "close_logloss_devig" in scored.columns else np.nan
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric(
+        "Avg Abs Prob Gap vs Close",
+        f"{avg_abs_prob_diff:.4f}" if pd.notna(avg_abs_prob_diff) else "—",
+        help="Average absolute difference between your model probability and devigged Pinnacle closing probability. Lower is better.",
+    )
+    m2.metric(
+        "Model Log Loss",
+        f"{model_logloss:.4f}" if pd.notna(model_logloss) else "—",
+        help="Outcome-based log loss from your model probabilities.",
+    )
+    m3.metric(
+        "Close Log Loss",
+        f"{close_logloss:.4f}" if pd.notna(close_logloss) else "—",
+        help="Outcome-based log loss from devigged Pinnacle closing probabilities.",
     )
 
     st.markdown("---")
     render_beating_the_market(scored)
-
-    with st.expander("Outcome-based diagnostics"):
-        st.caption("Secondary metrics describing how model probabilities aligned with actual outcomes.")
-        mae = scored["mae_total"].mean() if "mae_total" in scored.columns else np.nan
-        brier = scored["brier"].mean() if "brier" in scored.columns else np.nan
-        model_logloss = scored["logloss"].mean() if "logloss" in scored.columns else np.nan
-        close_logloss = scored["close_logloss_devig"].mean() if "close_logloss_devig" in scored.columns else np.nan
-
-        d1, d2, d3, d4 = st.columns(4)
-        d1.metric("MAE (Runs)", f"{mae:.3f}" if pd.notna(mae) else "—")
-        d2.metric("Brier Score", f"{brier:.4f}" if pd.notna(brier) else "—")
-        d3.metric("Model Log Loss", f"{model_logloss:.4f}" if pd.notna(model_logloss) else "—")
-        d4.metric("Close Log Loss", f"{close_logloss:.4f}" if pd.notna(close_logloss) else "—")
 
     st.markdown("---")
     st.markdown("#### Closing-Line Comparison Archive")
