@@ -1,6 +1,6 @@
 {
   "date": "2026-04-15",
-  "fetched_at": "2026-04-15 11:31 AM EDT",
+  "fetched_at": "2026-04-15 11:36 AM EDT",
   "games": {
     "Arizona Diamondbacks@Baltimore Orioles": {
       "away": "Arizona Diamondbacks",
@@ -24,8 +24,8 @@
           "home": -135
         },
         "betrivers": {
-          "away": 104,
-          "home": -137
+          "away": 102,
+          "home": -134
         }
       },
       "total": {
@@ -71,12 +71,12 @@
           "home": -115
         },
         "draftkings": {
-          "away": -115,
-          "home": -115
+          "away": -120,
+          "home": -110
         },
         "betrivers": {
           "away": 102,
-          "home": -136
+          "home": -137
         },
         "betmgm": {
           "away": -110,
@@ -85,9 +85,9 @@
       },
       "total": {
         "fanduel": {
-          "line": 4.5,
-          "over": -125,
-          "under": -104
+          "line": 5.5,
+          "over": 110,
+          "under": -144
         },
         "betonlineag": {
           "line": 5.0,
@@ -96,8 +96,8 @@
         },
         "betmgm": {
           "line": 5.0,
-          "over": -102,
-          "under": -130
+          "over": -110,
+          "under": -118
         }
       },
       "pinnacle": {
@@ -218,7 +218,7 @@
         "total": {
           "line": 4.5,
           "over": -103,
-          "under": -112
+          "under": -111
         }
       }
     },
@@ -598,12 +598,232 @@
       "pinnacle": {
         "ml": {
           "home": 116,
-          "away": -134
+          "away": -133
         },
         "total": {
           "line": 4.0,
           "over": -109,
           "under": -105
+        }
+      }
+    },
+    "Colorado Rockies@Houston Astros": {
+      "away": "Colorado Rockies",
+      "home": "Houston Astros",
+      "commence_edt": "",
+      "ml": {
+        "fanduel": {
+          "away": 142,
+          "home": -180
+        },
+        "draftkings": {
+          "away": 140,
+          "home": -180
+        },
+        "betrivers": {
+          "away": 128,
+          "home": -175
+        },
+        "betmgm": {
+          "away": 140,
+          "home": -175
+        },
+        "betonlineag": {
+          "away": 153,
+          "home": -175
+        }
+      },
+      "total": {
+        "fanduel": {
+          "line": 4.5,
+          "over": -120,
+          "under": -108
+        },
+        "betmgm": {
+          "line": 4.5,
+          "over": -118,
+          "under": -110
+        },
+        "betonlineag": {
+          "line": 4.5,
+          "over": -120,
+          "under": 100
+        }
+      },
+      "pinnacle": {
+        "ml": {
+          "away": 150,
+          "home": -175
+        },
+        "total": {
+          "line": 5.0,
+          "over": 103,
+          "under": -118
+        }
+      }
+    },
+    "Texas Rangers@Athletics": {
+      "away": "Texas Rangers",
+      "home": "Athletics",
+      "commence_edt": "",
+      "ml": {
+        "fanduel": {
+          "home": -120,
+          "away": -104
+        },
+        "betonlineag": {
+          "home": -120,
+          "away": 100
+        },
+        "draftkings": {
+          "home": -125,
+          "away": -105
+        },
+        "betmgm": {
+          "home": -115,
+          "away": -110
+        },
+        "betrivers": {
+          "home": -127,
+          "away": -104
+        }
+      },
+      "total": {
+        "fanduel": {
+          "line": 5.5,
+          "over": 100,
+          "under": -130
+        },
+        "betonlineag": {
+          "line": 5.5,
+          "over": 105,
+          "under": -125
+        },
+        "betmgm": {
+          "line": 5.5,
+          "over": -105,
+          "under": -125
+        }
+      },
+      "pinnacle": {
+        "ml": {
+          "home": -120,
+          "away": 105
+        },
+        "total": {
+          "line": 5.5,
+          "over": 105,
+          "under": -121
+        }
+      }
+    },
+    "Seattle Mariners@San Diego Padres": {
+      "away": "Seattle Mariners",
+      "home": "San Diego Padres",
+      "commence_edt": "",
+      "ml": {
+        "fanduel": {
+          "home": -114,
+          "away": -110
+        },
+        "betonlineag": {
+          "home": -115,
+          "away": -105
+        },
+        "draftkings": {
+          "home": -120,
+          "away": -110
+        },
+        "betmgm": {
+          "home": -110,
+          "away": -110
+        },
+        "betrivers": {
+          "home": -114,
+          "away": -117
+        }
+      },
+      "total": {
+        "fanduel": {
+          "line": 4.5,
+          "over": -106,
+          "under": -122
+        },
+        "betonlineag": {
+          "line": 4.0,
+          "over": -125,
+          "under": 105
+        },
+        "betmgm": {
+          "line": 4.5,
+          "over": -105,
+          "under": -125
+        }
+      },
+      "pinnacle": {
+        "ml": {
+          "home": -113,
+          "away": -101
+        },
+        "total": {
+          "line": 4.0,
+          "over": -119,
+          "under": 104
+        }
+      }
+    },
+    "New York Mets@Los Angeles Dodgers": {
+      "away": "New York Mets",
+      "home": "Los Angeles Dodgers",
+      "commence_edt": "",
+      "ml": {
+        "fanduel": {
+          "home": -230,
+          "away": 180
+        },
+        "betonlineag": {
+          "home": -215,
+          "away": 183
+        },
+        "draftkings": {
+          "home": -230,
+          "away": 175
+        },
+        "betmgm": {
+          "home": -220,
+          "away": 175
+        },
+        "betrivers": {
+          "home": -220,
+          "away": 160
+        }
+      },
+      "total": {
+        "fanduel": {
+          "line": 4.5,
+          "over": 108,
+          "under": -140
+        },
+        "betonlineag": {
+          "line": 4.0,
+          "over": -125,
+          "under": 105
+        },
+        "betmgm": {
+          "line": 4.5,
+          "over": -102,
+          "under": -125
+        }
+      },
+      "pinnacle": {
+        "ml": {
+          "home": -211,
+          "away": 178
+        },
+        "total": {
+          "line": 4.0,
+          "over": -119,
+          "under": 104
         }
       }
     }
