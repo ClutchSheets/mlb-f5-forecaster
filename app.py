@@ -23,7 +23,7 @@ BOOK_LABELS = {
     "betmgm": "BetMGM",
     "betrivers": "BetRivers",
 }
-EDGE_NOISE_THRESHOLD = 2.0
+ADJK_THRESHOLD = 1.5
 
 NAME_TO_CODE = {
     "Pittsburgh Pirates": "PIT", "Chicago Cubs": "CHC",
@@ -85,22 +85,22 @@ def fmt_american(odds: int) -> str:
     return f"+{odds}" if odds > 0 else str(odds)
 
 
-def highlight_color(edge: float) -> str | None:
-    if edge < EDGE_NOISE_THRESHOLD:
+def highlight_color(adjk: float) -> str | None:
+    if adjk < ADJK_THRESHOLD:
         return None
-    if edge < 3.0:
-        return "#2e7d32"  # lightest green tier
-    if edge < 5.0:
-        return "#1f6f2d"  # medium green tier
-    return "#145a22"      # strongest green tier
+    if adjk < 1.8:
+        return "#2e7d32"
+    if adjk < 2.3:
+        return "#1f6f2d"
+    return "#145a22"
 
 
-def format_highlight(odds: int, edge: float, adjk: float, color: str) -> str:
+def format_highlight(odds: int, adjk: float, color: str) -> str:
     odds_str = fmt_american(odds)
     return (
         f"<span class='edge' style='background:{color}'>"
         f"{odds_str}"
-        f"<small>+{edge:.1f}% | AdjK {adjk:.1f}</small>"
+        f"<small>AdjK {adjk:.1f}</small>"
         f"</span>"
     )
 
@@ -172,23 +172,11 @@ def get_book_metrics(model_p: float, side_odds: int, opp_odds: int):
     return edge, adjk
 
 
-def render_metric_cell(odds: int, edge: float, adjk: float, td_style: str) -> str:
-    color = highlight_color(edge)
+def render_metric_cell(odds: int, adjk: float, td_style: str) -> str:
+    color = highlight_color(adjk)
     if color is None:
         return f"<td style='{td_style}'><span style='color:#e0e0e0;font-size:0.9em'>{fmt_american(odds)}</span></td>"
-    return f"<td style='{td_style}'>{format_highlight(odds, edge, adjk, color)}</td>"
-
-
-def render_best_cell(best_pick: dict | None, td_style: str) -> str:
-    if not best_pick:
-        return f"<td style='{td_style}'><span style='color:#888'>—</span></td>"
-    html = format_highlight(best_pick['odds'], best_pick['edge'], best_pick['adjk'], best_pick['color'])
-    html = html.replace(
-        "</small>",
-        f"<br><span style='font-size:0.72em;opacity:0.9'>{best_pick['book_label']}</span></small>",
-        1,
-    )
-    return f"<td style='{td_style}'>{html}</td>"
+    return f"<td style='{td_style}'>{format_highlight(odds, adjk, color)}</td>"
 
 
 def render_games_table(df, odds_lookup):
@@ -225,7 +213,7 @@ def render_games_table(df, odds_lookup):
           <th style='{TH};text-align:left'>TEAM / PITCHER</th>
           <th style='{TH};text-align:center'>WIN %</th>
           <th style='{TH};text-align:center'>ML FV</th>
-          <th style='{TH};text-align:center'>BEST</th>
+          <th style='{TH};text-align:center'>EDGE</th>
           {book_headers}
         </tr>
       </thead>
@@ -249,8 +237,8 @@ def render_games_table(df, odds_lookup):
         away_cells = ""
         home_cells = ""
         td_style = f"padding:4px 12px;text-align:center;border-bottom:1px solid {BORDER}"
-        away_best = None
-        home_best = None
+        away_best_edge = None
+        home_best_edge = None
 
         for bk_key in BOOKS:
             away_odds, home_odds = get_book_odds(bk_key, game, away, home)
@@ -262,35 +250,16 @@ def render_games_table(df, odds_lookup):
             away_edge, away_adjk = get_book_metrics(model_away_p, away_odds, home_odds)
             home_edge, home_adjk = get_book_metrics(model_home_p, home_odds, away_odds)
 
-            away_cells += render_metric_cell(away_odds, away_edge, away_adjk, td_style)
-            home_cells += render_metric_cell(home_odds, home_edge, home_adjk, td_style)
+            away_cells += render_metric_cell(away_odds, away_adjk, td_style)
+            home_cells += render_metric_cell(home_odds, home_adjk, td_style)
 
-            away_color = highlight_color(away_edge)
-            if away_color is not None:
-                candidate = {
-                    "odds": away_odds,
-                    "edge": away_edge,
-                    "adjk": away_adjk,
-                    "color": away_color,
-                    "book_label": BOOK_LABELS[bk_key],
-                }
-                if away_best is None or candidate["adjk"] > away_best["adjk"]:
-                    away_best = candidate
+            if away_best_edge is None or away_edge > away_best_edge:
+                away_best_edge = away_edge
+            if home_best_edge is None or home_edge > home_best_edge:
+                home_best_edge = home_edge
 
-            home_color = highlight_color(home_edge)
-            if home_color is not None:
-                candidate = {
-                    "odds": home_odds,
-                    "edge": home_edge,
-                    "adjk": home_adjk,
-                    "color": home_color,
-                    "book_label": BOOK_LABELS[bk_key],
-                }
-                if home_best is None or candidate["adjk"] > home_best["adjk"]:
-                    home_best = candidate
-
-        away_best_cell = render_best_cell(away_best, td_style)
-        home_best_cell = render_best_cell(home_best, td_style)
+        away_edge_cell = f"<td style='{td_style}'><span style='color:#e0e0e0;font-size:0.9em'>{away_best_edge:+.1f}%</span></td>" if away_best_edge is not None else f"<td style='{td_style}'><span style='color:#888'>—</span></td>"
+        home_edge_cell = f"<td style='{td_style}'><span style='color:#e0e0e0;font-size:0.9em'>{home_best_edge:+.1f}%</span></td>" if home_best_edge is not None else f"<td style='{td_style}'><span style='color:#888'>—</span></td>"
 
         game_class = "game-odd" if game_num % 2 == 1 else "game-even"
         html += f"""
@@ -308,7 +277,7 @@ def render_games_table(df, odds_lookup):
           <td style='padding:4px 12px;text-align:center;border-bottom:1px solid {BORDER}'>
             <span style='color:#7ec8e3;font-size:0.9em;font-weight:600'>{ml_fv_away}</span>
           </td>
-          {away_best_cell}
+          {away_edge_cell}
           {away_cells}
         </tr>
         <tr class='{game_class}'>
@@ -322,7 +291,7 @@ def render_games_table(df, odds_lookup):
           <td style='padding:4px 12px;text-align:center;border-bottom:2px solid {BORDER}'>
             <span style='color:#7ec8e3;font-size:0.9em;font-weight:600'>{ml_fv_home}</span>
           </td>
-          {home_best_cell}
+          {home_edge_cell}
           {home_cells}
         </tr>
         """
@@ -588,8 +557,11 @@ def main():
 
     with tab1:
         st.caption(
-            "Edge = model probability minus devigged market implied probability. "
-            "AdjK = adjusted Kelly score. Only edges of 2.0% or higher are highlighted."
+            "Edge = best available model edge vs market price\n"
+            "AdjK = adjusted Kelly score (combines edge and payout quality)\n"
+            "Only prices with AdjK ≥ 1.5 are highlighted\n\n"
+            "F5 markets are more volatile than full game markets.\n"
+            "Small edges are often noise, so an AdjK threshold is applied to isolate higher-quality opportunities."
         )
 
         df = load_forecast(CSV_PATH)
