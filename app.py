@@ -23,7 +23,7 @@ BOOK_LABELS = {
     "betmgm": "BetMGM",
     "betrivers": "BetRivers",
 }
-KELLY_THRESHOLD = 1.5
+EDGE_NOISE_THRESHOLD = 2.0
 
 NAME_TO_CODE = {
     "Pittsburgh Pirates": "PIT", "Chicago Cubs": "CHC",
@@ -85,6 +85,26 @@ def fmt_american(odds: int) -> str:
     return f"+{odds}" if odds > 0 else str(odds)
 
 
+def highlight_color(edge: float) -> str | None:
+    if edge < EDGE_NOISE_THRESHOLD:
+        return None
+    if edge < 3.0:
+        return "#2e7d32"  # lightest green tier
+    if edge < 5.0:
+        return "#1f6f2d"  # medium green tier
+    return "#145a22"      # strongest green tier
+
+
+def format_highlight(odds: int, edge: float, adjk: float, color: str) -> str:
+    odds_str = fmt_american(odds)
+    return (
+        f"<span class='edge' style='background:{color}'>"
+        f"{odds_str}"
+        f"<small>+{edge:.1f}% | AdjK {adjk:.1f}</small>"
+        f"</span>"
+    )
+
+
 @st.cache_data(ttl=300)
 def fetch_odds():
     """
@@ -109,7 +129,7 @@ def fetch_odds():
         away_code = NAME_TO_CODE.get(away_name, away_name[:3].upper())
         home_code = NAME_TO_CODE.get(home_name, home_name[:3].upper())
         code_key = f"{away_code}@{home_code}"
-        lookup[code_key] = game  # contains ml, total, pinnacle, commence_edt
+        lookup[code_key] = game
     return lookup
 
 
@@ -135,15 +155,43 @@ def load_history(db_path: str) -> pd.DataFrame:
 
 
 def get_book_odds(book_key, game, away, home):
-    """Reads F5 ML odds from daily_odds.json game dict."""
     entry = game.get("ml", {}).get(book_key)
     if not entry:
         return None, None
     return entry.get("away"), entry.get("home")
 
 
+def get_book_metrics(model_p: float, side_odds: int, opp_odds: int):
+    decimal_odds = american_to_decimal(side_odds)
+    adjk = adj_kelly(model_p, decimal_odds)
+    if opp_odds is not None:
+        market_p, _ = no_vig_prob(side_odds, opp_odds)
+    else:
+        market_p = american_to_prob(side_odds)
+    edge = edge_pct(model_p, market_p)
+    return edge, adjk
+
+
+def render_metric_cell(odds: int, edge: float, adjk: float, td_style: str) -> str:
+    color = highlight_color(edge)
+    if color is None:
+        return f"<td style='{td_style}'><span style='color:#e0e0e0;font-size:0.9em'>{fmt_american(odds)}</span></td>"
+    return f"<td style='{td_style}'>{format_highlight(odds, edge, adjk, color)}</td>"
+
+
+def render_best_cell(best_pick: dict | None, td_style: str) -> str:
+    if not best_pick:
+        return f"<td style='{td_style}'><span style='color:#888'>—</span></td>"
+    html = format_highlight(best_pick['odds'], best_pick['edge'], best_pick['adjk'], best_pick['color'])
+    html = html.replace(
+        "</small>",
+        f"<br><span style='font-size:0.72em;opacity:0.9'>{best_pick['book_label']}</span></small>",
+        1,
+    )
+    return f"<td style='{td_style}'>{html}</td>"
+
+
 def render_games_table(df, odds_lookup):
-    GREEN = "#1a7a3a"
     BG_DARK = "#0e1117"
     BG_ROW = "#1a1d24"
     BG_ALT = "#14171e"
@@ -162,9 +210,9 @@ def render_games_table(df, odds_lookup):
         th{{background:#111418;color:#ffffff;font-size:0.72em;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:10px 12px;border-bottom:2px solid #3a4050}}
         tr.game-odd td{{background:{BG_ROW}}}
         tr.game-even td{{background:{BG_ALT}}}
-        tr.game-odd:hover td,tr.game-even:hover td{{filter:brightness(1.2)}}
-        .edge{{background:{GREEN};border-radius:3px;padding:1px 6px;white-space:nowrap;display:inline-block;font-weight:600;color:#fff}}
-        .edge small{{display:block;font-size:0.75em;font-weight:400;opacity:0.9}}
+        tr.game-odd:hover td,tr.game-even:hover td{{filter:brightness(1.08)}}
+        .edge{{border-radius:4px;padding:2px 7px;white-space:nowrap;display:inline-block;font-weight:600;color:#fff;line-height:1.25}}
+        .edge small{{display:block;font-size:0.75em;font-weight:500;opacity:0.96}}
         td{{padding:4px 12px;border-bottom:1px solid {BORDER}}}
       </style>
     """
@@ -177,6 +225,7 @@ def render_games_table(df, odds_lookup):
           <th style='{TH};text-align:left'>TEAM / PITCHER</th>
           <th style='{TH};text-align:center'>WIN %</th>
           <th style='{TH};text-align:center'>ML FV</th>
+          <th style='{TH};text-align:center'>BEST</th>
           {book_headers}
         </tr>
       </thead>
@@ -200,30 +249,48 @@ def render_games_table(df, odds_lookup):
         away_cells = ""
         home_cells = ""
         td_style = f"padding:4px 12px;text-align:center;border-bottom:1px solid {BORDER}"
+        away_best = None
+        home_best = None
 
         for bk_key in BOOKS:
             away_odds, home_odds = get_book_odds(bk_key, game, away, home)
-            if away_odds is None:
+            if away_odds is None or home_odds is None:
                 away_cells += f"<td style='{td_style}'><span style='color:#888'>—</span></td>"
                 home_cells += f"<td style='{td_style}'><span style='color:#888'>—</span></td>"
                 continue
 
-            away_dec = american_to_decimal(away_odds)
-            home_dec = american_to_decimal(home_odds)
-            away_k = adj_kelly(model_away_p, away_dec)
-            home_k = adj_kelly(model_home_p, home_dec)
+            away_edge, away_adjk = get_book_metrics(model_away_p, away_odds, home_odds)
+            home_edge, home_adjk = get_book_metrics(model_home_p, home_odds, away_odds)
 
-            away_sign = fmt_american(away_odds)
-            if away_k >= KELLY_THRESHOLD:
-                away_cells += f"<td style='{td_style}'><span class='edge'>{away_sign}<small>K:{away_k:.1f}</small></span></td>"
-            else:
-                away_cells += f"<td style='{td_style}'><span style='color:#e0e0e0;font-size:0.9em'>{away_sign}</span></td>"
+            away_cells += render_metric_cell(away_odds, away_edge, away_adjk, td_style)
+            home_cells += render_metric_cell(home_odds, home_edge, home_adjk, td_style)
 
-            home_sign = fmt_american(home_odds)
-            if home_k >= KELLY_THRESHOLD:
-                home_cells += f"<td style='{td_style}'><span class='edge'>{home_sign}<small>K:{home_k:.1f}</small></span></td>"
-            else:
-                home_cells += f"<td style='{td_style}'><span style='color:#e0e0e0;font-size:0.9em'>{home_sign}</span></td>"
+            away_color = highlight_color(away_edge)
+            if away_color is not None:
+                candidate = {
+                    "odds": away_odds,
+                    "edge": away_edge,
+                    "adjk": away_adjk,
+                    "color": away_color,
+                    "book_label": BOOK_LABELS[bk_key],
+                }
+                if away_best is None or candidate["adjk"] > away_best["adjk"]:
+                    away_best = candidate
+
+            home_color = highlight_color(home_edge)
+            if home_color is not None:
+                candidate = {
+                    "odds": home_odds,
+                    "edge": home_edge,
+                    "adjk": home_adjk,
+                    "color": home_color,
+                    "book_label": BOOK_LABELS[bk_key],
+                }
+                if home_best is None or candidate["adjk"] > home_best["adjk"]:
+                    home_best = candidate
+
+        away_best_cell = render_best_cell(away_best, td_style)
+        home_best_cell = render_best_cell(home_best, td_style)
 
         game_class = "game-odd" if game_num % 2 == 1 else "game-even"
         html += f"""
@@ -241,6 +308,7 @@ def render_games_table(df, odds_lookup):
           <td style='padding:4px 12px;text-align:center;border-bottom:1px solid {BORDER}'>
             <span style='color:#7ec8e3;font-size:0.9em;font-weight:600'>{ml_fv_away}</span>
           </td>
+          {away_best_cell}
           {away_cells}
         </tr>
         <tr class='{game_class}'>
@@ -254,12 +322,12 @@ def render_games_table(df, odds_lookup):
           <td style='padding:4px 12px;text-align:center;border-bottom:2px solid {BORDER}'>
             <span style='color:#7ec8e3;font-size:0.9em;font-weight:600'>{ml_fv_home}</span>
           </td>
+          {home_best_cell}
           {home_cells}
         </tr>
         """
 
     html += "</tbody></table>"
-    # 2 rows per game × ~52px per row + 60px header, no internal scrolling
     height = len(df) * 104 + 60
     components.html(html, height=height, scrolling=False)
 
@@ -325,40 +393,44 @@ def render_beating_the_market(df: pd.DataFrame):
     plot_df = plot_df.sort_values("date").reset_index(drop=True)
     plot_df["game_num"] = range(1, len(plot_df) + 1)
     plot_df["cumulative_median"] = plot_df["model_vs_close_logloss_devig"].expanding().median()
-    plot_df["cumulative_mean"]   = plot_df["model_vs_close_logloss_devig"].expanding().mean()
+    plot_df["cumulative_mean"] = plot_df["model_vs_close_logloss_devig"].expanding().mean()
     plot_df["game_label"] = plot_df["away_team"] + " @ " + plot_df["home_team"] + " (" + plot_df["date"] + ")"
 
     median_delta = plot_df["model_vs_close_logloss_devig"].median()
-    mean_delta   = plot_df["model_vs_close_logloss_devig"].mean()
-    outlier_drag = mean_delta - median_delta  # positive = outliers pulling mean up
-    n            = len(plot_df)
+    mean_delta = plot_df["model_vs_close_logloss_devig"].mean()
+    outlier_drag = mean_delta - median_delta
+    n = len(plot_df)
 
-    # Recent trend: compare last 50 games vs overall median
-    window     = min(50, n)
-    recent_df  = plot_df.tail(window)
+    window = min(50, n)
+    recent_df = plot_df.tail(window)
     recent_avg = recent_df["model_vs_close_logloss_devig"].median()
-    trend_diff = recent_avg - median_delta  # negative = recent is better than overall
+    trend_diff = recent_avg - median_delta
 
-    # Plain-English headline
     if median_delta < 0:
         overall_txt = f"Overall your model is <b>ahead of the market</b> by {abs(median_delta):.4f} median log loss per game across {n} games."
     else:
         overall_txt = f"Overall your model is <b>behind the market</b> by {abs(median_delta):.4f} median log loss per game across {n} games."
 
     if abs(trend_diff) < 0.005:
-        trend_txt = f"Your last {window} games are flat — performance is holding steady."
+        trend_txt = "Your last {window} games are flat — performance is holding steady.".format(window=window)
         trend_color = "#666"
     elif trend_diff < 0:
-        trend_txt = f"Your last {window} games are <b>trending better</b> (recent median {recent_avg:+.4f} vs overall {median_delta:+.4f}) — you\'re closing the gap on the market."
+        trend_txt = (
+            f"Your last {window} games are <b>trending better</b> "
+            f"(recent median {recent_avg:+.4f} vs overall {median_delta:+.4f}) — you're closing the gap on the market."
+        )
         trend_color = "#1a7a3a"
     else:
-        trend_txt = f"Your last {window} games are <b>trending worse</b> (recent median {recent_avg:+.4f} vs overall {median_delta:+.4f}) — the gap to the market is widening."
+        trend_txt = (
+            f"Your last {window} games are <b>trending worse</b> "
+            f"(recent median {recent_avg:+.4f} vs overall {median_delta:+.4f}) — the gap to the market is widening."
+        )
         trend_color = "#a33333"
 
     st.markdown(
         f"<p style=\"margin:0 0 4px\">{overall_txt}</p>"
         f"<p style=\"margin:0;color:{trend_color}\">{trend_txt}</p>",
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
     st.caption("Log loss delta = model log loss minus Pinnacle closing log loss. Negative = your model priced the outcome better. Lower is better. Blue line = cumulative median (robust to outliers).")
 
@@ -367,26 +439,16 @@ def render_beating_the_market(df: pd.DataFrame):
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Games Scored", n)
     c2.metric("Median Log Loss Delta", f"{median_delta:+.4f}", help="Typical game — robust to outliers")
-    c3.metric("Mean Log Loss Delta",   f"{mean_delta:+.4f}",   help="Overall calibration — includes blowups")
-    c4.metric("Outlier Drag",          f"{outlier_drag:+.4f}", help="Mean minus median. Positive = bad outlier games pulling mean up. Investigate these.")
-    c5.metric(f"Last {window} Median", f"{recent_avg:+.4f}",
-              delta=f"{trend_diff:+.4f} vs overall",
-              delta_color="inverse")
+    c3.metric("Mean Log Loss Delta", f"{mean_delta:+.4f}", help="Overall calibration — includes blowups")
+    c4.metric("Outlier Drag", f"{outlier_drag:+.4f}", help="Mean minus median. Positive = bad outlier games pulling mean up. Investigate these.")
+    c5.metric(f"Last {window} Median", f"{recent_avg:+.4f}", delta=f"{trend_diff:+.4f} vs overall", delta_color="inverse")
 
     st.markdown("")
-
-    # Shaded region below zero
-    shade_df = pd.DataFrame({"x": [0, n + 1], "y1": [0, 0], "y2": [-1, -1]})
-    shade = alt.Chart(shade_df).mark_rect(opacity=0.04, color="#1a7a3a").encode(
-        x=alt.X("x:Q"), x2="x:Q",
-        y=alt.Y("y1:Q"), y2="y2:Q"
-    )
 
     zero_line = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(
         strokeDash=[4, 4], color="gray", opacity=0.5
     ).encode(y="y:Q")
 
-    # Recent window highlight band
     recent_band = alt.Chart(pd.DataFrame({
         "x1": [n - window + 1], "x2": [n + 0.5]
     })).mark_rect(opacity=0.06, color="#378AD3").encode(
@@ -402,15 +464,13 @@ def render_beating_the_market(df: pd.DataFrame):
 
     trend_line_median = alt.Chart(plot_df).mark_line(color="#378AD3", strokeWidth=2.5).encode(
         x=alt.X("game_num:Q", title="Game #"),
-        y=alt.Y("cumulative_median:Q",
-                title="Log loss delta (negative = beating market)",
-                axis=alt.Axis(format=".3f")),
+        y=alt.Y("cumulative_median:Q", title="Log loss delta (negative = beating market)", axis=alt.Axis(format=".3f")),
         tooltip=[
-            alt.Tooltip("game_label:N",        title="Game"),
+            alt.Tooltip("game_label:N", title="Game"),
             alt.Tooltip("cumulative_median:Q", title="Cumulative median", format="+.4f"),
-            alt.Tooltip("cumulative_mean:Q",   title="Cumulative mean",   format="+.4f"),
+            alt.Tooltip("cumulative_mean:Q", title="Cumulative mean", format="+.4f"),
             alt.Tooltip("model_vs_close_logloss_devig:Q", title="This game", format="+.4f"),
-            alt.Tooltip("game_num:Q",          title="Game #"),
+            alt.Tooltip("game_num:Q", title="Game #"),
         ]
     )
 
@@ -420,10 +480,10 @@ def render_beating_the_market(df: pd.DataFrame):
         x=alt.X("game_num:Q"),
         y=alt.Y("cumulative_mean:Q"),
         tooltip=[
-            alt.Tooltip("game_label:N",        title="Game"),
-            alt.Tooltip("cumulative_mean:Q",   title="Cumulative mean",   format="+.4f"),
+            alt.Tooltip("game_label:N", title="Game"),
+            alt.Tooltip("cumulative_mean:Q", title="Cumulative mean", format="+.4f"),
             alt.Tooltip("cumulative_median:Q", title="Cumulative median", format="+.4f"),
-            alt.Tooltip("game_num:Q",          title="Game #"),
+            alt.Tooltip("game_num:Q", title="Game #"),
         ]
     )
 
@@ -436,9 +496,9 @@ def render_beating_the_market(df: pd.DataFrame):
             alt.value("#a33333")
         ),
         tooltip=[
-            alt.Tooltip("game_label:N",       title="Game"),
+            alt.Tooltip("game_label:N", title="Game"),
             alt.Tooltip("model_vs_close_logloss_devig:Q", title="Log loss delta", format="+.4f"),
-            alt.Tooltip("game_num:Q",         title="Game #"),
+            alt.Tooltip("game_num:Q", title="Game #"),
         ]
     )
 
@@ -478,16 +538,16 @@ def render_performance(hist: pd.DataFrame):
 
     with st.expander("Outcome-based diagnostics"):
         st.caption("Secondary metrics describing how model probabilities aligned with actual outcomes.")
-        mae          = scored["mae_total"].mean()        if "mae_total"          in scored.columns else np.nan
-        brier        = scored["brier"].mean()            if "brier"              in scored.columns else np.nan
-        model_logloss= scored["logloss"].mean()          if "logloss"            in scored.columns else np.nan
-        close_logloss= scored["close_logloss_devig"].mean() if "close_logloss_devig" in scored.columns else np.nan
+        mae = scored["mae_total"].mean() if "mae_total" in scored.columns else np.nan
+        brier = scored["brier"].mean() if "brier" in scored.columns else np.nan
+        model_logloss = scored["logloss"].mean() if "logloss" in scored.columns else np.nan
+        close_logloss = scored["close_logloss_devig"].mean() if "close_logloss_devig" in scored.columns else np.nan
 
         d1, d2, d3, d4 = st.columns(4)
-        d1.metric("MAE (Runs)",      f"{mae:.3f}"         if pd.notna(mae)           else "—")
-        d2.metric("Brier Score",     f"{brier:.4f}"       if pd.notna(brier)         else "—")
-        d3.metric("Model Log Loss",  f"{model_logloss:.4f}" if pd.notna(model_logloss) else "—")
-        d4.metric("Close Log Loss",  f"{close_logloss:.4f}" if pd.notna(close_logloss) else "—")
+        d1.metric("MAE (Runs)", f"{mae:.3f}" if pd.notna(mae) else "—")
+        d2.metric("Brier Score", f"{brier:.4f}" if pd.notna(brier) else "—")
+        d3.metric("Model Log Loss", f"{model_logloss:.4f}" if pd.notna(model_logloss) else "—")
+        d4.metric("Close Log Loss", f"{close_logloss:.4f}" if pd.notna(close_logloss) else "—")
 
     st.markdown("---")
     st.markdown("#### Closing-Line Comparison Archive")
@@ -527,6 +587,11 @@ def main():
     tab1, tab2 = st.tabs(["📅 Today's Games", "📊 Performance"])
 
     with tab1:
+        st.caption(
+            "Edge = model probability minus devigged market implied probability. "
+            "AdjK = adjusted Kelly score. Only edges of 2.0% or higher are highlighted."
+        )
+
         df = load_forecast(CSV_PATH)
         if df.empty:
             st.warning("No forecast data found.")
