@@ -1,7 +1,7 @@
 import json
 import os
 import sqlite3
-from datetime import date
+from datetime import date, datetime
 
 import altair as alt
 import numpy as np
@@ -24,6 +24,74 @@ BOOK_LABELS = {
     "betrivers": "BetRivers",
 }
 ADJK_THRESHOLD = 1.5
+
+
+
+
+
+def get_odds_payload() -> dict:
+    if not os.path.exists(DAILY_ODDS_FILE):
+        return {}
+    try:
+        with open(DAILY_ODDS_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def format_timestamp_label(value) -> str:
+    if value is None:
+        return "—"
+    if isinstance(value, datetime):
+        return value.strftime("%Y-%m-%d %I:%M %p")
+    if isinstance(value, pd.Timestamp):
+        if pd.isna(value):
+            return "—"
+        return value.strftime("%Y-%m-%d %I:%M %p")
+    value = str(value).strip()
+    return value if value else "—"
+
+
+def get_model_output_time(csv_path: str, df: pd.DataFrame | None = None) -> str:
+    if df is not None and not df.empty:
+        for col in ["model_output_at", "model_run_at", "generated_at", "created_at", "updated_at", "run_time", "timestamp"]:
+            if col in df.columns:
+                parsed = pd.to_datetime(df[col], errors="coerce")
+                parsed = parsed.dropna()
+                if not parsed.empty:
+                    return format_timestamp_label(parsed.max())
+
+    if not os.path.exists(csv_path):
+        return "—"
+
+    try:
+        modified = datetime.fromtimestamp(os.path.getmtime(csv_path))
+        return format_timestamp_label(modified)
+    except Exception:
+        return "—"
+
+
+def render_data_status(odds_payload: dict, model_output_time: str):
+    odds_fetched_at = odds_payload.get("fetched_at", "—") if odds_payload else "—"
+    odds_date = odds_payload.get("date", "—") if odds_payload else "—"
+
+    st.markdown(
+        f"""
+        <div style='display:flex;gap:12px;flex-wrap:wrap;margin:0 0 14px 0'>
+          <div style='background:#111418;border:1px solid #2a2d35;border-radius:10px;padding:10px 14px;min-width:220px'>
+            <div style='font-size:0.72rem;letter-spacing:0.05em;text-transform:uppercase;color:#888'>Odds fetched</div>
+            <div style='font-size:1rem;font-weight:700;color:#e0e0e0;margin-top:2px'>{odds_fetched_at}</div>
+            <div style='font-size:0.78rem;color:#888;margin-top:2px'>Odds file date: {odds_date}</div>
+          </div>
+          <div style='background:#111418;border:1px solid #2a2d35;border-radius:10px;padding:10px 14px;min-width:220px'>
+            <div style='font-size:0.72rem;letter-spacing:0.05em;text-transform:uppercase;color:#888'>Model output</div>
+            <div style='font-size:1rem;font-weight:700;color:#e0e0e0;margin-top:2px'>{model_output_time}</div>
+            <div style='font-size:0.78rem;color:#888;margin-top:2px'>Source: daily_forecast.csv</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 NAME_TO_CODE = {
     "Pittsburgh Pirates": "PIT", "Chicago Cubs": "CHC",
@@ -114,12 +182,8 @@ def fetch_odds():
         "total": {...},
         "pinnacle": {"ml": {...}, "total": {...}} }
     """
-    if not os.path.exists(DAILY_ODDS_FILE):
-        return {}
-    try:
-        with open(DAILY_ODDS_FILE, encoding="utf-8") as f:
-            payload = json.load(f)
-    except Exception:
+    payload = get_odds_payload()
+    if not payload:
         return {}
 
     lookup = {}
@@ -297,8 +361,8 @@ def render_games_table(df, odds_lookup):
         """
 
     html += "</tbody></table>"
-    height = len(df) * 104 + 60
-    components.html(html, height=height, scrolling=False)
+    table_height = max(700, len(df) * 104 + 60)
+    components.html(html, height=table_height, scrolling=True)
 
 
 def prepare_scored_subset(hist: pd.DataFrame) -> pd.DataFrame:
@@ -566,6 +630,10 @@ def main():
         )
 
         df = load_forecast(CSV_PATH)
+        odds_payload = get_odds_payload()
+        model_output_time = get_model_output_time(CSV_PATH, df)
+        render_data_status(odds_payload, model_output_time)
+
         if df.empty:
             st.warning("No forecast data found.")
         else:
