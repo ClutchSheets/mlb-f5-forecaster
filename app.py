@@ -211,6 +211,7 @@ def render_games_table(df, odds_lookup):
         <tr>
           <th style='{TH};text-align:center;width:30px'>#</th>
           <th style='{TH};text-align:left'>TEAM / PITCHER</th>
+          <th style='{TH};text-align:center'>TIME</th>
           <th style='{TH};text-align:center'>WIN %</th>
           <th style='{TH};text-align:center'>ML FV</th>
           <th style='{TH};text-align:center'>EDGE</th>
@@ -233,6 +234,9 @@ def render_games_table(df, odds_lookup):
 
         key = f"{away}@{home}"
         game = odds_lookup.get(key, {})
+        away_display = game.get("away", away)
+        home_display = game.get("home", home)
+        commence_edt = game.get("commence_edt", "") or "—"
 
         away_cells = ""
         home_cells = ""
@@ -268,8 +272,11 @@ def render_games_table(df, odds_lookup):
             <span style='color:#888;font-size:0.8em'>{game_num}</span>
           </td>
           <td style='padding:4px 12px;border-bottom:1px solid {BORDER}'>
-            <span style='font-weight:600;color:#e0e0e0'>{away}</span><br>
+            <span style='font-weight:600;color:#e0e0e0'>{away_display}</span><br>
             <span style='color:#888;font-size:0.78em'>{away_sp}</span>
+          </td>
+          <td style='padding:4px 12px;text-align:center;border-bottom:2px solid {BORDER};vertical-align:middle' rowspan='2'>
+            <span style='color:#e0e0e0;font-size:0.9em'>{commence_edt}</span>
           </td>
           <td style='padding:4px 12px;text-align:center;border-bottom:1px solid {BORDER}'>
             <span style='color:#e0e0e0;font-size:0.9em'>{model_away_p*100:.1f}%</span>
@@ -282,7 +289,7 @@ def render_games_table(df, odds_lookup):
         </tr>
         <tr class='{game_class}'>
           <td style='padding:4px 12px;border-bottom:2px solid {BORDER}'>
-            <span style='font-weight:600;color:#e0e0e0'>{home}</span><br>
+            <span style='font-weight:600;color:#e0e0e0'>{home_display}</span><br>
             <span style='color:#888;font-size:0.78em'>{home_sp}</span>
           </td>
           <td style='padding:4px 12px;text-align:center;border-bottom:2px solid {BORDER}'>
