@@ -1,16 +1,16 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-15,ARI,Eduardo Rodriguez,BAL,Kyle Bradish,2.1304,2.7182,4.8486,0.5928,v1.0
-2026-04-15,CLE,Slade Cecconi,STL,Dustin May,2.5259,2.4786,5.0045,0.4927,v1.0
-2026-04-15,BOS,Connelly Early,MIN,Simeon Woods Richardson,2.4083,2.2982,4.7065,0.4820,v1.0
-2026-04-15,KCR,Seth Lugo,DET,Jack Flaherty,1.9822,2.3507,4.3329,0.5645,v1.0
-2026-04-15,WSN,Jake Irvin,PIT,Carmen Mlodzinski,2.6537,2.6591,5.3128,0.5008,v1.0
-2026-04-15,SFG,Tyler Mahle,CIN,Rhett Lowder,2.7226,2.4657,5.1883,0.4616,v1.0
-2026-04-15,CHC,Shota Imanaga,PHI,Jesús Luzardo,2.2911,2.4605,4.7516,0.5274,v1.0
-2026-04-15,LAA,Jack Kochanowicz,NYY,Luis Gil,2.8153,2.6510,5.4663,0.4765,v1.0
-2026-04-15,MIA,Chris Paddack,ATL,Bryce Elder,2.5580,2.8768,5.4348,0.5457,v1.0
-2026-04-15,TBR,Jesse Scholtens,CHW,Sean Burke,2.3155,1.9364,4.2519,0.4325,v1.0
-2026-04-15,TOR,Dylan Cease,MIL,Chad Patrick,2.3855,2.3974,4.7828,0.5019,v1.0
-2026-04-15,COL,Jose Quintana,HOU,Spencer Arrighetti,2.4626,2.8424,5.3050,0.5556,v1.0
-2026-04-15,SEA,Emerson Hancock,SDP,Randy Vásquez,2.4872,2.4687,4.9559,0.4971,v1.0
-2026-04-15,TEX,Kumar Rocker,ATH,J.T. Ginn,2.3237,2.3287,4.6524,0.5008,v1.0
-2026-04-15,NYM,Clay Holmes,LAD,Shohei Ohtani,1.9662,2.9898,4.9560,0.6564,v1.0
+2026-04-16,WSN,Foster Griffin,PIT,Braxton Ashcraft,2.3921,2.8495,5.2417,0.5676,v1.0
+2026-04-16,SFG,Landen Roupp,CIN,Chase Burns,1.9969,2.4866,4.4835,0.5830,v1.0
+2026-04-16,KCR,Kris Bubic,DET,Keider Montero,2.1926,2.1849,4.3775,0.4987,v1.0
+2026-04-16,LAA,Walbert Urena,NYY,Max Fried,2.3931,2.8148,5.2078,0.5627,v1.0
+2026-04-16,TOR,Patrick Corbin,MIL,Brandon Sproat,2.3954,2.5414,4.9368,0.5228,v1.0
+2026-04-16,TBR,Steven Matz,CHW,Jordan Leasure,2.2763,1.7355,4.0118,0.3992,v1.0
+2026-04-16,TEX,Jack Leiter,ATH,Jacob Lopez,2.3296,2.3898,4.7193,0.5098,v1.0
+2026-04-16,BAL,Shane Baz,CLE,Parker Messick,2.1921,2.1402,4.3323,0.4909,v1.0
+2026-04-16,COL,Juan Mejia,HOU,Ryan Weiss,2.7101,3.0807,5.7908,0.5502,v1.0
+2026-04-16,SEA,Luis Castillo,SDP,Walker Buehler,2.4679,2.2894,4.7573,0.4711,v1.0
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
