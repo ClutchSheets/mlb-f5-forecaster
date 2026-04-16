@@ -282,7 +282,7 @@ def render_games_table(df, odds_lookup):
             <span style='color:#e0e0e0;font-size:0.9em'>{model_away_p*100:.1f}%</span>
           </td>
           <td style='padding:4px 12px;text-align:center;border-bottom:1px solid {BORDER}'>
-            <span style='color:#7ec8e3;font-size:0.9em;font-weight:600'>{ml_fv_away}</span>
+            <span style='color:#7ec8e3;font-size:0.9em;font-weight:600'>{ml_fv_away}</span><br><span style='color:#888;font-size:0.75em'>(PIN {game.get('pinnacle', {}).get('ml', {}).get('away','—')})</span>
           </td>
           {away_edge_cell}
           {away_cells}
@@ -296,7 +296,7 @@ def render_games_table(df, odds_lookup):
             <span style='color:#e0e0e0;font-size:0.9em'>{model_home_p*100:.1f}%</span>
           </td>
           <td style='padding:4px 12px;text-align:center;border-bottom:2px solid {BORDER}'>
-            <span style='color:#7ec8e3;font-size:0.9em;font-weight:600'>{ml_fv_home}</span>
+            <span style='color:#7ec8e3;font-size:0.9em;font-weight:600'>{ml_fv_home}</span><br><span style='color:#888;font-size:0.75em'>(PIN {game.get('pinnacle', {}).get('ml', {}).get('home','—')})</span>
           </td>
           {home_edge_cell}
           {home_cells}
