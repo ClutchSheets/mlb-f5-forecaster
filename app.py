@@ -2,6 +2,7 @@ import json
 import os
 import sqlite3
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 import altair as alt
 import numpy as np
@@ -39,15 +40,21 @@ def get_odds_payload() -> dict:
         return {}
 
 
+DISPLAY_TZ = ZoneInfo("America/New_York")
+
+
 def format_timestamp_label(value) -> str:
     if value is None:
         return "—"
-    if isinstance(value, datetime):
-        return value.strftime("%Y-%m-%d %I:%M %p")
     if isinstance(value, pd.Timestamp):
         if pd.isna(value):
             return "—"
-        return value.strftime("%Y-%m-%d %I:%M %p")
+        value = value.to_pydatetime()
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=ZoneInfo("UTC"))
+        value = value.astimezone(DISPLAY_TZ)
+        return value.strftime("%Y-%m-%d %I:%M %p %Z")
     value = str(value).strip()
     return value if value else "—"
 
@@ -65,7 +72,7 @@ def get_model_output_time(csv_path: str, df: pd.DataFrame | None = None) -> str:
         return "—"
 
     try:
-        modified = datetime.fromtimestamp(os.path.getmtime(csv_path))
+        modified = datetime.fromtimestamp(os.path.getmtime(csv_path), tz=ZoneInfo("UTC"))
         return format_timestamp_label(modified)
     except Exception:
         return "—"
