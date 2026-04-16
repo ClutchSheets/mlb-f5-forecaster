@@ -298,7 +298,7 @@ def render_games_table(df, odds_lookup):
 
     html += "</tbody></table>"
     height = len(df) * 104 + 60
-    components.html(html, height=height, scrolling=False)
+    components.html(html, height=height, scrolling=True)
 
 
 def prepare_scored_subset(hist: pd.DataFrame) -> pd.DataFrame:
@@ -547,39 +547,21 @@ def main():
         unsafe_allow_html=True
     )
     st.markdown(
-        "<h2 style='color:#1a7a3a;margin:0 0 6px 0'>⚾ ClutchSheets F5 Baseball Forecaster</h2>""",
+        "<h2 style='color:#1a7a3a;margin:0 0 6px 0'>⚾ ClutchSheets F5 Baseball Forecaster</h2>",
         unsafe_allow_html=True
     )
 
     fetched_at = None
+    odds_file_date = None
     if os.path.exists(DAILY_ODDS_FILE):
         try:
             with open(DAILY_ODDS_FILE, encoding="utf-8") as f:
-                payload = json.load(f)
-                fetched_at = payload.get("fetched_at")
-        except:
-            pass
-
-    if fetched_at:
-        st.markdown(f"""
-        <div style="
-            background:#0e1117;
-            padding:10px 14px;
-            border-radius:8px;
-            display:inline-block;
-            margin-bottom:8px;
-        ">
-            <div style="color:#888;font-size:0.7em;letter-spacing:0.05em">
-                LAST UPDATED
-            </div>
-            <div style="color:#e0e0e0;font-size:1em;font-weight:600">
-                {fetched_at}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-",
-        unsafe_allow_html=True
-    )
+                odds_payload = json.load(f)
+            fetched_at = odds_payload.get("fetched_at")
+            odds_file_date = odds_payload.get("date")
+        except Exception:
+            fetched_at = None
+            odds_file_date = None
 
     CSV_PATH = os.environ.get("FORECAST_CSV", "daily_forecast.csv")
     DB_PATH = os.environ.get("DB_PATH", "mlb_f5_forecasts.db")
@@ -594,6 +576,29 @@ def main():
             "F5 markets are more volatile than full game markets.\n"
             "Small edges are often noise, so an AdjK threshold is applied to isolate higher-quality opportunities."
         )
+
+        if fetched_at:
+            date_line = f"<div style='color:#8f9bad;font-size:0.82em;margin-top:6px'>Odds file date: {odds_file_date}</div>" if odds_file_date else ""
+            st.markdown(
+                f"""
+                <div style="
+                    background:#0e1117;
+                    padding:12px 16px;
+                    border-radius:10px;
+                    display:inline-block;
+                    margin: 2px 0 14px 0;
+                ">
+                    <div style="color:#a7b0c0;font-size:0.75em;letter-spacing:0.08em">
+                        LAST UPDATED
+                    </div>
+                    <div style="color:#ffffff;font-size:1.12em;font-weight:700;margin-top:4px">
+                        {fetched_at}
+                    </div>
+                    {date_line}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         df = load_forecast(CSV_PATH)
         if df.empty:
