@@ -15,8 +15,9 @@ BET_COLUMNS = [
     "pick_side",
     "edge",
     "odds_taken_american",
-    "odds_taken_decimal",
+    "taken_implied_prob",
     "close_prob_devig",
+    "close_fair_odds_american",
     "clv",
     "beat_close",
     "result",
@@ -31,14 +32,6 @@ SUMMARY_COLUMNS = [
     "updated_at",
 ]
 
-UNIQUE_KEY_COLUMNS = [
-    "date",
-    "away_team",
-    "home_team",
-    "pick_side",
-    "odds_taken_american",
-]
-
 
 def ensure_tables(conn: sqlite3.Connection) -> None:
     conn.execute(
@@ -51,8 +44,9 @@ def ensure_tables(conn: sqlite3.Connection) -> None:
             pick_side TEXT,
             edge REAL,
             odds_taken_american INTEGER,
-            odds_taken_decimal REAL,
+            taken_implied_prob REAL,
             close_prob_devig REAL,
+            close_fair_odds_american INTEGER,
             clv REAL,
             beat_close INTEGER,
             result REAL,
@@ -73,7 +67,6 @@ def ensure_tables(conn: sqlite3.Connection) -> None:
         """
     )
 
-    # Prevent duplicate bet inserts
     conn.execute(
         """
         CREATE UNIQUE INDEX IF NOT EXISTS idx_edge_clv_bets_unique
@@ -114,9 +107,7 @@ def validate_schema(conn: sqlite3.Connection) -> None:
 
 def load_input(csv_path: str) -> pd.DataFrame:
     if not os.path.exists(csv_path):
-        raise FileNotFoundError(
-            f"Input file not found: {csv_path}. Create this CSV in the same folder as the script."
-        )
+        raise FileNotFoundError(f"Input file not found: {csv_path}")
 
     df = pd.read_csv(csv_path)
     required = [c for c in BET_COLUMNS if c != "updated_at"]
@@ -189,7 +180,6 @@ def main() -> None:
         df = load_input(CSV_PATH)
         inserted = append_new_bets(conn, df)
         rebuild_summary(conn)
-
         print(f"New rows inserted: {inserted}")
         print("edge_clv_summary rebuilt from all stored bets.")
     finally:
