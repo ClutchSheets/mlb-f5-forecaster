@@ -11,6 +11,7 @@ Called by 2_push_forecasts.bat only.
 
 import json
 import os
+import sqlite3
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -27,6 +28,7 @@ BOOKS = [
 ]
 
 OUTPUT_FILE = "daily_odds.json"
+DB_FILE = os.environ.get("DB_PATH", "mlb_f5_forecasts.db")
 BASE_URL = "https://api.the-odds-api.com/v4/sports/baseball_mlb"
 
 
@@ -37,6 +39,71 @@ def to_edt(iso_str: str) -> str:
         return dt_et.strftime("%I:%M %p").lstrip("0")
     except Exception:
         return ""
+
+
+def american_to_decimal(price: int) -> float:
+    if price > 0:
+        return (price / 100) + 1
+    return (100 / abs(price)) + 1
+
+
+def ensure_snapshot_table(conn: sqlite3.Connection) -> None:
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS odds_snapshot (
+            date TEXT,
+            away_team TEXT,
+            home_team TEXT,
+            book TEXT,
+            side TEXT,
+            price_american INTEGER,
+            price_decimal REAL,
+            snapshot_type TEXT,
+            captured_at TEXT,
+            UNIQUE(date, away_team, home_team, book, side, snapshot_type)
+        )
+    """)
+    conn.commit()
+
+
+def archive_odds_snapshot(games: dict, snapshot_date: str, captured_at: str, snapshot_type: str = "6h") -> None:
+    conn = sqlite3.connect(DB_FILE)
+    ensure_snapshot_table(conn)
+    conn.execute(
+        "DELETE FROM odds_snapshot WHERE date=? AND snapshot_type=?",
+        (snapshot_date, snapshot_type),
+    )
+
+    rows = []
+    for game in games.values():
+        away = game.get("away")
+        home = game.get("home")
+        for book, prices in game.get("ml", {}).items():
+            for side in ("away", "home"):
+                if side not in prices:
+                    continue
+                american = int(prices[side])
+                rows.append((
+                    snapshot_date,
+                    away,
+                    home,
+                    book,
+                    side,
+                    american,
+                    american_to_decimal(american),
+                    snapshot_type,
+                    captured_at,
+                ))
+
+    if rows:
+        conn.executemany("""
+            INSERT OR REPLACE INTO odds_snapshot (
+                date, away_team, home_team, book, side,
+                price_american, price_decimal, snapshot_type, captured_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, rows)
+        conn.commit()
+
+    conn.close()
 
 
 def get_events():
@@ -196,7 +263,15 @@ def main():
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
 
+    archive_odds_snapshot(
+        odds,
+        snapshot_date=str(date.today()),
+        captured_at=datetime.now(timezone.utc).isoformat(),
+        snapshot_type="6h",
+    )
+
     print(f"Saved {OUTPUT_FILE} — {len(odds)} games")
+    print(f"Archived odds snapshot to {DB_FILE}")
 
 
 if __name__ == "__main__":

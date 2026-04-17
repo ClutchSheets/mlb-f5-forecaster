@@ -490,6 +490,86 @@ def render_beating_the_market(df: pd.DataFrame):
     )
 
 
+
+def render_edge_market_validation(db_path: str):
+    st.subheader("Beating the Market")
+    st.caption(
+        "Threshold-based market validation using 6-hour release prices. "
+        "CLV = implied probability from odds taken minus devigged Pinnacle closing probability. Positive CLV is good."
+    )
+
+    if not os.path.exists(db_path):
+        st.info("No database found yet.")
+        return
+
+    conn = sqlite3.connect(db_path)
+    try:
+        summary = pd.read_sql(
+            "SELECT * FROM edge_clv_summary ORDER BY threshold",
+            conn
+        )
+    except Exception:
+        summary = pd.DataFrame()
+
+    try:
+        detail = pd.read_sql(
+            "SELECT * FROM edge_clv_detail WHERE threshold = 5.0 ORDER BY date DESC",
+            conn
+        )
+    except Exception:
+        detail = pd.DataFrame()
+    conn.close()
+
+    if summary.empty:
+        st.info("No threshold CLV summary available yet. Run grade_edge_clv.py after scoring and closing-line grading.")
+        return
+
+    show = summary.copy()
+    pct_cols = ["win_rate_ex_push", "avg_clv", "median_clv", "beat_close_pct"]
+    for col in pct_cols:
+        if col in show.columns:
+            show[col] = pd.to_numeric(show[col], errors="coerce")
+    show["threshold_label"] = show["threshold"].map(lambda x: f"Edge ≥ {int(round(x))}%")
+
+    metric_row = show.loc[show["threshold"] == 5.0]
+    if metric_row.empty:
+        metric_row = show.iloc[[0]]
+    r = metric_row.iloc[0]
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Qualified Bets", int(r["bets"]))
+    c2.metric("Avg CLV", f"{r['avg_clv']*100:.2f}%" if pd.notna(r["avg_clv"]) else "—")
+    c3.metric("Beat Close", f"{r['beat_close_pct']*100:.1f}%" if pd.notna(r["beat_close_pct"]) else "—")
+
+    table = show[["threshold_label", "bets", "avg_clv", "median_clv", "beat_close_pct"]].rename(columns={
+        "threshold_label": "Threshold",
+        "bets": "Bets",
+        "avg_clv": "Avg CLV",
+        "median_clv": "Median CLV",
+        "beat_close_pct": "Beat Close"
+    }).copy()
+
+    for col in ["Avg CLV", "Median CLV", "Beat Close"]:
+        table[col] = table[col].map(lambda x: f"{x*100:.2f}%" if pd.notna(x) else "—")
+
+    st.markdown("##### Threshold Summary")
+    st.dataframe(table, use_container_width=True, hide_index=True)
+
+    if not detail.empty:
+        d = detail.copy()
+        d["Matchup"] = d["away_team"] + " @ " + d["home_team"]
+        d["Edge %"] = pd.to_numeric(d["edge_pct"], errors="coerce").map(lambda x: f"{x:.2f}%")
+        d["CLV"] = pd.to_numeric(d["clv"], errors="coerce").map(lambda x: f"{x*100:.2f}%")
+        d["Beat Close"] = d["beat_close"].map(lambda x: "Yes" if x == 1 else "No")
+        d["Odds Taken"] = d["odds_taken_american"].map(lambda x: f"+{int(x)}" if pd.notna(x) and int(x) > 0 else (str(int(x)) if pd.notna(x) else "—"))
+        d["Result"] = d["result"].map(lambda x: "Win" if x == 1 else ("Loss" if x == 0 else ("Push" if x == 0.5 else "—")))
+        detail_show = d[["date", "Matchup", "pick_team", "Edge %", "Odds Taken", "CLV", "Beat Close", "Result"]].rename(columns={
+            "date": "Date",
+            "pick_team": "Pick"
+        })
+        st.markdown("##### Edge ≥ 5% Detail")
+        st.dataframe(detail_show, use_container_width=True, hide_index=True)
+
 def render_performance(hist: pd.DataFrame):
     st.subheader("Model vs Market Performance")
     st.caption(
@@ -634,6 +714,8 @@ def main():
                 render_games_table(slate_df, odds_lookup)
 
     with tab2:
+        render_edge_market_validation(DB_PATH)
+        st.markdown("---")
         hist = load_history(DB_PATH)
         render_performance(hist)
 
