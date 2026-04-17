@@ -700,7 +700,7 @@ def main():
             odds_file_date = None
 
     CSV_PATH = os.environ.get("FORECAST_CSV", "daily_forecast.csv")
-    DB_PATH = "mlb_f5_forecasts.db"
+    DB_PATH = "mlb_f5_edge.db"
     st.caption(f"DB file in use: {DB_PATH}")
 
     tab1, tab2 = st.tabs(["📅 Today's Games", "📊 Performance"])
