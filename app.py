@@ -160,9 +160,9 @@ def load_edge_clv_summary(db_path: str) -> pd.DataFrame:
     try:
         df = pd.read_sql(
             """
-            SELECT threshold_pct, bets, avg_clv, beat_close_pct, updated_at
+            SELECT threshold, bets, avg_clv, beat_close, updated_at
             FROM edge_clv_summary
-            ORDER BY threshold_pct
+            ORDER BY threshold
             """,
             conn,
         )
@@ -173,21 +173,30 @@ def load_edge_clv_summary(db_path: str) -> pd.DataFrame:
     return df
 
 
-def load_edge_clv_bets(db_path: str, threshold_pct: float = 5.0) -> pd.DataFrame:
+def load_edge_clv_bets(db_path: str, threshold: float = 0.05) -> pd.DataFrame:
     if not os.path.exists(db_path):
         return pd.DataFrame()
     conn = sqlite3.connect(db_path)
     try:
         df = pd.read_sql(
             """
-            SELECT game_date, matchup, pick_side, edge_pct, odds_taken_american,
-                   odds_taken_decimal, close_devig_prob, clv, beat_close, result
+            SELECT
+                date,
+                away_team,
+                home_team,
+                pick_side,
+                edge,
+                odds_taken_american,
+                close_prob_devig,
+                clv,
+                beat_close,
+                result
             FROM edge_clv_bets
-            WHERE threshold_pct = ?
-            ORDER BY game_date DESC, matchup
+            WHERE threshold = ?
+            ORDER BY date DESC, away_team, home_team
             """,
             conn,
-            params=[threshold_pct],
+            params=[threshold],
         )
     except Exception:
         df = pd.DataFrame()
