@@ -21,22 +21,50 @@ def load_input(csv_path):
     missing = [c for c in required if c not in df.columns]
     if missing:
         raise ValueError(f"CSV is missing required columns: {missing}")
+    if df.empty:
+        df["updated_at"] = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
+        return df[BET_COLUMNS]
     df = df.copy()
+    df["pick_side"] = df["pick_side"].astype(str).str.upper().str.strip()
+    df = df[df["pick_side"].isin(["AWAY", "HOME"])].copy()
+    if df.empty:
+        raise ValueError("No valid rows after normalizing pick_side. Expected AWAY/HOME values.")
     df["updated_at"] = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
     return df[BET_COLUMNS]
 
 def replace_edge_clv(conn, df):
     conn.execute("DELETE FROM edge_clv_bets")
     conn.execute("DELETE FROM edge_clv_summary")
-    placeholders = ", ".join(["?"] * len(BET_COLUMNS))
-    conn.executemany(f"INSERT INTO edge_clv_bets ({', '.join(BET_COLUMNS)}) VALUES ({placeholders})", df.itertuples(index=False, name=None))
-    updated_at = df["updated_at"].iloc[0] if not df.empty else datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
-    summary = df.groupby("threshold", dropna=False).agg(bets=("threshold","size"), avg_clv=("clv","mean"), beat_close=("beat_close","mean")).reset_index()
+
+    if not df.empty:
+        placeholders = ", ".join(["?"] * len(BET_COLUMNS))
+        conn.executemany(
+            f"INSERT INTO edge_clv_bets ({', '.join(BET_COLUMNS)}) VALUES ({placeholders})",
+            df.itertuples(index=False, name=None),
+        )
+
+    updated_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
+    if df.empty:
+        conn.execute(
+            "INSERT INTO edge_clv_summary (threshold, bets, avg_clv, beat_close, updated_at) VALUES (?, ?, ?, ?, ?)",
+            (0.05, 0, None, None, updated_at),
+        )
+        conn.commit()
+        return
+
+    summary = (
+        df.groupby("threshold", dropna=False)
+          .agg(bets=("threshold","size"), avg_clv=("clv","mean"), beat_close=("beat_close","mean"))
+          .reset_index()
+    )
     summary["updated_at"] = updated_at
     summary = summary[SUMMARY_COLUMNS]
-    if not summary.empty:
-        summary_placeholders = ", ".join(["?"] * len(SUMMARY_COLUMNS))
-        conn.executemany(f"INSERT INTO edge_clv_summary ({', '.join(SUMMARY_COLUMNS)}) VALUES ({summary_placeholders})", summary.itertuples(index=False, name=None))
+
+    summary_placeholders = ", ".join(["?"] * len(SUMMARY_COLUMNS))
+    conn.executemany(
+        f"INSERT INTO edge_clv_summary ({', '.join(SUMMARY_COLUMNS)}) VALUES ({summary_placeholders})",
+        summary.itertuples(index=False, name=None),
+    )
     conn.commit()
 
 def main():

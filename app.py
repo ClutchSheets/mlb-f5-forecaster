@@ -126,81 +126,128 @@ def load_history(db_path: str) -> pd.DataFrame:
     conn.close()
     return df
 
-def load_edge_clv_summary(db_path: str) -> pd.DataFrame:
+@st.cache_data(ttl=300)
+def compute_edge_clv(db_path: str, threshold: float = 0.05) -> pd.DataFrame:
+    """
+    Compute edge/CLV at runtime directly from forecast_archive + odds_snapshot.
+    Picks the best available odds (highest edge) per game across all books.
+    Returns one row per qualifying game.
+    """
     if not os.path.exists(db_path):
         return pd.DataFrame()
     conn = sqlite3.connect(db_path)
     try:
-        df = pd.read_sql("SELECT threshold, bets, avg_clv, beat_close, updated_at FROM edge_clv_summary ORDER BY threshold", conn)
+        fa = pd.read_sql("""
+            SELECT date, away_team, home_team, winprob_home, home_win_f5, close_home_prob_devig
+            FROM forecast_archive
+            WHERE completed5=1 AND close_home_prob_devig IS NOT NULL
+        """, conn)
+        os_ = pd.read_sql("""
+            SELECT date, away_team, home_team, side, price_american, price_decimal, book, captured_at
+            FROM odds_snapshot WHERE snapshot_type='6h'
+        """, conn)
     except Exception:
-        df = pd.DataFrame()
+        return pd.DataFrame()
     finally:
         conn.close()
-    return df
 
-def load_edge_clv_bets(db_path: str, threshold: float = 0.05) -> pd.DataFrame:
-    if not os.path.exists(db_path):
+    if fa.empty or os_.empty:
         return pd.DataFrame()
-    conn = sqlite3.connect(db_path)
-    try:
-        df = pd.read_sql("""
-            SELECT date, away_team, home_team, pick_side, edge, odds_taken_american,
-                   close_prob_devig, clv, beat_close, result
-            FROM edge_clv_bets
-            WHERE threshold = ?
-            ORDER BY date DESC, away_team, home_team
-        """, conn, params=[threshold])
-    except Exception:
-        df = pd.DataFrame()
-    finally:
-        conn.close()
-    return df
+
+    fa["date"] = pd.to_datetime(fa["date"], errors="coerce").dt.strftime("%Y-%m-%d")
+    os_["date"] = pd.to_datetime(os_["date"], errors="coerce").dt.strftime("%Y-%m-%d")
+    os_["captured_at"] = pd.to_datetime(os_["captured_at"], errors="coerce", utc=True)
+
+    fa["home_win_prob"] = pd.to_numeric(fa["winprob_home"], errors="coerce")
+    fa["away_win_prob"] = 1 - fa["home_win_prob"]
+    fa["home_result"] = pd.to_numeric(fa["home_win_f5"], errors="coerce")
+    fa["close_home_prob"] = pd.to_numeric(fa["close_home_prob_devig"], errors="coerce")
+
+    os_["side_clean"] = None
+    os_.loc[os_["side"].str.lower() == "away", "side_clean"] = "away"
+    os_.loc[os_["side"].str.lower() == "home", "side_clean"] = "home"
+    os_.loc[os_["side"].str.upper() == os_["away_team"].str.upper(), "side_clean"] = "away"
+    os_.loc[os_["side"].str.upper() == os_["home_team"].str.upper(), "side_clean"] = "home"
+    os_["price_american"] = pd.to_numeric(os_["price_american"], errors="coerce")
+    os_["price_decimal"] = pd.to_numeric(os_["price_decimal"], errors="coerce")
+    os_ = os_.dropna(subset=["side_clean", "price_american", "price_decimal", "captured_at"])
+
+    if os_.empty:
+        return pd.DataFrame()
+
+    df = fa.merge(os_, on=["date", "away_team", "home_team"], how="inner")
+    if df.empty:
+        return pd.DataFrame()
+
+    df["model_prob"] = df.apply(
+        lambda r: r["away_win_prob"] if r["side_clean"] == "away" else r["home_win_prob"], axis=1
+    )
+    df["close_prob"] = df.apply(
+        lambda r: 1 - r["close_home_prob"] if r["side_clean"] == "away" else r["close_home_prob"], axis=1
+    )
+    df["result"] = df.apply(
+        lambda r: 1 - r["home_result"] if r["side_clean"] == "away" else r["home_result"], axis=1
+    )
+    df["taken_implied"] = df["price_american"].apply(american_to_prob)
+    df["edge"] = df["model_prob"] - df["taken_implied"]
+    df["clv"] = df["close_prob"] - (1 / df["price_decimal"])
+    df["beat_close"] = (df["clv"] > 0).astype(int)
+
+    # One row per game: best odds (highest edge) across all books
+    df["game_key"] = df["date"] + "_" + df["away_team"] + "_" + df["home_team"]
+    bets = df[df["edge"] >= threshold].copy()
+    bets = (
+        bets.sort_values(["game_key", "edge", "captured_at"], ascending=[True, False, False])
+        .drop_duplicates("game_key")
+        .copy()
+    )
+
+    bets["pick_side"] = bets["side_clean"].str.upper()
+    bets["odds_taken_american"] = bets["price_american"].astype(int)
+    bets["close_prob_devig"] = bets["close_prob"]
+
+    return bets.sort_values(["date", "away_team", "home_team"], ascending=[False, True, True]).reset_index(drop=True)
 
 def render_edge_clv_section(db_path: str):
     st.subheader("Beating the Market")
-    st.caption("Threshold report based on stored 6-hour prices. CLV is devigged Pinnacle closing implied probability minus the implied probability of the odds taken.")
-    summary = load_edge_clv_summary(db_path)
-    if summary.empty:
-        st.info("No edge/CLV summary table found yet. Run build_edge_clv_input.py, then grade_edge_clv.py.")
-        return
-    show = summary.copy()
-    show["threshold_label"] = show["threshold"].map(lambda x: f"Edge ≥ {x*100:.0f}%")
-    show["avg_clv_pct"] = show["avg_clv"] * 100
-    show["beat_close_display"] = show["beat_close"] * 100
-    row5 = show.loc[show["threshold"] == 0.05]
+    st.caption("Best available odds per game (across all books) at the 6-hour snapshot. CLV = devigged Pinnacle closing implied prob minus the implied prob of the odds taken.")
+
+    bets = compute_edge_clv(db_path, threshold=0.05)
+
+    n = len(bets)
+    avg_clv = bets["clv"].mean() if n > 0 else np.nan
+    beat_close_rate = bets["beat_close"].mean() if n > 0 else np.nan
+
     c1, c2, c3 = st.columns(3)
-    if not row5.empty:
-        r = row5.iloc[0]
-        c1.metric("Qualified Bets", int(r["bets"]))
-        c2.metric("Avg CLV", f"{r['avg_clv_pct']:.2f}%")
-        c3.metric("Beat Close", f"{r['beat_close_display']:.1f}%")
-    else:
-        c1.metric("Qualified Bets", "—")
-        c2.metric("Avg CLV", "—")
-        c3.metric("Beat Close", "—")
-    disp = show[["threshold_label", "bets", "avg_clv_pct", "beat_close_display", "updated_at"]].rename(columns={
-        "threshold_label": "Threshold",
-        "bets": "Bets",
-        "avg_clv_pct": "Avg CLV %",
-        "beat_close_display": "Beat Close %",
-        "updated_at": "Updated",
-    })
-    st.dataframe(disp, use_container_width=True, hide_index=True)
-    bets = load_edge_clv_bets(db_path, 0.05)
-    if not bets.empty:
-        st.markdown("#### Edge ≥ 5% Detail")
-        bets = bets.copy()
-        bets["Matchup"] = bets["away_team"] + " @ " + bets["home_team"]
-        bets["Edge %"] = bets["edge"] * 100
-        bets["Odds Taken"] = bets["odds_taken_american"].astype(int)
-        bets["Taken Implied %"] = bets["odds_taken_american"].apply(lambda x: american_to_prob(int(x)) * 100)
-        bets["Close Fair Odds"] = bets["close_prob_devig"].apply(lambda x: prob_to_american(float(x)))
-        bets["Close Fair %"] = bets["close_prob_devig"] * 100
-        bets["CLV %"] = bets["clv"] * 100
-        bets["Beat Close"] = bets["beat_close"].map({1: "Yes", 0: "No"})
-        bets["Result"] = bets["result"].map({1: "Win", 0: "Loss", 0.5: "Push"}).fillna(bets["result"])
-        detail = bets[["date","Matchup","pick_side","Edge %","Odds Taken","Taken Implied %","Close Fair Odds","Close Fair %","CLV %","Beat Close","Result"]].rename(columns={"date":"Date","pick_side":"Pick"})
-        st.dataframe(detail, use_container_width=True, hide_index=True)
+    c1.metric("Qualified Bets (Edge ≥ 5%)", n if n > 0 else "—")
+    c2.metric("Avg CLV", f"{avg_clv*100:.2f}%" if pd.notna(avg_clv) else "—")
+    c3.metric("Beat Close", f"{beat_close_rate*100:.1f}%" if pd.notna(beat_close_rate) else "—")
+
+    if bets.empty:
+        st.info("No qualifying bets yet (need completed games with closing Pinnacle odds and a 6h odds snapshot).")
+        return
+
+    st.markdown("#### Edge ≥ 5% — Best Odds Per Game")
+    disp = bets.copy()
+    disp["Matchup"] = disp["away_team"] + " @ " + disp["home_team"]
+    disp["Edge %"] = (disp["edge"] * 100).round(1)
+    disp["Odds Taken"] = disp["odds_taken_american"].apply(fmt_american)
+    disp["Book"] = disp["book"]
+    disp["Taken Implied %"] = (disp["taken_implied"] * 100).round(1)
+    disp["Close Fair Odds"] = disp["close_prob_devig"].apply(lambda x: fmt_american(prob_to_american(float(x))))
+    disp["Close Fair %"] = (disp["close_prob_devig"] * 100).round(1)
+    disp["CLV %"] = (disp["clv"] * 100).round(2)
+    disp["Beat Close"] = disp["beat_close"].map({1: "✅", 0: "❌"})
+    disp["Result"] = disp["result"].map({1.0: "Win", 0.0: "Loss", 0.5: "Push"}).fillna("—")
+    disp["Pick"] = disp["pick_side"].fillna("—")
+
+    detail = disp[[
+        "date", "Matchup", "Pick", "Edge %", "Odds Taken", "Book",
+        "Taken Implied %", "Close Fair Odds", "Close Fair %",
+        "CLV %", "Beat Close", "Result"
+    ]].rename(columns={"date": "Date"})
+
+    st.dataframe(detail, use_container_width=True, hide_index=True)
 
 def get_book_odds(book_key, game, away, home):
     entry = game.get("ml", {}).get(book_key)

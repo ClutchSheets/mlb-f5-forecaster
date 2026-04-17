@@ -1,21 +1,12 @@
 {
   "date": "2026-04-17",
-  "fetched_at": "2026-04-17 07:20 AM EDT",
+  "fetched_at": "2026-04-17 03:52 PM EDT",
   "games": {
     "New York Mets@Chicago Cubs": {
       "away": "New York Mets",
       "home": "Chicago Cubs",
       "commence_edt": "2:21 PM",
-      "ml": {
-        "fanduel": {
-          "home": -145,
-          "away": 116
-        },
-        "betrivers": {
-          "home": -152,
-          "away": 114
-        }
-      },
+      "ml": {},
       "pinnacle": {
         "ml": {}
       }
@@ -26,30 +17,30 @@
       "commence_edt": "6:11 PM",
       "ml": {
         "fanduel": {
-          "away": 104,
-          "home": -130
+          "away": 110,
+          "home": -138
         },
         "betonlineag": {
-          "away": 117,
-          "home": -137
+          "away": 127,
+          "home": -147
         },
         "draftkings": {
+          "away": 114,
+          "home": -145
+        },
+        "betmgm": {
           "away": 105,
           "home": -135
         },
-        "betmgm": {
-          "away": 110,
-          "home": -140
-        },
         "betrivers": {
-          "away": 100,
-          "home": -132
+          "away": -103,
+          "home": -130
         }
       },
       "pinnacle": {
         "ml": {
-          "away": 112,
-          "home": -131
+          "away": 116,
+          "home": -133
         }
       }
     },
@@ -59,30 +50,30 @@
       "commence_edt": "6:41 PM",
       "ml": {
         "fanduel": {
-          "away": -110,
-          "home": -114
+          "away": -118,
+          "home": -106
         },
         "betonlineag": {
-          "away": -116,
-          "home": -104
+          "away": -130,
+          "home": 110
         },
         "draftkings": {
-          "away": -120,
-          "home": -110
+          "away": -110,
+          "home": -120
         },
         "betmgm": {
           "away": -118,
           "home": -105
         },
         "betrivers": {
-          "away": -114,
+          "away": -113,
           "home": -117
         }
       },
       "pinnacle": {
         "ml": {
-          "away": -110,
-          "home": -107
+          "away": -118,
+          "home": 103
         }
       }
     },
@@ -96,26 +87,26 @@
           "away": 116
         },
         "betonlineag": {
-          "home": -147,
-          "away": 127
+          "home": -135,
+          "away": 115
         },
         "draftkings": {
-          "home": -160,
-          "away": 124
+          "home": -145,
+          "away": 114
         },
         "betmgm": {
-          "home": -160,
-          "away": 130
+          "home": -135,
+          "away": 105
         },
         "betrivers": {
-          "home": -159,
-          "away": 120
+          "home": -155,
+          "away": 115
         }
       },
       "pinnacle": {
         "ml": {
-          "home": -146,
-          "away": 124
+          "home": -136,
+          "away": 118
         }
       }
     },
@@ -125,30 +116,30 @@
       "commence_edt": "6:46 PM",
       "ml": {
         "fanduel": {
-          "away": -174,
-          "home": 138
+          "away": -166,
+          "home": 132
         },
         "betonlineag": {
-          "away": -160,
-          "home": 140
+          "away": -165,
+          "home": 145
         },
         "draftkings": {
-          "away": -160,
-          "home": 124
+          "away": -175,
+          "home": 135
         },
         "betmgm": {
-          "away": -155,
-          "home": 120
+          "away": -160,
+          "home": 130
         },
         "betrivers": {
-          "away": -175,
-          "home": 130
+          "away": -167,
+          "home": 125
         }
       },
       "pinnacle": {
         "ml": {
-          "away": -153,
-          "home": 130
+          "away": -158,
+          "home": 137
         }
       }
     },
@@ -158,30 +149,30 @@
       "commence_edt": "7:06 PM",
       "ml": {
         "fanduel": {
-          "away": 142,
-          "home": -180
+          "away": 148,
+          "home": -188
         },
         "betonlineag": {
           "away": 153,
           "home": -175
         },
         "draftkings": {
-          "away": 135,
-          "home": -175
+          "away": 150,
+          "home": -195
         },
         "betmgm": {
           "away": 140,
-          "home": -175
+          "home": -180
         },
         "betrivers": {
-          "away": 135,
-          "home": -182
+          "away": 132,
+          "home": -177
         }
       },
       "pinnacle": {
         "ml": {
-          "away": 149,
-          "home": -177
+          "away": 154,
+          "home": -179
         }
       }
     },
@@ -191,22 +182,30 @@
       "commence_edt": "7:11 PM",
       "ml": {
         "fanduel": {
-          "home": -120,
-          "away": -104
-        },
-        "draftkings": {
-          "home": -120,
+          "home": -114,
           "away": -110
         },
+        "draftkings": {
+          "home": -125,
+          "away": -105
+        },
         "betrivers": {
-          "home": -129,
-          "away": -104
+          "home": -134,
+          "away": 102
+        },
+        "betmgm": {
+          "home": -115,
+          "away": -110
+        },
+        "betonlineag": {
+          "home": -115,
+          "away": -105
         }
       },
       "pinnacle": {
         "ml": {
           "home": -117,
-          "away": 100
+          "away": 102
         }
       }
     },
@@ -216,30 +215,30 @@
       "commence_edt": "7:16 PM",
       "ml": {
         "fanduel": {
-          "home": -128,
-          "away": 102
+          "home": -132,
+          "away": 106
         },
         "betonlineag": {
-          "home": -133,
-          "away": 113
+          "home": -125,
+          "away": 105
         },
         "draftkings": {
-          "home": -145,
-          "away": 114
+          "home": -130,
+          "away": 100
         },
         "betmgm": {
-          "home": -140,
-          "away": 110
+          "home": -135,
+          "away": 105
         },
         "betrivers": {
-          "home": -143,
-          "away": 108
+          "home": -148,
+          "away": 112
         }
       },
       "pinnacle": {
         "ml": {
-          "home": -133,
-          "away": 114
+          "home": -125,
+          "away": 109
         }
       }
     },
@@ -249,30 +248,30 @@
       "commence_edt": "8:11 PM",
       "ml": {
         "fanduel": {
-          "away": 162,
-          "home": -205
+          "away": 156,
+          "home": -198
         },
         "betonlineag": {
-          "away": 155,
-          "home": -177
-        },
-        "draftkings": {
-          "away": 150,
-          "home": -195
-        },
-        "betmgm": {
-          "away": 150,
+          "away": 165,
           "home": -190
         },
+        "draftkings": {
+          "away": 145,
+          "home": -188
+        },
+        "betmgm": {
+          "away": 145,
+          "home": -185
+        },
         "betrivers": {
-          "away": 155,
-          "home": -210
+          "away": 145,
+          "home": -195
         }
       },
       "pinnacle": {
         "ml": {
-          "away": 151,
-          "home": -180
+          "away": 162,
+          "home": -190
         }
       }
     },
@@ -282,18 +281,30 @@
       "commence_edt": "8:11 PM",
       "ml": {
         "fanduel": {
-          "home": -130,
-          "away": 104
+          "home": -132,
+          "away": 106
+        },
+        "betmgm": {
+          "home": -135,
+          "away": 105
         },
         "betrivers": {
-          "home": -139,
-          "away": 106
+          "home": -132,
+          "away": 100
+        },
+        "draftkings": {
+          "home": -140,
+          "away": 110
+        },
+        "betonlineag": {
+          "home": -130,
+          "away": 110
         }
       },
       "pinnacle": {
         "ml": {
-          "home": -136,
-          "away": 116
+          "home": -132,
+          "away": 115
         }
       }
     },
@@ -303,12 +314,12 @@
       "commence_edt": "8:41 PM",
       "ml": {
         "fanduel": {
-          "home": 215,
-          "away": -280
+          "home": 220,
+          "away": -290
         },
         "betrivers": {
-          "home": 205,
-          "away": -286
+          "home": 215,
+          "away": -305
         },
         "betonlineag": {
           "home": 219,
@@ -319,14 +330,14 @@
           "away": -298
         },
         "betmgm": {
-          "home": 210,
-          "away": -275
+          "home": 220,
+          "away": -285
         }
       },
       "pinnacle": {
         "ml": {
-          "home": 224,
-          "away": -280
+          "home": 212,
+          "away": -256
         }
       }
     },
@@ -340,26 +351,26 @@
           "away": 140
         },
         "betonlineag": {
-          "home": -163,
-          "away": 143
+          "home": -168,
+          "away": 148
         },
         "draftkings": {
-          "home": -166,
-          "away": 130
+          "home": -180,
+          "away": 140
         },
         "betmgm": {
-          "home": -145,
-          "away": 115
+          "home": -155,
+          "away": 120
         },
         "betrivers": {
-          "home": -175,
-          "away": 130
+          "home": -167,
+          "away": 125
         }
       },
       "pinnacle": {
         "ml": {
-          "home": -153,
-          "away": 130
+          "home": -156,
+          "away": 135
         }
       }
     },
@@ -369,30 +380,30 @@
       "commence_edt": "9:41 PM",
       "ml": {
         "fanduel": {
-          "home": -135,
-          "away": 108
+          "home": -138,
+          "away": 110
         },
         "betonlineag": {
           "home": -138,
           "away": 118
         },
         "draftkings": {
-          "home": -145,
-          "away": 114
+          "home": -140,
+          "away": 110
         },
         "betmgm": {
-          "home": -145,
-          "away": 115
+          "home": -135,
+          "away": 105
         },
         "betrivers": {
-          "home": -150,
-          "away": 112
+          "home": -152,
+          "away": 115
         }
       },
       "pinnacle": {
         "ml": {
-          "home": -139,
-          "away": 119
+          "home": -143,
+          "away": 124
         }
       }
     },
@@ -402,30 +413,30 @@
       "commence_edt": "9:41 PM",
       "ml": {
         "fanduel": {
-          "home": -132,
-          "away": 106
+          "home": -145,
+          "away": 116
         },
         "betonlineag": {
-          "home": -143,
-          "away": 123
+          "home": -150,
+          "away": 130
         },
         "draftkings": {
-          "home": -140,
-          "away": 110
+          "home": -154,
+          "away": 120
         },
         "betmgm": {
           "home": -150,
-          "away": 118
+          "away": 120
         },
         "betrivers": {
-          "home": -141,
-          "away": 106
+          "home": -152,
+          "away": 114
         }
       },
       "pinnacle": {
         "ml": {
-          "home": -156,
-          "away": 132
+          "home": -147,
+          "away": 128
         }
       }
     },
@@ -439,26 +450,26 @@
           "away": -102
         },
         "betonlineag": {
-          "home": -131,
-          "away": 111
+          "home": -115,
+          "away": -105
         },
         "draftkings": {
-          "home": -140,
-          "away": 110
+          "home": -120,
+          "away": -110
         },
         "betrivers": {
-          "home": -132,
-          "away": 100
+          "home": -134,
+          "away": 102
         },
         "betmgm": {
-          "home": -135,
-          "away": 105
+          "home": -120,
+          "away": -102
         }
       },
       "pinnacle": {
         "ml": {
-          "home": -133,
-          "away": 114
+          "home": -117,
+          "away": 102
         }
       }
     }
