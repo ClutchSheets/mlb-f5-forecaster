@@ -160,9 +160,9 @@ def load_edge_clv_summary(db_path: str) -> pd.DataFrame:
     try:
         df = pd.read_sql(
             """
-            SELECT threshold, bets, avg_clv, beat_close, updated_at
+            SELECT threshold_pct, bets, avg_clv, beat_close_pct, updated_at
             FROM edge_clv_summary
-            ORDER BY threshold
+            ORDER BY threshold_pct
             """,
             conn,
         )
@@ -173,31 +173,21 @@ def load_edge_clv_summary(db_path: str) -> pd.DataFrame:
     return df
 
 
-def load_edge_clv_bets(db_path: str, threshold: float = 0.05) -> pd.DataFrame:
+def load_edge_clv_bets(db_path: str, threshold_pct: float = 5.0) -> pd.DataFrame:
     if not os.path.exists(db_path):
         return pd.DataFrame()
     conn = sqlite3.connect(db_path)
     try:
         df = pd.read_sql(
             """
-            SELECT
-                date,
-                away_team,
-                home_team,
-                pick_side,
-                edge,
-                odds_taken_american,
-                odds_taken_decimal,
-                close_prob_devig,
-                clv,
-                beat_close,
-                result
+            SELECT game_date, matchup, pick_side, edge_pct, odds_taken_american,
+                   odds_taken_decimal, close_devig_prob, clv, beat_close, result
             FROM edge_clv_bets
-            WHERE threshold = ?
-            ORDER BY date DESC, away_team, home_team
+            WHERE threshold_pct = ?
+            ORDER BY game_date DESC, matchup
             """,
             conn,
-            params=[threshold],
+            params=[threshold_pct],
         )
     except Exception:
         df = pd.DataFrame()
@@ -209,20 +199,21 @@ def load_edge_clv_bets(db_path: str, threshold: float = 0.05) -> pd.DataFrame:
 def render_edge_clv_section(db_path: str):
     st.subheader("Beating the Market")
     st.caption(
-        "Threshold report based on stored 6-hour prices. Positive CLV means the implied win probability at the taken odds was better than the devigged close."
+        "Threshold report based on stored 6-hour prices. CLV is the difference between the devigged Pinnacle closing implied probability and the implied probability of the odds taken."
     )
 
     summary = load_edge_clv_summary(db_path)
     if summary.empty:
-        st.info("No edge/CLV summary table found yet. Run build_edge_clv_input.py, then grade_edge_clv.py.")
+        st.info("No edge/CLV summary table found yet. Run grade_edge_clv.py first.")
         return
 
     show = summary.copy()
-    show["threshold_label"] = show["threshold"].map(lambda x: f"Edge ≥ {x * 100:.0f}%")
+    show["threshold_label"] = show["threshold"].map(lambda x: f"Edge≥ {x*100:.0f}%")
     show["avg_clv_pct"] = show["avg_clv"] * 100
     show["beat_close_display"] = show["beat_close"] * 100
 
     row5 = show.loc[show["threshold"] == 0.05]
+
     c1, c2, c3 = st.columns(3)
     if not row5.empty:
         r = row5.iloc[0]
@@ -246,47 +237,41 @@ def render_edge_clv_section(db_path: str):
     st.dataframe(disp, use_container_width=True, hide_index=True)
 
     bets = load_edge_clv_bets(db_path, 0.05)
-    if bets.empty:
-        return
+    if not bets.empty:
+        st.markdown("#### Edge ≥ 5% Detail")
+        bets = bets.copy()
+        bets["Matchup"] = bets["away_team"] + " @ " + bets["home_team"]
+        bets["Edge %"] = bets["edge"] * 100
+        bets["Odds Taken"] = bets["odds_taken_american"].astype(int)
+        bets["Taken Implied %"] = bets["odds_taken_american"].apply(lambda x: american_to_prob(int(x)) * 100)
+        bets["Close Fair Odds"] = bets["close_prob_devig"].apply(lambda x: prob_to_american(float(x)))
+        bets["Close Fair %"] = bets["close_prob_devig"] * 100
+        bets["CLV %"] = bets["clv"] * 100
+        bets["Beat Close"] = bets["beat_close"].map({1: "Yes", 0: "No"})
+        bets["Result"] = bets["result"].map({1: "Win", 0: "Loss", 0.5: "Push"}).fillna(bets["result"])
 
-    st.markdown("#### Edge ≥ 5% Detail")
-    bets = bets.copy()
-    bets["matchup"] = bets["away_team"] + " @ " + bets["home_team"]
-    bets["edge"] = bets["edge"] * 100
-    bets["close_prob_devig"] = bets["close_prob_devig"] * 100
-    bets["clv"] = bets["clv"] * 100
-    bets["beat_close"] = bets["beat_close"].map({1: "Yes", 0: "No"})
-    bets["result"] = bets["result"].map({1: "Win", 0: "Loss", 0.5: "Push"}).fillna(bets["result"])
+        detail = bets[
+            [
+                "date",
+                "Matchup",
+                "pick_side",
+                "Edge %",
+                "Odds Taken",
+                "Taken Implied %",
+                "Close Fair Odds",
+                "Close Fair %",
+                "CLV %",
+                "Beat Close",
+                "Result",
+            ]
+        ].rename(
+            columns={
+                "date": "Date",
+                "pick_side": "Pick",
+            }
+        )
 
-    bets = bets[
-        [
-            "date",
-            "matchup",
-            "pick_side",
-            "edge",
-            "odds_taken_american",
-            "odds_taken_decimal",
-            "close_prob_devig",
-            "clv",
-            "beat_close",
-            "result",
-        ]
-    ].rename(
-        columns={
-            "date": "Date",
-            "matchup": "Matchup",
-            "pick_side": "Pick",
-            "edge": "Edge %",
-            "odds_taken_american": "Odds Taken",
-            "odds_taken_decimal": "Dec Odds",
-            "close_prob_devig": "Close Fair %",
-            "clv": "CLV %",
-            "beat_close": "Beat Close",
-            "result": "Result",
-        }
-    )
-
-    st.dataframe(bets, use_container_width=True, hide_index=True)
+        st.dataframe(detail, use_container_width=True, hide_index=True)
 
 
 def get_book_odds(book_key, game, away, home):
