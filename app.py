@@ -12,7 +12,7 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="ClutchSheets F5 Forecaster", layout="wide")
 
 DAILY_ODDS_FILE = os.environ.get("DAILY_ODDS_FILE", "daily_odds.json")
-DB_PATH = "mlb_f5_edge_v2.db"
+DB_PATH = "mlb_f5_forecasts.db"
 
 BOOKS = ["betonlineag", "fanduel", "draftkings", "betmgm", "betrivers"]
 BOOK_LABELS = {

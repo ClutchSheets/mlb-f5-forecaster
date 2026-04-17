@@ -3,7 +3,7 @@ import sqlite3
 from datetime import datetime, UTC
 import pandas as pd
 
-DB_PATH = "mlb_f5_edge_v2.db"
+DB_PATH = "mlb_f5_forecasts.db"
 CSV_PATH = "edge_clv_input.csv"
 BET_COLUMNS = ["threshold","date","away_team","home_team","pick_side","edge","odds_taken_american","odds_taken_decimal","close_prob_devig","clv","beat_close","result","updated_at"]
 SUMMARY_COLUMNS = ["threshold","bets","avg_clv","beat_close","updated_at"]

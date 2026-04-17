@@ -1,7 +1,7 @@
 import sqlite3
 import pandas as pd
 
-DB_PATH = "mlb_f5_edge_v2.db"
+DB_PATH = "mlb_f5_forecasts.db"
 OUTPUT_CSV = "edge_clv_input.csv"
 EDGE_THRESHOLD = 0.05
 
