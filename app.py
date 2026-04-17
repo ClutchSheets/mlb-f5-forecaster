@@ -214,15 +214,6 @@ def render_edge_clv_section(db_path: str):
 
     bets = compute_edge_clv(db_path, threshold=0.05)
 
-    n = len(bets)
-    avg_clv = bets["clv"].mean() if n > 0 else np.nan
-    beat_close_rate = bets["beat_close"].mean() if n > 0 else np.nan
-
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Qualified Bets (Edge ≥ 5%)", n if n > 0 else "—")
-    c2.metric("Avg CLV", f"{avg_clv*100:.2f}%" if pd.notna(avg_clv) else "—")
-    c3.metric("Beat Close", f"{beat_close_rate*100:.1f}%" if pd.notna(beat_close_rate) else "—")
-
     if bets.empty:
         st.info("No qualifying bets yet (need completed games with closing Pinnacle odds and a 6h odds snapshot).")
         return
@@ -333,17 +324,61 @@ def render_beating_the_market(df: pd.DataFrame):
     plot_df["game_num"] = range(1, len(plot_df) + 1)
     plot_df["cumulative_median"] = plot_df["model_vs_close_logloss_devig"].expanding().median()
     plot_df["cumulative_mean"] = plot_df["model_vs_close_logloss_devig"].expanding().mean()
+
+    # Dot colour by result: win=green, loss=red, push/unknown=grey
+    def result_color(r):
+        if r == 1.0: return "Win"
+        if r == 0.0: return "Loss"
+        return "Push"
+    plot_df["outcome"] = plot_df["home_win_f5"].apply(result_color) if "home_win_f5" in plot_df.columns else "Unknown"
+
     median_delta = plot_df["model_vs_close_logloss_devig"].median()
-    mean_delta = plot_df["model_vs_close_logloss_devig"].mean()
+    mean_delta   = plot_df["model_vs_close_logloss_devig"].mean()
     outlier_drag = mean_delta - median_delta
-    n = len(plot_df); window = min(50, n); recent_avg = plot_df.tail(window)["model_vs_close_logloss_devig"].median(); trend_diff = recent_avg - median_delta
-    c1,c2,c3,c4,c5 = st.columns(5)
-    c1.metric("Games Scored", n); c2.metric("Median Log Loss Delta", f"{median_delta:+.4f}"); c3.metric("Mean Log Loss Delta", f"{mean_delta:+.4f}"); c4.metric("Outlier Drag", f"{outlier_drag:+.4f}"); c5.metric(f"Last {window} Median", f"{recent_avg:+.4f}", delta=f"{trend_diff:+.4f} vs overall", delta_color="inverse")
-    zero_line = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(strokeDash=[4,4], color="gray", opacity=0.5).encode(y="y:Q")
-    trend_line_median = alt.Chart(plot_df).mark_line(color="#378AD3", strokeWidth=2.5).encode(x="game_num:Q", y="cumulative_median:Q")
-    trend_line_mean = alt.Chart(plot_df).mark_line(color="#f0a500", strokeWidth=1.5, strokeDash=[4,3], opacity=0.7).encode(x="game_num:Q", y="cumulative_mean:Q")
-    points = alt.Chart(plot_df).mark_circle(size=35, opacity=0.55).encode(x="game_num:Q", y="model_vs_close_logloss_devig:Q")
-    st.altair_chart((zero_line + points + trend_line_mean + trend_line_median).properties(height=400), use_container_width=True)
+    n = len(plot_df)
+    window = min(50, n)
+    recent_avg = plot_df.tail(window)["model_vs_close_logloss_devig"].median()
+    trend_diff = recent_avg - median_delta
+
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Games Scored", n)
+    c2.metric("Median Log Loss Delta", f"{median_delta:+.4f}")
+    c3.metric("Mean Log Loss Delta", f"{mean_delta:+.4f}")
+    c4.metric("Outlier Drag", f"{outlier_drag:+.4f}")
+    c5.metric(f"Last {window} Median", f"{recent_avg:+.4f}", delta=f"{trend_diff:+.4f} vs overall", delta_color="inverse")
+
+    # Shaded last-50 band
+    shade_start = max(1, n - window + 1)
+    shade_df = pd.DataFrame({"x1": [shade_start], "x2": [n]})
+    shade = alt.Chart(shade_df).mark_rect(opacity=0.08, color="#378AD3").encode(
+        x=alt.X("x1:Q"), x2="x2:Q"
+    )
+
+    zero_line = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(
+        strokeDash=[4, 4], color="gray", opacity=0.5
+    ).encode(y="y:Q")
+
+    color_scale = alt.Scale(
+        domain=["Win", "Loss", "Push"],
+        range=["#2ecc71", "#e74c3c", "#888888"]
+    )
+    points = alt.Chart(plot_df).mark_circle(size=40, opacity=0.65).encode(
+        x=alt.X("game_num:Q", title="Game #"),
+        y=alt.Y("model_vs_close_logloss_devig:Q", title="Log Loss Delta (model − close)"),
+        color=alt.Color("outcome:N", scale=color_scale, legend=alt.Legend(title="Result")),
+        tooltip=["date:N", "away_team:N", "home_team:N", "outcome:N",
+                 alt.Tooltip("model_vs_close_logloss_devig:Q", format="+.4f", title="LL Delta")]
+    )
+
+    trend_line_median = alt.Chart(plot_df).mark_line(color="#378AD3", strokeWidth=2.5).encode(
+        x="game_num:Q", y="cumulative_median:Q"
+    )
+    trend_line_mean = alt.Chart(plot_df).mark_line(
+        color="#f0a500", strokeWidth=1.5, strokeDash=[4, 3], opacity=0.7
+    ).encode(x="game_num:Q", y="cumulative_mean:Q")
+
+    chart = (shade + zero_line + points + trend_line_mean + trend_line_median).properties(height=400)
+    st.altair_chart(chart, use_container_width=True)
 
 def render_performance(hist: pd.DataFrame):
     st.subheader("Model vs Market Performance")
@@ -351,12 +386,28 @@ def render_performance(hist: pd.DataFrame):
     if scored.empty:
         st.info("No scored games yet.")
         return
+
     avg_abs_prob_diff = scored["abs_prob_diff_close"].mean() if "abs_prob_diff_close" in scored.columns else np.nan
-    model_logloss = scored["logloss"].mean() if "logloss" in scored.columns else np.nan
-    close_logloss = scored["close_logloss_devig"].mean() if "close_logloss_devig" in scored.columns else np.nan
-    m1,m2,m3 = st.columns(3)
-    m1.metric("Avg Abs Prob Gap vs Close", f"{avg_abs_prob_diff:.4f}" if pd.notna(avg_abs_prob_diff) else "—"); m2.metric("Model Log Loss", f"{model_logloss:.4f}" if pd.notna(model_logloss) else "—"); m3.metric("Close Log Loss", f"{close_logloss:.4f}" if pd.notna(close_logloss) else "—")
-    st.markdown("---"); render_beating_the_market(scored)
+    model_logloss    = scored["logloss"].mean() if "logloss" in scored.columns else np.nan
+    close_logloss    = scored["close_logloss_devig"].mean() if "close_logloss_devig" in scored.columns else np.nan
+
+    # CLV summary for side-by-side
+    clv_bets = compute_edge_clv(DB_PATH, threshold=0.05)
+    n_bets        = len(clv_bets)
+    avg_clv       = clv_bets["clv"].mean() if n_bets > 0 else np.nan
+    beat_close_rt = clv_bets["beat_close"].mean() if n_bets > 0 else np.nan
+
+    # Six metrics in one row: CLV left, logloss right
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    c1.metric("Qualified Bets (≥5%)", n_bets if n_bets > 0 else "—")
+    c2.metric("Avg CLV", f"{avg_clv*100:.2f}%" if pd.notna(avg_clv) else "—")
+    c3.metric("Beat Close", f"{beat_close_rt*100:.1f}%" if pd.notna(beat_close_rt) else "—")
+    c4.metric("Model Log Loss", f"{model_logloss:.4f}" if pd.notna(model_logloss) else "—")
+    c5.metric("Close Log Loss", f"{close_logloss:.4f}" if pd.notna(close_logloss) else "—")
+    c6.metric("Avg Prob Gap vs Close", f"{avg_abs_prob_diff:.4f}" if pd.notna(avg_abs_prob_diff) else "—")
+
+    st.markdown("---")
+    render_beating_the_market(scored)
 
 def main():
     st.markdown("<style>header[data-testid='stHeader']{display:none!important}#MainMenu{display:none!important}footer{display:none!important}.block-container{padding-top:0.5rem!important;padding-bottom:0!important}h2{margin-top:0!important}</style>", unsafe_allow_html=True)
