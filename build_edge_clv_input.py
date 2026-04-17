@@ -5,6 +5,12 @@ DB_PATH = "mlb_f5_edge_v2.db"
 OUTPUT_CSV = "edge_clv_input.csv"
 EDGE_THRESHOLD = 0.05
 
+def american_to_prob(odds):
+    odds = float(odds)
+    if odds > 0:
+        return 100 / (odds + 100)
+    return -odds / (-odds + 100)
+
 def main():
     conn = sqlite3.connect(DB_PATH)
     model_df = pd.read_sql("SELECT date, away_team, home_team, winprob_home, home_win_f5, close_home_prob_devig FROM forecast_archive WHERE completed5 = 1", conn)
@@ -26,7 +32,7 @@ def main():
     df["model_prob"] = df.apply(lambda r: r["away_win_prob"] if r["side"] == "away" else r["home_win_prob"], axis=1)
     df["close_prob_devig"] = df.apply(lambda r: r["close_away_prob_devig"] if r["side"] == "away" else r["close_home_prob_devig"], axis=1)
     df["result"] = df.apply(lambda r: r["away_result"] if r["side"] == "away" else r["home_result"], axis=1)
-    df["taken_implied_prob"] = 1 / df["price_decimal"]
+    df["taken_implied_prob"] = df["price_american"].apply(american_to_prob)
     df["edge"] = df["model_prob"] - df["taken_implied_prob"]
     df["clv"] = df["close_prob_devig"] - df["taken_implied_prob"]
     df["beat_close"] = (df["clv"] > 0).astype(int)
