@@ -1,16 +1,16 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-17,NYM,Kodai Senga,CHC,Edward Cabrera,2.1356,2.5762,4.7119,0.5716,v1.0
-2026-04-17,BAL,Chris Bassitt,CLE,Tanner Bibee,2.1935,2.0861,4.2796,0.4809,v1.0
-2026-04-17,ATL,Martín Pérez,PHI,Taijuan Walker,2.7417,2.5809,5.3226,0.4765,v1.0
-2026-04-17,SFG,Logan Webb,WSN,Zack Littell,2.4526,2.2286,4.6812,0.4633,v1.0
-2026-04-17,TBR,Nick Martinez,PIT,Bubba Chandler,2.1033,2.4617,4.5650,0.5600,v1.0
-2026-04-17,KCR,Michael Wacha,NYY,Cam Schlittler,2.1543,2.5574,4.7118,0.5655,v1.0
-2026-04-17,MIL,Robert Gasser,MIA,Janson Junk,2.5027,2.5864,5.0891,0.5128,v1.0
-2026-04-17,DET,Casey Mize,BOS,Ranger Suarez,2.3311,2.3697,4.7008,0.5063,v1.0
-2026-04-17,STL,Kyle Leahy,HOU,Peter Lambert,2.8912,2.4859,5.3770,0.4414,v1.0
-2026-04-17,CIN,Brandon Williamson,MIN,Joe Ryan,2.0703,3.1319,5.2022,0.6553,v1.0
-2026-04-17,LAD,Tyler Glasnow,COL,Tomoyuki Sugano,3.5342,2.8574,6.3917,0.4082,v1.0
-2026-04-17,SDP,Matt Waldron,LAA,José Soriano,2.4678,2.9621,5.4299,0.5708,v1.0
-2026-04-17,TEX,Jacob deGrom,SEA,Logan Gilbert,1.6901,1.7895,3.4796,0.5190,v1.0
-2026-04-17,TOR,Eric Lauer,ARI,Michael Soroka,2.4176,2.5485,4.9661,0.5204,v1.0
-2026-04-17,CHW,Davis Martin,ATH,Aaron Civale,2.4642,2.5833,5.0475,0.5183,v1.0
+2026-04-18,KCR,Noah Cameron,NYY,Will Warren,2.1971,2.4298,4.6269,0.5385,v1.0
+2026-04-18,CIN,Andrew Abbott,MIN,Taj Bradley,2.4274,2.5051,4.9325,0.5122,v1.0
+2026-04-18,NYM,Freddy Peralta,CHC,Jameson Taillon,2.3326,2.3264,4.6589,0.4990,v1.0
+2026-04-18,SFG,Adrian Houser,WSN,Cade Cavalli,2.3767,2.7396,5.1163,0.5549,v1.0
+2026-04-18,TBR,Drew Rasmussen,PIT,Paul Skenes,1.9753,2.3144,4.2897,0.5599,v1.0
+2026-04-18,CHW,Erick Fedde,ATH,Luis Severino,2.4383,2.8088,5.2471,0.5548,v1.0
+2026-04-18,DET,Tarik Skubal,BOS,Brayan Bello,2.5804,1.8868,4.4672,0.3827,v1.0
+2026-04-18,MIL,Brandon Woodruff,MIA,Sandy Alcantara,2.4751,2.0323,4.5074,0.4252,v1.0
+2026-04-18,BAL,Dean Kremer,CLE,Gavin Williams,2.2716,2.2372,4.5089,0.4942,v1.0
+2026-04-18,STL,Andre Pallante,HOU,Lance McCullers Jr.,2.5423,2.5713,5.1136,0.5044,v1.0
+2026-04-18,TEX,Nathan Eovaldi,SEA,George Kirby,1.8807,1.7366,3.6173,0.4734,v1.0
+2026-04-18,ATL,Chris Sale,PHI,Cristopher Sánchez,2.1682,1.9755,4.1437,0.4648,v1.0
+2026-04-18,LAD,Emmet Sheehan,COL,Ryan Feltner,3.5599,2.5115,6.0714,0.3657,v1.0
+2026-04-18,TOR,Max Scherzer,ARI,Zac Gallen,2.5797,2.5850,5.1648,0.5008,v1.0
+2026-04-18,SDP,Germán Márquez,LAA,Yusei Kikuchi,2.5814,3.0791,5.6605,0.5687,v1.0
