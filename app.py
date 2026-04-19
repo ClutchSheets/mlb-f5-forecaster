@@ -170,7 +170,10 @@ def compute_edge_clv(db_path: str, threshold: float = 0.05) -> pd.DataFrame:
     os_.loc[os_["side"].str.upper() == os_["home_team"].str.upper(), "side_clean"] = "home"
     os_["price_american"] = pd.to_numeric(os_["price_american"], errors="coerce")
     os_["price_decimal"] = pd.to_numeric(os_["price_decimal"], errors="coerce")
-    os_ = os_.dropna(subset=["side_clean", "price_american", "price_decimal", "captured_at"])
+    os_ = os_.dropna(subset=["side_clean", "price_american", "price_decimal"])
+    os_["captured_at"] = pd.to_datetime(os_["captured_at"], errors="coerce", utc=True).fillna(
+        pd.Timestamp("1970-01-01", tz="UTC")
+    )
 
     if os_.empty:
         return pd.DataFrame()
