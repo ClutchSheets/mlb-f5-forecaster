@@ -1,7 +1,7 @@
 # score_forecasts.py
-# Reads daily_forecast.csv (Sheets export), matches MLB games by date + teams,
-# pulls score through 5 innings, computes MAE/Brier/LogLoss, and appends to SQLite.
-# Includes away_sp/home_sp in the stored snapshot.
+# Reads daily_forecast.csv, matches MLB games by date + teams,
+# pulls score through 5 innings, computes MAE/Brier/LogLoss, appends to SQLite.
+# Does NOT auto-push. Call push_scores.py separately.
 
 import pandas as pd
 import requests
@@ -14,43 +14,41 @@ DB_FILE = "mlb_f5_forecasts.db"
 
 TEAM_ID_MAP = {
     "ARI": 109, "ATL": 144, "BAL": 110, "BOS": 111, "CHC": 112,
-    "CWS": 145, "CHW": 145,   # both codes map to White Sox
+    "CWS": 145, "CHW": 145,
     "CIN": 113, "CLE": 114, "COL": 115, "DET": 116, "HOU": 117, "KCR": 118,
     "LAA": 108, "LAD": 119, "MIA": 146, "MIL": 158, "MIN": 142, "NYM": 121,
     "NYY": 147,
-    "ATH": 133, "OAK": 133,   # both codes map to Athletics
+    "ATH": 133, "OAK": 133,
     "PHI": 143, "PIT": 134, "SDP": 135, "SEA": 136,
     "SFG": 137, "STL": 138, "TBR": 139, "TEX": 140, "TOR": 141, "WSN": 120
 }
 
-def get_schedule(date_str: str) -> dict:
+def get_schedule(date_str):
     url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={date_str}"
     r = requests.get(url, timeout=30)
     r.raise_for_status()
     return r.json()
 
-def get_game_feed(game_pk: int) -> dict:
+def get_game_feed(game_pk):
     url = f"https://statsapi.mlb.com/api/v1.1/game/{game_pk}/feed/live"
     r = requests.get(url, timeout=30)
     r.raise_for_status()
     return r.json()
 
-def flatten_games(schedule_json: dict) -> list:
+def flatten_games(schedule_json):
     games = []
     for d in schedule_json.get("dates", []):
         games.extend(d.get("games", []))
     return games
 
-def find_game_pk(games: list, away_id: int, home_id: int):
-    matches = []
+def find_game_pk(games, away_id, home_id):
     for g in games:
-        a_id = g["teams"]["away"]["team"]["id"]
-        h_id = g["teams"]["home"]["team"]["id"]
-        if a_id == away_id and h_id == home_id:
-            matches.append(g["gamePk"])
-    return matches[0] if matches else None
+        if (g["teams"]["away"]["team"]["id"] == away_id and
+                g["teams"]["home"]["team"]["id"] == home_id):
+            return g["gamePk"]
+    return None
 
-def compute_runs_thru5(game_feed: dict):
+def compute_runs_thru5(game_feed):
     innings = game_feed.get("liveData", {}).get("linescore", {}).get("innings", [])
     if not innings or len(innings) < 5:
         return None, None, 0
@@ -58,17 +56,15 @@ def compute_runs_thru5(game_feed: dict):
     home = sum(inn.get("home", {}).get("runs", 0) for inn in innings[:5])
     return away, home, 1
 
-def brier(p: float, y: float) -> float:
+def brier(p, y):
     return (p - y) ** 2
 
-def logloss(p: float, y: float) -> float:
-    # supports y in {0,1,0.5}
+def logloss(p, y):
     p = max(min(p, 1 - 1e-15), 1e-15)
     return -(y * math.log(p) + (1 - y) * math.log(1 - p))
 
-def ensure_table(conn: sqlite3.Connection):
-    conn.execute(
-        """
+def ensure_table(conn):
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS forecast_archive (
             date TEXT,
             away_team TEXT,
@@ -91,86 +87,88 @@ def ensure_table(conn: sqlite3.Connection):
             game_pk INTEGER,
             created_at TEXT
         )
-        """
-    )
+    """)
     conn.commit()
 
-def validate_row(row: pd.Series):
+def already_scored(conn, date, away_code, home_code):
+    """Prevent duplicate rows if scoring is run more than once."""
+    row = conn.execute(
+        "SELECT 1 FROM forecast_archive WHERE date=? AND away_team=? AND home_team=? AND completed5=1",
+        (date, away_code, home_code)
+    ).fetchone()
+    return row is not None
+
+def validate_row(row):
     required = ["date", "away_team", "home_team", "lambda_away", "lambda_home", "winprob_home"]
     for c in required:
         if c not in row or pd.isna(row[c]):
             raise ValueError(f"Missing required field: {c}")
-
     away = str(row["away_team"]).strip()
     home = str(row["home_team"]).strip()
     if away not in TEAM_ID_MAP:
         raise ValueError(f"Unknown away_team code: {away}")
     if home not in TEAM_ID_MAP:
         raise ValueError(f"Unknown home_team code: {home}")
-
     p = float(row["winprob_home"])
     if not (0.0 <= p <= 1.0):
         raise ValueError(f"winprob_home must be in [0,1], got {p}")
 
 def main():
-    forecasts = pd.read_csv(FORECAST_FILE, encoding='utf-8-sig')
+    forecasts = pd.read_csv(FORECAST_FILE, encoding="utf-8-sig")
+    forecasts.dropna(how="all", inplace=True)
 
     if forecasts.empty:
-        print(f"[SKIP] {FORECAST_FILE} is empty — no forecasts to score.")
+        print(f"[SKIP] {FORECAST_FILE} is empty.")
         return
 
-    # normalize column names (strip whitespace, lowercase)
     forecasts.columns = forecasts.columns.str.strip().str.lower()
 
     if "date" not in forecasts.columns:
-        print(f"[ERROR] 'date' column not found in {FORECAST_FILE}.")
-        print(f"  Columns present: {forecasts.columns.tolist()}")
+        print(f"[ERROR] 'date' column not found. Columns: {forecasts.columns.tolist()}")
         return
 
-    # normalize
-    forecasts["date"] = forecasts["date"].astype(str).str.strip()
+    forecasts["date"]      = forecasts["date"].astype(str).str.strip()
     forecasts["away_team"] = forecasts["away_team"].astype(str).str.strip()
     forecasts["home_team"] = forecasts["home_team"].astype(str).str.strip()
 
-    # optional starter cols
-    if "away_sp" not in forecasts.columns:
-        forecasts["away_sp"] = ""
-    if "home_sp" not in forecasts.columns:
-        forecasts["home_sp"] = ""
-
+    if "away_sp" not in forecasts.columns: forecasts["away_sp"] = ""
+    if "home_sp" not in forecasts.columns: forecasts["home_sp"] = ""
     forecasts["away_sp"] = forecasts["away_sp"].astype(str).fillna("").str.strip()
     forecasts["home_sp"] = forecasts["home_sp"].astype(str).fillna("").str.strip()
 
-    forecasts["lambda_away"] = pd.to_numeric(forecasts["lambda_away"], errors="coerce")
-    forecasts["lambda_home"] = pd.to_numeric(forecasts["lambda_home"], errors="coerce")
-    forecasts["winprob_home"] = pd.to_numeric(forecasts["winprob_home"], errors="coerce")
-    forecasts["total_proj"] = forecasts["lambda_away"] + forecasts["lambda_home"]
+    forecasts["lambda_away"]   = pd.to_numeric(forecasts["lambda_away"],   errors="coerce")
+    forecasts["lambda_home"]   = pd.to_numeric(forecasts["lambda_home"],   errors="coerce")
+    forecasts["winprob_home"]  = pd.to_numeric(forecasts["winprob_home"],  errors="coerce")
+    forecasts["total_proj"]    = forecasts["lambda_away"] + forecasts["lambda_home"]
 
     conn = sqlite3.connect(DB_FILE)
     ensure_table(conn)
 
-    inserted = 0
-    skipped_invalid = 0
-    skipped_no_schedule = 0
-    skipped_no_match = 0
-    skipped_not_thru5 = 0
+    inserted = skipped_dup = skipped_invalid = skipped_no_schedule = 0
+    skipped_no_match = skipped_not_thru5 = 0
 
     for _, row in forecasts.iterrows():
         try:
             validate_row(row)
         except Exception as e:
-            print(f"[SKIP INVALID ROW] {e}")
+            print(f"[SKIP INVALID] {e}")
             skipped_invalid += 1
             continue
 
-        date = row["date"]
+        date      = row["date"]
         away_code = row["away_team"]
         home_code = row["home_team"]
+
+        if already_scored(conn, date, away_code, home_code):
+            print(f"[DUP] {date} {away_code}@{home_code} already scored — skipping")
+            skipped_dup += 1
+            continue
+
         away_id = TEAM_ID_MAP[away_code]
         home_id = TEAM_ID_MAP[home_code]
 
         schedule = get_schedule(date)
-        games = flatten_games(schedule)
+        games    = flatten_games(schedule)
         if not games:
             print(f"[NO SCHEDULE] {date} {away_code}@{home_code}")
             skipped_no_schedule += 1
@@ -190,53 +188,29 @@ def main():
             continue
 
         total_actual = int(away_runs + home_runs)
-
-        if home_runs > away_runs:
-            y = 1.0
-        elif home_runs < away_runs:
-            y = 0.0
-        else:
-            y = 0.5
-
+        y = 1.0 if home_runs > away_runs else (0.0 if home_runs < away_runs else 0.5)
         p = float(row["winprob_home"])
-        mae_total = abs(total_actual - float(row["total_proj"]))
-        b = brier(p, y)
-        ll = logloss(p, y)
-        created_at = datetime.now(timezone.utc).isoformat()
 
-        conn.execute(
-            """
+        conn.execute("""
             INSERT INTO forecast_archive (
                 date, away_team, away_sp, home_team, home_sp,
                 lambda_away, lambda_home, total_proj, winprob_home, model_version,
                 runs_away_thru5, runs_home_thru5, completed5, total_actual, home_win_f5,
                 mae_total, brier, logloss, game_pk, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                date,
-                away_code,
-                str(row.get("away_sp", "")),
-                home_code,
-                str(row.get("home_sp", "")),
-                float(row["lambda_away"]),
-                float(row["lambda_home"]),
-                float(row["total_proj"]),
-                p,
-                str(row.get("model_version", "v1.0")),
-                int(away_runs),
-                int(home_runs),
-                int(completed5),
-                total_actual,
-                y,
-                float(mae_total),
-                float(b),
-                float(ll),
-                int(game_pk),
-                created_at,
-            )
-        )
-
+        """, (
+            date, away_code, str(row.get("away_sp", "")),
+            home_code, str(row.get("home_sp", "")),
+            float(row["lambda_away"]), float(row["lambda_home"]),
+            float(row["total_proj"]), p,
+            str(row.get("model_version", "v1.0")),
+            int(away_runs), int(home_runs),
+            int(completed5), total_actual, y,
+            abs(total_actual - float(row["total_proj"])),
+            brier(p, y), logloss(p, y),
+            int(game_pk),
+            datetime.now(timezone.utc).isoformat(),
+        ))
         inserted += 1
         print(f"[OK] {date} {away_code}@{home_code} thru5 {away_runs}-{home_runs} gamePk={game_pk}")
 
@@ -244,14 +218,12 @@ def main():
     conn.close()
 
     print("\n--- SUMMARY ---")
-    print(f"Inserted: {inserted}")
-    print(f"Skipped (invalid): {skipped_invalid}")
-    print(f"Skipped (no schedule): {skipped_no_schedule}")
-    print(f"Skipped (no match): {skipped_no_match}")
-    print(f"Skipped (not thru 5): {skipped_not_thru5}")
+    print(f"Inserted:            {inserted}")
+    print(f"Skipped (duplicate): {skipped_dup}")
+    print(f"Skipped (invalid):   {skipped_invalid}")
+    print(f"Skipped (no sched):  {skipped_no_schedule}")
+    print(f"Skipped (no match):  {skipped_no_match}")
+    print(f"Skipped (< 5 inn):   {skipped_not_thru5}")
 
 if __name__ == "__main__":
     main()
-    # Auto-push scores to GitHub → triggers Railway redeploy
-    from push_scores import push_scores
-    push_scores()
