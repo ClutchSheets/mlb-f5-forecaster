@@ -68,7 +68,11 @@ def main():
         return None
 
     odds_df["side_clean"] = odds_df.apply(resolve_side, axis=1)
-    odds_df = odds_df.dropna(subset=["side_clean", "price_american", "price_decimal", "captured_at"]).copy()
+    odds_df = odds_df.dropna(subset=["side_clean", "price_american", "price_decimal"]).copy()
+    # captured_at may be None for rows imported via CSV; fill with epoch so sort still works
+    odds_df["captured_at"] = pd.to_datetime(odds_df["captured_at"], errors="coerce", utc=True).fillna(
+        pd.Timestamp("1970-01-01", tz="UTC")
+    )
 
     if odds_df.empty:
         write_empty()
