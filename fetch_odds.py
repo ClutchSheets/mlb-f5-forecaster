@@ -189,14 +189,28 @@ def ensure_snapshot_table(conn):
     conn.commit()
 
 
+TEAM_NAME_TO_CODE = {
+    "Arizona Diamondbacks": "ARI", "Atlanta Braves": "ATL", "Baltimore Orioles": "BAL",
+    "Boston Red Sox": "BOS", "Chicago Cubs": "CHC", "Chicago White Sox": "CHW",
+    "Cincinnati Reds": "CIN", "Cleveland Guardians": "CLE", "Colorado Rockies": "COL",
+    "Detroit Tigers": "DET", "Houston Astros": "HOU", "Kansas City Royals": "KCR",
+    "Los Angeles Angels": "LAA", "Los Angeles Dodgers": "LAD", "Miami Marlins": "MIA",
+    "Milwaukee Brewers": "MIL", "Minnesota Twins": "MIN", "New York Mets": "NYM",
+    "New York Yankees": "NYY", "Athletics": "ATH", "Oakland Athletics": "ATH",
+    "Philadelphia Phillies": "PHI", "Pittsburgh Pirates": "PIT", "San Diego Padres": "SDP",
+    "Seattle Mariners": "SEA", "San Francisco Giants": "SFG", "St. Louis Cardinals": "STL",
+    "Tampa Bay Rays": "TBR", "Texas Rangers": "TEX", "Toronto Blue Jays": "TOR",
+    "Washington Nationals": "WSN",
+}
+
 def archive_odds_snapshot(payload_games):
     conn = sqlite3.connect("mlb_f5_forecasts.db")
     ensure_snapshot_table(conn)
     captured_at = datetime.now(timezone.utc).isoformat()
     rows = []
     for game in payload_games.values():
-        away = game.get("away")
-        home = game.get("home")
+        away = TEAM_NAME_TO_CODE.get(game.get("away"), game.get("away"))
+        home = TEAM_NAME_TO_CODE.get(game.get("home"), game.get("home"))
         for book, entry in game.get("ml", {}).items():
             for side in ("away", "home"):
                 price = entry.get(side)
