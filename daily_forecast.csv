@@ -1,16 +1,16 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-19,SFG,Robbie Ray,WSN,Miles Mikolas,2.6529,2.6468,5.2997,0.4991,v1.0
-2026-04-19,TBR,Shane McClanahan,PIT,Mitch Keller,2.3863,2.9926,5.3789,0.5874,v1.0
-2026-04-19,KCR,Cole Ragans,NYY,Ryan Weathers,2.2070,1.9734,4.1804,0.4577,v1.0
-2026-04-19,BAL,Trevor Rogers,CLE,Joey Cantillo,2.1644,2.0609,4.2253,0.4814,v1.0
-2026-04-19,MIL,Jacob Misiorowski,MIA,Eury Pérez,2.3002,2.1552,4.4554,0.4752,v1.0
-2026-04-19,STL,Matthew Liberatore,HOU,Mike Burrows,2.2547,2.5676,4.8223,0.5499,v1.0
-2026-04-19,CIN,Brady Singer,MIN,Bailey Ober,2.4412,2.4961,4.9373,0.5086,v1.0
-2026-04-19,NYM,Tobias Myers,CHC,Javier Assad,2.4058,2.7482,5.1541,0.5515,v1.0
-2026-04-19,LAD,Roki Sasaki,COL,Michael Lorenzen,3.3837,3.4714,6.8550,0.5113,v1.0
-2026-04-19,CHW,Noah Schultz,ATH,Jeffrey Springs,2.5339,2.9985,5.5324,0.5655,v1.0
-2026-04-19,SDP,Michael King,LAA,Reid Detmers,3.1590,2.6263,5.7853,0.4279,v1.0
-2026-04-19,TEX,MacKenzie Gore,SEA,Bryan Woo,1.8644,1.8872,3.7516,0.5046,v1.0
-2026-04-19,TOR,Kevin Gausman,ARI,Ryne Nelson,2.5803,2.4024,4.9827,0.4724,v1.0
-2026-04-19,DET,Framber Valdez,BOS,Garrett Crochet,1.9765,2.1965,4.1730,0.5399,v1.0
-2026-04-19,ATL,Grant Holmes,PHI,Andrew Painter,3.1525,2.3348,5.4872,0.3848,v1.0
+2026-04-20,DET,Jack Flaherty,BOS,Sonny Gray,2.1500,2.2001,4.3501,0.5088,v1.0
+2026-04-20,HOU,Spencer Arrighetti,CLE,Slade Cecconi,2.3696,2.3930,4.7626,0.5038,v1.0
+2026-04-20,CIN,Rhett Lowder,TBR,Jesse Scholtens,2.8206,3.0697,5.8902,0.5333,v1.0
+2026-04-20,STL,Michael McGreevy,MIA,Max Meyer,2.2899,2.4811,4.7710,0.5308,v1.0
+2026-04-20,ATL,Bryce Elder,WSN,Jake Irvin,2.9750,2.6749,5.6498,0.4584,v1.0
+2026-04-20,BAL,Kyle Bradish,KCR,Seth Lugo,2.3042,1.7194,4.0236,0.3914,v1.0
+2026-04-20,PHI,Aaron Nola,CHC,Colin Rea,2.4140,2.3379,4.7519,0.4877,v1.0
+2026-04-20,LAD,Justin Wrobleski,COL,Jose Quintana,3.6836,3.2469,6.9306,0.4447,v1.0
+2026-04-20,TOR,Dylan Cease,LAA,Reid Detmers,3.1752,2.4355,5.6107,0.3976,v1.0
+2026-04-20,ATH,J.T. Ginn,SEA,Emerson Hancock,2.2473,1.9405,4.1878,0.4446,v1.0
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
