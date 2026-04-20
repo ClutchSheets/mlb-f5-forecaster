@@ -170,10 +170,7 @@ def compute_edge_clv(db_path: str, threshold: float = 0.05) -> pd.DataFrame:
     os_.loc[os_["side"].str.upper() == os_["home_team"].str.upper(), "side_clean"] = "home"
     os_["price_american"] = pd.to_numeric(os_["price_american"], errors="coerce")
     os_["price_decimal"] = pd.to_numeric(os_["price_decimal"], errors="coerce")
-    os_ = os_.dropna(subset=["side_clean", "price_american", "price_decimal"])
-    os_["captured_at"] = pd.to_datetime(os_["captured_at"], errors="coerce", utc=True).fillna(
-        pd.Timestamp("1970-01-01", tz="UTC")
-    )
+    os_ = os_.dropna(subset=["side_clean", "price_american", "price_decimal", "captured_at"])
 
     if os_.empty:
         return pd.DataFrame()
@@ -400,14 +397,23 @@ def render_performance(hist: pd.DataFrame):
     avg_clv       = clv_bets["clv"].mean() if n_bets > 0 else np.nan
     beat_close_rt = clv_bets["beat_close"].mean() if n_bets > 0 else np.nan
 
-    # Six metrics in one row: CLV left, logloss right
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    # P/L to win 100
+    def to_win_100_profit(row):
+        odds = row["odds_taken_american"]
+        if row["result"] == 1.0: return 100.0
+        if row["result"] == 0.0: return -100.0 if odds > 0 else -float(abs(odds))
+        return 0.0
+    pl_to_win_100 = clv_bets.apply(to_win_100_profit, axis=1).sum() if n_bets > 0 else np.nan
+
+    # Seven metrics in one row
+    c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
     c1.metric("Qualified Bets (≥5%)", n_bets if n_bets > 0 else "—")
     c2.metric("Avg CLV", f"{avg_clv*100:.2f}%" if pd.notna(avg_clv) else "—")
     c3.metric("Beat Close", f"{beat_close_rt*100:.1f}%" if pd.notna(beat_close_rt) else "—")
-    c4.metric("Model Log Loss", f"{model_logloss:.4f}" if pd.notna(model_logloss) else "—")
-    c5.metric("Close Log Loss", f"{close_logloss:.4f}" if pd.notna(close_logloss) else "—")
-    c6.metric("Avg Prob Gap vs Close", f"{avg_abs_prob_diff:.4f}" if pd.notna(avg_abs_prob_diff) else "—")
+    c4.metric("P/L (to win 00)", f"" if pd.notna(pl_to_win_100) else "—")
+    c5.metric("Model Log Loss", f"{model_logloss:.4f}" if pd.notna(model_logloss) else "—")
+    c6.metric("Close Log Loss", f"{close_logloss:.4f}" if pd.notna(close_logloss) else "—")
+    c7.metric("Avg Prob Gap vs Close", f"{avg_abs_prob_diff:.4f}" if pd.notna(avg_abs_prob_diff) else "—")
 
     st.markdown("---")
     render_beating_the_market(scored)
