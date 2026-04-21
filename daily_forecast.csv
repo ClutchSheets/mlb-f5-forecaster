@@ -1,16 +1,16 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-20,DET,Jack Flaherty,BOS,Sonny Gray,2.1500,2.2001,4.3501,0.5088,v1.0
-2026-04-20,HOU,Spencer Arrighetti,CLE,Slade Cecconi,2.3696,2.3930,4.7626,0.5038,v1.0
-2026-04-20,CIN,Rhett Lowder,TBR,Jesse Scholtens,2.8206,3.0697,5.8902,0.5333,v1.0
-2026-04-20,STL,Michael McGreevy,MIA,Max Meyer,2.2899,2.4811,4.7710,0.5308,v1.0
-2026-04-20,ATL,Bryce Elder,WSN,Jake Irvin,2.9750,2.6749,5.6498,0.4584,v1.0
-2026-04-20,BAL,Kyle Bradish,KCR,Seth Lugo,2.3042,1.7194,4.0236,0.3914,v1.0
-2026-04-20,PHI,Aaron Nola,CHC,Colin Rea,2.4140,2.3379,4.7519,0.4877,v1.0
-2026-04-20,LAD,Justin Wrobleski,COL,Jose Quintana,3.6836,3.2469,6.9306,0.4447,v1.0
-2026-04-20,TOR,Dylan Cease,LAA,Reid Detmers,3.1752,2.4355,5.6107,0.3976,v1.0
-2026-04-20,ATH,J.T. Ginn,SEA,Emerson Hancock,2.2473,1.9405,4.1878,0.4446,v1.0
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
+2026-04-21,HOU,Ryan Weiss,CLE,Parker Messick,2.3949,2.5870,4.9819,0.5298,v1.0
+2026-04-21,CIN,Chase Burns,TBR,Steven Matz,1.9456,2.1090,4.0547,0.5304,v1.0
+2026-04-21,STL,Dustin May,MIA,Chris Paddack,2.5519,2.4439,4.9958,0.4833,v1.0
+2026-04-21,MIL,Kyle Harrison,DET,Keider Montero,2.4845,2.3178,4.8023,0.4733,v1.0
+2026-04-21,ATL,Reynaldo López,WSN,Foster Griffin,3.2763,2.6260,5.9023,0.4138,v1.0
+2026-04-21,NYY,Luis Gil,BOS,Connelly Early,2.3415,2.6812,5.0227,0.5523,v1.0
+2026-04-21,MIN,Simeon Woods Richardson,NYM,Nolan McLean,2.2231,2.2254,4.4485,0.5004,v1.0
+2026-04-21,BAL,Shane Baz,KCR,Kris Bubic,2.1458,1.9932,4.1390,0.4721,v1.0
+2026-04-21,PHI,Jesús Luzardo,CHC,Shota Imanaga,2.3505,2.3607,4.7112,0.5017,v1.0
+2026-04-21,PIT,Carmen Mlodzinski,TEX,Kumar Rocker,2.5187,2.4343,4.9530,0.4868,v1.0
+2026-04-21,SDP,Randy Vásquez,COL,Chase Dollander,3.1787,3.4115,6.5902,0.5309,v1.0
+2026-04-21,TOR,Patrick Corbin,LAA,Jack Kochanowicz,2.8260,2.7649,5.5908,0.4914,v1.0
+2026-04-21,ATH,Jacob Lopez,SEA,Luis Castillo,2.0480,1.9823,4.0303,0.4877,v1.0
+2026-04-21,CHW,Sean Burke,ARI,Merrill Kelly,2.4692,2.7078,5.1770,0.5358,v1.0
+2026-04-21,LAD,Yoshinobu Yamamoto,SFG,Landen Roupp,2.7446,1.8575,4.6021,0.3548,v1.0
