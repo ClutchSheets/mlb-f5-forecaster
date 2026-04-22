@@ -1,16 +1,16 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-21,HOU,Ryan Weiss,CLE,Parker Messick,2.3949,2.5870,4.9819,0.5298,v1.0
-2026-04-21,CIN,Chase Burns,TBR,Steven Matz,1.9456,2.1090,4.0547,0.5304,v1.0
-2026-04-21,STL,Dustin May,MIA,Chris Paddack,2.5519,2.4439,4.9958,0.4833,v1.0
-2026-04-21,MIL,Kyle Harrison,DET,Keider Montero,2.4845,2.3178,4.8023,0.4733,v1.0
-2026-04-21,ATL,Reynaldo López,WSN,Foster Griffin,3.2763,2.6260,5.9023,0.4138,v1.0
-2026-04-21,NYY,Luis Gil,BOS,Connelly Early,2.3415,2.6812,5.0227,0.5523,v1.0
-2026-04-21,MIN,Simeon Woods Richardson,NYM,Nolan McLean,2.2231,2.2254,4.4485,0.5004,v1.0
-2026-04-21,BAL,Shane Baz,KCR,Kris Bubic,2.1458,1.9932,4.1390,0.4721,v1.0
-2026-04-21,PHI,Jesús Luzardo,CHC,Shota Imanaga,2.3505,2.3607,4.7112,0.5017,v1.0
-2026-04-21,PIT,Carmen Mlodzinski,TEX,Kumar Rocker,2.5187,2.4343,4.9530,0.4868,v1.0
-2026-04-21,SDP,Randy Vásquez,COL,Chase Dollander,3.1787,3.4115,6.5902,0.5309,v1.0
-2026-04-21,TOR,Patrick Corbin,LAA,Jack Kochanowicz,2.8260,2.7649,5.5908,0.4914,v1.0
-2026-04-21,ATH,Jacob Lopez,SEA,Luis Castillo,2.0480,1.9823,4.0303,0.4877,v1.0
-2026-04-21,CHW,Sean Burke,ARI,Merrill Kelly,2.4692,2.7078,5.1770,0.5358,v1.0
-2026-04-21,LAD,Yoshinobu Yamamoto,SFG,Landen Roupp,2.7446,1.8575,4.6021,0.3548,v1.0
+2026-04-22,STL,Kyle Leahy,MIA,Janson Junk,2.4826,2.4046,4.8872,0.4877,v1.0
+2026-04-22,HOU,Peter Lambert,CLE,Tanner Bibee,2.5032,2.6143,5.1175,0.5168,v1.0
+2026-04-22,CIN,Brandon Williamson,TBR,Nick Martinez,2.3619,2.8285,5.1904,0.5696,v1.0
+2026-04-22,BAL,Chris Bassitt,KCR,Michael Wacha,2.3260,2.0317,4.3577,0.4486,v1.0
+2026-04-22,TOR,Eric Lauer,LAA,José Soriano,2.4599,2.6317,5.0916,0.5261,v1.0
+2026-04-22,ATH,Aaron Civale,SEA,Logan Gilbert,1.8456,2.1540,3.9996,0.5580,v1.0
+2026-04-22,MIL,Chad Patrick,DET,Casey Mize,2.3705,2.2759,4.6464,0.4844,v1.0
+2026-04-22,ATL,Martín Pérez,WSN,Zack Littell,2.8862,2.8748,5.7610,0.4984,v1.0
+2026-04-22,NYY,Max Fried,BOS,Ranger Suarez,2.5519,2.1871,4.7390,0.4409,v1.0
+2026-04-22,MIN,Connor Prielipp,NYM,Clay Holmes,2.4928,2.5598,5.0526,0.5103,v1.0
+2026-04-22,PHI,Kyle Backhus,CHC,Matthew Boyd,2.2793,3.0205,5.2997,0.6079,v1.0
+2026-04-22,PIT,Braxton Ashcraft,TEX,Jack Leiter,2.4932,2.2078,4.7010,0.4534,v1.0
+2026-04-22,SDP,Walker Buehler,COL,Tomoyuki Sugano,3.0733,3.2556,6.3288,0.5251,v1.0
+2026-04-22,CHW,Anthony Kay,ARI,Eduardo Rodriguez,2.7118,3.0375,5.7493,0.5444,v1.0
+2026-04-22,LAD,Shohei Ohtani,SFG,Tyler Mahle,2.7465,1.7303,4.4768,0.3307,v1.0
