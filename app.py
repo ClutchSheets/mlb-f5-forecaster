@@ -449,21 +449,16 @@ def render_calibration(hist: pd.DataFrame, forecast_df: pd.DataFrame):
     if scored.empty or "winprob_home" not in scored.columns or "home_win_f5" not in scored.columns:
         st.info("No scored games available for calibration.")
     else:
-        # Build long-form: one row per (game, side) so both perspectives are captured
-        home_rows = scored[["winprob_home", "home_win_f5"]].rename(
+        # One row per game, always from the HOME team's perspective.
+        # This preserves sub-50% predictions so the full distribution is visible.
+        long_df = scored[["winprob_home", "home_win_f5"]].rename(
             columns={"winprob_home": "pred_prob", "home_win_f5": "actual"}
-        ).copy()
-        away_rows = scored[["winprob_home", "home_win_f5"]].copy()
-        away_rows["pred_prob"] = 1 - scored["winprob_home"]
-        away_rows["actual"]    = 1 - scored["home_win_f5"]
-        long_df = pd.concat([home_rows, away_rows], ignore_index=True)
-        long_df = long_df.dropna(subset=["pred_prob", "actual"])
-        # Keep only the "confident" side per game — pred_prob >= 0.50
-        long_df = long_df[long_df["pred_prob"] >= 0.50].copy()
+        ).dropna().copy()
 
-        # 5% buckets: 50-55, 55-60, 60-65, 65-70, 70+
-        edges = [0.50, 0.55, 0.60, 0.65, 0.70, 1.01]
-        labels = ["50–55%", "55–60%", "60–65%", "65–70%", "70%+"]
+        # 5% buckets across full range
+        edges  = [0.0, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 1.01]
+        labels = ["<25%", "25–30%", "30–35%", "35–40%", "40–45%", "45–50%",
+                  "50–55%", "55–60%", "60–65%", "65–70%", "70%+"]
         long_df["bucket"] = pd.cut(long_df["pred_prob"], bins=edges, labels=labels, right=False)
         bucket_stats = (
             long_df.groupby("bucket", observed=True)
@@ -511,8 +506,8 @@ def render_calibration(hist: pd.DataFrame, forecast_df: pd.DataFrame):
         # Dot size proportional to sample size
         chart_df["n_sqrt"] = np.sqrt(chart_df["n"]) * 18
 
-        # Perfect calibration diagonal (x=y from 0.50 to 0.85)
-        diag_df = pd.DataFrame({"x": [0.48, 0.88], "y": [0.48, 0.88]})
+        # Perfect calibration diagonal 0→1
+        diag_df = pd.DataFrame({"x": [0.0, 1.0], "y": [0.0, 1.0]})
         diag_line = alt.Chart(diag_df).mark_line(
             color="#f0a500", strokeDash=[6, 3], strokeWidth=2, opacity=0.75
         ).encode(x=alt.X("x:Q"), y=alt.Y("y:Q"))
@@ -521,8 +516,8 @@ def render_calibration(hist: pd.DataFrame, forecast_df: pd.DataFrame):
         error_bars = alt.Chart(chart_df).mark_rule(
             color="#888888", strokeWidth=1.5, opacity=0.5
         ).encode(
-            x=alt.X("avg_pred_prob:Q"),
-            y=alt.Y("avg_pred_prob:Q"),
+            x=alt.X("avg_pred_prob:Q", scale=alt.Scale(domain=[0.0, 1.0])),
+            y=alt.Y("avg_pred_prob:Q", scale=alt.Scale(domain=[0.0, 1.0])),
             y2="actual_win_rate:Q"
         )
 
@@ -535,10 +530,10 @@ def render_calibration(hist: pd.DataFrame, forecast_df: pd.DataFrame):
             range=["#e74c3c", "#2ecc71", "#378AD3"]
         )
         dots = alt.Chart(chart_df).mark_circle(opacity=0.9, stroke="#ffffff", strokeWidth=1).encode(
-            x=alt.X("avg_pred_prob:Q", title="Predicted Win Probability",
-                    scale=alt.Scale(domain=[0.48, 0.88]), axis=alt.Axis(format="%")),
-            y=alt.Y("actual_win_rate:Q", title="Actual Win Rate",
-                    scale=alt.Scale(domain=[0.20, 0.88]), axis=alt.Axis(format="%")),
+            x=alt.X("avg_pred_prob:Q", title="Predicted Win Probability (Home)",
+                    scale=alt.Scale(domain=[0.0, 1.0]), axis=alt.Axis(format="%")),
+            y=alt.Y("actual_win_rate:Q", title="Actual Win Rate (Home)",
+                    scale=alt.Scale(domain=[0.0, 1.0]), axis=alt.Axis(format="%")),
             size=alt.Size("n:Q", scale=alt.Scale(range=[100, 900]), legend=alt.Legend(title="Sample (N)")),
             color=alt.Color("over_under:N", scale=color_scale, legend=alt.Legend(title="Calibration")),
             tooltip=[
