@@ -421,6 +421,274 @@ def render_performance(hist: pd.DataFrame):
     st.markdown("---")
     render_beating_the_market(scored)
 
+def _negbin_r(total_proj: float) -> float:
+    """Dynamic dispersion: r = MAX(3, MIN(6, 2.5 + 0.4 × total_proj)).
+    Matches the Excel model formula =MAX(3,MIN(6,2.5+0.4*(lambda_away+lambda_home)))."""
+    return max(3.0, min(6.0, 2.5 + 0.4 * total_proj))
+
+def _negbin_pmf(k_vals, mu, r):
+    """Negative Binomial PMF: P(X=k) given mean mu and dispersion r."""
+    from scipy.stats import nbinom
+    p = r / (r + mu)
+    return nbinom.pmf(k_vals, r, p)
+
+def render_calibration(hist: pd.DataFrame, forecast_df: pd.DataFrame):
+    """Calibration tab: confidence buckets + NegBin distribution explorer."""
+    from scipy.stats import nbinom
+
+    st.subheader("Model Calibration — Confidence Buckets")
+    st.caption("How often does the model's predicted win probability match actual outcomes? Buckets use both home and away perspectives (each game contributes two data points).")
+
+    scored = hist.copy()
+    scored["completed5"] = pd.to_numeric(scored.get("completed5", pd.Series(dtype=float)), errors="coerce").fillna(0)
+    scored = scored[scored["completed5"] == 1].copy()
+    for col in ["winprob_home", "home_win_f5", "lambda_away", "lambda_home"]:
+        if col in scored.columns:
+            scored[col] = pd.to_numeric(scored[col], errors="coerce")
+
+    if scored.empty or "winprob_home" not in scored.columns or "home_win_f5" not in scored.columns:
+        st.info("No scored games available for calibration.")
+    else:
+        # Build long-form: one row per (game, side) so both perspectives are captured
+        home_rows = scored[["winprob_home", "home_win_f5"]].rename(
+            columns={"winprob_home": "pred_prob", "home_win_f5": "actual"}
+        ).copy()
+        away_rows = scored[["winprob_home", "home_win_f5"]].copy()
+        away_rows["pred_prob"] = 1 - scored["winprob_home"]
+        away_rows["actual"]    = 1 - scored["home_win_f5"]
+        long_df = pd.concat([home_rows, away_rows], ignore_index=True)
+        long_df = long_df.dropna(subset=["pred_prob", "actual"])
+        # Keep only the "confident" side per game — pred_prob >= 0.50
+        long_df = long_df[long_df["pred_prob"] >= 0.50].copy()
+
+        # 5% buckets: 50-55, 55-60, 60-65, 65-70, 70+
+        edges = [0.50, 0.55, 0.60, 0.65, 0.70, 1.01]
+        labels = ["50–55%", "55–60%", "60–65%", "65–70%", "70%+"]
+        long_df["bucket"] = pd.cut(long_df["pred_prob"], bins=edges, labels=labels, right=False)
+        bucket_stats = (
+            long_df.groupby("bucket", observed=True)
+            .agg(
+                n=("actual", "count"),
+                actual_win_rate=("actual", "mean"),
+                avg_pred_prob=("pred_prob", "mean"),
+            )
+            .reset_index()
+        )
+        bucket_stats["delta"] = bucket_stats["actual_win_rate"] - bucket_stats["avg_pred_prob"]
+        bucket_stats["midpoint"] = bucket_stats["avg_pred_prob"]
+
+        # Summary metrics row
+        total_games = len(scored)
+        overall_actual = long_df["actual"].mean()
+        overall_pred   = long_df["pred_prob"].mean()
+        mean_abs_err   = (long_df["actual"] - long_df["pred_prob"]).abs().mean()
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Scored Games", total_games)
+        c2.metric("Avg Predicted Win%", f"{overall_pred*100:.1f}%")
+        c3.metric("Avg Actual Win%", f"{overall_actual*100:.1f}%")
+        c4.metric("Mean Abs Calibration Error", f"{mean_abs_err*100:.2f}%")
+
+        st.markdown("---")
+
+        # Bucket table
+        st.markdown("#### Bucket Breakdown")
+        tbl = bucket_stats.copy()
+        tbl["Avg Predicted"] = (tbl["avg_pred_prob"] * 100).round(1).astype(str) + "%"
+        tbl["Actual Win Rate"] = (tbl["actual_win_rate"] * 100).round(1).astype(str) + "%"
+        tbl["Delta (Actual − Pred)"] = tbl["delta"].apply(lambda x: f"{x*100:+.1f}%" if pd.notna(x) else "—")
+        tbl["N"] = tbl["n"].astype(int)
+        st.dataframe(
+            tbl[["bucket", "N", "Avg Predicted", "Actual Win Rate", "Delta (Actual − Pred)"]].rename(columns={"bucket": "Bucket"}),
+            use_container_width=True, hide_index=True
+        )
+
+        st.markdown("---")
+
+        # Calibration chart: predicted vs actual per bucket
+        st.markdown("#### Predicted vs Actual Win Rate by Bucket")
+        chart_df = bucket_stats.dropna(subset=["actual_win_rate", "avg_pred_prob"]).copy()
+        chart_df["bucket_str"] = chart_df["bucket"].astype(str)
+
+        pred_bars = alt.Chart(chart_df).mark_bar(color="#378AD3", opacity=0.7, xOffset=-12, width=20).encode(
+            x=alt.X("bucket_str:N", title="Confidence Bucket", sort=labels),
+            y=alt.Y("avg_pred_prob:Q", title="Win Rate", scale=alt.Scale(domain=[0.45, 0.85]), axis=alt.Axis(format="%")),
+            tooltip=[alt.Tooltip("bucket_str:N", title="Bucket"), alt.Tooltip("avg_pred_prob:Q", title="Avg Predicted", format=".1%"), alt.Tooltip("n:Q", title="N")]
+        )
+        actual_bars = alt.Chart(chart_df).mark_bar(color="#2ecc71", opacity=0.85, xOffset=12, width=20).encode(
+            x=alt.X("bucket_str:N", sort=labels),
+            y=alt.Y("actual_win_rate:Q"),
+            tooltip=[alt.Tooltip("bucket_str:N", title="Bucket"), alt.Tooltip("actual_win_rate:Q", title="Actual Win Rate", format=".1%"), alt.Tooltip("n:Q", title="N")]
+        )
+        # Perfect calibration line across bucket midpoints
+        perfect_line = alt.Chart(chart_df).mark_line(
+            color="#f0a500", strokeDash=[5, 3], strokeWidth=2, opacity=0.8
+        ).encode(
+            x=alt.X("bucket_str:N", sort=labels),
+            y=alt.Y("avg_pred_prob:Q")
+        )
+        # Legend dummy
+        legend_data = pd.DataFrame({"category": ["Predicted", "Actual"], "color": ["#378AD3", "#2ecc71"]})
+        calibration_chart = (pred_bars + actual_bars + perfect_line).properties(height=320)
+        st.altair_chart(calibration_chart, use_container_width=True)
+        st.caption("🔵 Predicted  🟢 Actual  🟡 Perfect calibration line (= predicted)")
+
+    # -----------------------------------------------------------------------
+    # NegBin Distribution Explorer
+    # -----------------------------------------------------------------------
+    st.markdown("---")
+    st.markdown("### NegBin Run Distribution Explorer")
+    st.caption("Distributions reconstructed from stored λ (mean) values using the pipeline's dynamic dispersion formula: r = MAX(3, MIN(6, 2.5 + 0.4 × projected total)). Win% shown is the **raw NegBin output** — expect ~8% lower than the stored final win prob due to HFA/handedness adjustments applied downstream.")
+
+    # Build game list — prefer today's forecast, fall back to recent archived games
+    game_options = []
+    if not forecast_df.empty and "lambda_away" in forecast_df.columns:
+        for _, row in forecast_df.iterrows():
+            label = f"{row.get('date','')} | {row.get('away_team','')} @ {row.get('home_team','')} (forecast)"
+            game_options.append({"label": label, "row": row, "source": "forecast"})
+
+    if not hist.empty and "lambda_away" in hist.columns:
+        recent = hist.copy()
+        recent["lambda_away"] = pd.to_numeric(recent["lambda_away"], errors="coerce")
+        recent["lambda_home"] = pd.to_numeric(recent["lambda_home"], errors="coerce")
+        recent = recent.dropna(subset=["lambda_away", "lambda_home"]).sort_values("date", ascending=False).head(30)
+        for _, row in recent.iterrows():
+            result_tag = ""
+            if pd.notna(row.get("home_win_f5")):
+                result_tag = f" → {'HOME WIN' if row['home_win_f5']==1 else 'AWAY WIN' if row['home_win_f5']==0 else 'PUSH'}"
+            label = f"{row.get('date','')} | {row.get('away_team','')} @ {row.get('home_team','')} (archived{result_tag})"
+            game_options.append({"label": label, "row": row, "source": "archive"})
+
+    if not game_options:
+        st.info("No games with NegBin parameters available.")
+        return
+
+    selected_label = st.selectbox("Select game", [g["label"] for g in game_options], key="negbin_game_select")
+    selected = next(g for g in game_options if g["label"] == selected_label)
+    row = selected["row"]
+
+    mu_away = float(row["lambda_away"])
+    mu_home = float(row["lambda_home"])
+    away_team = str(row.get("away_team", "Away"))
+    home_team = str(row.get("home_team", "Home"))
+    winprob_home = float(row.get("winprob_home", 0.5))
+    winprob_away = 1 - winprob_home
+    total_proj = mu_away + mu_home
+    r = _negbin_r(total_proj)
+
+    k_vals = np.arange(0, 12)
+    pmf_away = _negbin_pmf(k_vals, mu_away, r)
+    pmf_home = _negbin_pmf(k_vals, mu_home, r)
+
+    # Joint PMF for total runs
+    max_k = 12
+    total_probs = {}
+    for ka in range(max_k):
+        for kh in range(max_k):
+            t = ka + kh
+            total_probs[t] = total_probs.get(t, 0) + pmf_away[ka] * pmf_home[kh]
+    total_k = sorted(total_probs.keys())
+    total_pmf = np.array([total_probs[k] for k in total_k])
+
+    # Win prob from joint PMF (sanity check vs stored)
+    win_home_joint = sum(
+        pmf_away[ka] * pmf_home[kh]
+        for ka in range(max_k) for kh in range(max_k) if kh > ka
+    )
+    win_away_joint = sum(
+        pmf_away[ka] * pmf_home[kh]
+        for ka in range(max_k) for kh in range(max_k) if ka > kh
+    )
+    push_joint = sum(
+        pmf_away[ka] * pmf_home[kh]
+        for ka in range(max_k) for kh in range(max_k) if ka == kh
+    )
+
+    # Header metrics
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    c1.metric(f"{away_team} λ", f"{mu_away:.3f}")
+    c2.metric(f"{home_team} λ", f"{mu_home:.3f}")
+    c3.metric("Proj Total", f"{total_proj:.2f}")
+    c4.metric("Dispersion r", f"{r:.2f}")
+    c5.metric(f"{home_team} Win% (stored)", f"{winprob_home*100:.1f}%")
+    c6.metric(f"{home_team} Win% (pre-adj)", f"{win_home_joint*100:.1f}%", delta=f"{(win_home_joint - winprob_home)*100:+.1f}% vs final", help="Raw NegBin output before pipeline adjustments (HFA, handedness). Expect ~8% lower than stored win prob for home teams.")
+
+    # Result annotation for archived games
+    if selected["source"] == "archive" and pd.notna(row.get("home_win_f5")):
+        actual_away = int(row.get("runs_away_thru5", 0) or 0)
+        actual_home = int(row.get("runs_home_thru5", 0) or 0)
+        result_str = "HOME WIN" if row["home_win_f5"] == 1 else "AWAY WIN" if row["home_win_f5"] == 0 else "PUSH"
+        st.info(f"**Result:** {away_team} {actual_away} – {actual_home} {home_team} → **{result_str}**")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown(f"**{away_team} Run Distribution**")
+        away_df = pd.DataFrame({"runs": k_vals, "prob": pmf_away, "team": away_team})
+        mode_away = int(k_vals[np.argmax(pmf_away)])
+        away_chart = alt.Chart(away_df).mark_bar(opacity=0.85).encode(
+            x=alt.X("runs:O", title="F5 Runs"),
+            y=alt.Y("prob:Q", title="Probability", axis=alt.Axis(format=".0%")),
+            color=alt.condition(
+                alt.datum.runs == mode_away,
+                alt.value("#f0a500"), alt.value("#e74c3c")
+            ),
+            tooltip=[alt.Tooltip("runs:O", title="Runs"), alt.Tooltip("prob:Q", title="P(X=k)", format=".3f")]
+        ).properties(height=260)
+        st.altair_chart(away_chart, use_container_width=True)
+        st.caption(f"Mode: {mode_away}  |  Mean: {mu_away:.2f}  |  P(0): {pmf_away[0]:.1%}")
+
+    with col2:
+        st.markdown(f"**{home_team} Run Distribution**")
+        home_df = pd.DataFrame({"runs": k_vals, "prob": pmf_home, "team": home_team})
+        mode_home = int(k_vals[np.argmax(pmf_home)])
+        home_chart = alt.Chart(home_df).mark_bar(opacity=0.85).encode(
+            x=alt.X("runs:O", title="F5 Runs"),
+            y=alt.Y("prob:Q", title="Probability", axis=alt.Axis(format=".0%")),
+            color=alt.condition(
+                alt.datum.runs == mode_home,
+                alt.value("#f0a500"), alt.value("#1a7a3a")
+            ),
+            tooltip=[alt.Tooltip("runs:O", title="Runs"), alt.Tooltip("prob:Q", title="P(X=k)", format=".3f")]
+        ).properties(height=260)
+        st.altair_chart(home_chart, use_container_width=True)
+        st.caption(f"Mode: {mode_home}  |  Mean: {mu_home:.2f}  |  P(0): {pmf_home[0]:.1%}")
+
+    with col3:
+        st.markdown("**Game Total Distribution**")
+        total_df = pd.DataFrame({"runs": total_k, "prob": total_pmf})
+        proj_total = mu_away + mu_home
+        total_chart = alt.Chart(total_df).mark_bar(color="#378AD3", opacity=0.85).encode(
+            x=alt.X("runs:O", title="F5 Total Runs"),
+            y=alt.Y("prob:Q", title="Probability", axis=alt.Axis(format=".0%")),
+            tooltip=[alt.Tooltip("runs:O", title="Total"), alt.Tooltip("prob:Q", title="P(Total=k)", format=".3f")]
+        ).properties(height=260)
+        proj_line = alt.Chart(pd.DataFrame({"x": [proj_total]})).mark_rule(
+            color="#f0a500", strokeDash=[4, 3], strokeWidth=2
+        ).encode(x=alt.X("x:Q"))
+        st.altair_chart(total_chart, use_container_width=True)
+        st.caption(f"Proj: {proj_total:.2f}  |  P(≤4): {sum(v for k,v in zip(total_k,total_pmf) if k<=4):.1%}  |  P(≥6): {sum(v for k,v in zip(total_k,total_pmf) if k>=6):.1%}")
+
+    # Win probability breakdown bar
+    st.markdown("---")
+    st.markdown("#### Win Probability Breakdown (from Joint NegBin PMF)")
+    wp_df = pd.DataFrame({
+        "outcome": [f"{away_team} Win", "Push/Tie", f"{home_team} Win"],
+        "prob": [win_away_joint, push_joint, win_home_joint],
+        "color": ["#e74c3c", "#888888", "#1a7a3a"]
+    })
+    wp_chart = alt.Chart(wp_df).mark_bar(size=48).encode(
+        x=alt.X("prob:Q", title="Probability", axis=alt.Axis(format="%"), scale=alt.Scale(domain=[0, 1])),
+        y=alt.Y("outcome:N", sort=[f"{away_team} Win", "Push/Tie", f"{home_team} Win"], title=""),
+        color=alt.Color("outcome:N", scale=alt.Scale(
+            domain=[f"{away_team} Win", "Push/Tie", f"{home_team} Win"],
+            range=["#e74c3c", "#888888", "#1a7a3a"]
+        ), legend=None),
+        tooltip=[alt.Tooltip("outcome:N"), alt.Tooltip("prob:Q", format=".2%")]
+    ).properties(height=160)
+    st.altair_chart(wp_chart, use_container_width=True)
+    st.caption(f"Push probability: {push_joint:.2%} — included in moneyline devig but worth watching if high")
+
+
 def main():
     st.markdown("<style>header[data-testid='stHeader']{display:none!important}#MainMenu{display:none!important}footer{display:none!important}.block-container{padding-top:0.5rem!important;padding-bottom:0!important}h2{margin-top:0!important}</style>", unsafe_allow_html=True)
     st.markdown("<h2 style='color:#1a7a3a;margin:0 0 6px 0'>⚾ ClutchSheets F5 Baseball Forecaster</h2>", unsafe_allow_html=True)
@@ -433,7 +701,7 @@ def main():
             fetched_at = odds_payload.get("fetched_at"); odds_file_date = odds_payload.get("date")
         except Exception:
             pass
-    tab1, tab2 = st.tabs(["📅 Today's Games", "📊 Performance"])
+    tab1, tab2, tab3 = st.tabs(["📅 Today's Games", "📊 Performance", "🎯 Calibration"])
     with tab1:
         if fetched_at:
             date_line = f"<div style='color:#8f9bad;font-size:0.82em;margin-top:6px'>Odds file date: {odds_file_date}</div>" if odds_file_date else ""
@@ -461,6 +729,10 @@ def main():
         st.markdown("---")
         hist = load_history(DB_PATH)
         render_performance(hist)
+    with tab3:
+        hist = load_history(DB_PATH)
+        forecast_df = load_forecast(CSV_PATH)
+        render_calibration(hist, forecast_df)
 
 if __name__ == "__main__":
     main()
