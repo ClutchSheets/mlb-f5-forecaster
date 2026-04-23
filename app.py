@@ -504,33 +504,64 @@ def render_calibration(hist: pd.DataFrame, forecast_df: pd.DataFrame):
 
         st.markdown("---")
 
-        # Calibration chart: predicted vs actual per bucket
-        st.markdown("#### Predicted vs Actual Win Rate by Bucket")
+        # Reliability diagram: dots on diagonal
+        st.markdown("#### Reliability Diagram — Predicted vs Actual Win Rate")
         chart_df = bucket_stats.dropna(subset=["actual_win_rate", "avg_pred_prob"]).copy()
         chart_df["bucket_str"] = chart_df["bucket"].astype(str)
+        # Dot size proportional to sample size
+        chart_df["n_sqrt"] = np.sqrt(chart_df["n"]) * 18
 
-        pred_bars = alt.Chart(chart_df).mark_bar(color="#378AD3", opacity=0.7, xOffset=-12, width=20).encode(
-            x=alt.X("bucket_str:N", title="Confidence Bucket", sort=labels),
-            y=alt.Y("avg_pred_prob:Q", title="Win Rate", scale=alt.Scale(domain=[0.45, 0.85]), axis=alt.Axis(format="%")),
-            tooltip=[alt.Tooltip("bucket_str:N", title="Bucket"), alt.Tooltip("avg_pred_prob:Q", title="Avg Predicted", format=".1%"), alt.Tooltip("n:Q", title="N")]
-        )
-        actual_bars = alt.Chart(chart_df).mark_bar(color="#2ecc71", opacity=0.85, xOffset=12, width=20).encode(
-            x=alt.X("bucket_str:N", sort=labels),
-            y=alt.Y("actual_win_rate:Q"),
-            tooltip=[alt.Tooltip("bucket_str:N", title="Bucket"), alt.Tooltip("actual_win_rate:Q", title="Actual Win Rate", format=".1%"), alt.Tooltip("n:Q", title="N")]
-        )
-        # Perfect calibration line across bucket midpoints
-        perfect_line = alt.Chart(chart_df).mark_line(
-            color="#f0a500", strokeDash=[5, 3], strokeWidth=2, opacity=0.8
+        # Perfect calibration diagonal (x=y from 0.50 to 0.85)
+        diag_df = pd.DataFrame({"x": [0.48, 0.88], "y": [0.48, 0.88]})
+        diag_line = alt.Chart(diag_df).mark_line(
+            color="#f0a500", strokeDash=[6, 3], strokeWidth=2, opacity=0.75
+        ).encode(x=alt.X("x:Q"), y=alt.Y("y:Q"))
+
+        # Error bars: vertical lines from predicted to actual per bucket
+        error_bars = alt.Chart(chart_df).mark_rule(
+            color="#888888", strokeWidth=1.5, opacity=0.5
         ).encode(
-            x=alt.X("bucket_str:N", sort=labels),
-            y=alt.Y("avg_pred_prob:Q")
+            x=alt.X("avg_pred_prob:Q"),
+            y=alt.Y("avg_pred_prob:Q"),
+            y2="actual_win_rate:Q"
         )
-        # Legend dummy
-        legend_data = pd.DataFrame({"category": ["Predicted", "Actual"], "color": ["#378AD3", "#2ecc71"]})
-        calibration_chart = (pred_bars + actual_bars + perfect_line).properties(height=320)
-        st.altair_chart(calibration_chart, use_container_width=True)
-        st.caption("🔵 Predicted  🟢 Actual  🟡 Perfect calibration line (= predicted)")
+
+        # Dots coloured by delta direction
+        chart_df["over_under"] = chart_df["delta"].apply(
+            lambda d: "Overconfident" if d < -0.02 else ("Underconfident" if d > 0.02 else "Calibrated")
+        )
+        color_scale = alt.Scale(
+            domain=["Overconfident", "Calibrated", "Underconfident"],
+            range=["#e74c3c", "#2ecc71", "#378AD3"]
+        )
+        dots = alt.Chart(chart_df).mark_circle(opacity=0.9, stroke="#ffffff", strokeWidth=1).encode(
+            x=alt.X("avg_pred_prob:Q", title="Predicted Win Probability",
+                    scale=alt.Scale(domain=[0.48, 0.88]), axis=alt.Axis(format="%")),
+            y=alt.Y("actual_win_rate:Q", title="Actual Win Rate",
+                    scale=alt.Scale(domain=[0.20, 0.88]), axis=alt.Axis(format="%")),
+            size=alt.Size("n:Q", scale=alt.Scale(range=[100, 900]), legend=alt.Legend(title="Sample (N)")),
+            color=alt.Color("over_under:N", scale=color_scale, legend=alt.Legend(title="Calibration")),
+            tooltip=[
+                alt.Tooltip("bucket_str:N", title="Bucket"),
+                alt.Tooltip("n:Q", title="N"),
+                alt.Tooltip("avg_pred_prob:Q", title="Avg Predicted", format=".1%"),
+                alt.Tooltip("actual_win_rate:Q", title="Actual Win Rate", format=".1%"),
+                alt.Tooltip("delta:Q", title="Delta", format="+.1%"),
+            ]
+        )
+
+        # Bucket labels next to each dot
+        bucket_labels = alt.Chart(chart_df).mark_text(
+            align="left", dx=10, dy=-4, fontSize=11, color="#cccccc"
+        ).encode(
+            x=alt.X("avg_pred_prob:Q"),
+            y=alt.Y("actual_win_rate:Q"),
+            text=alt.Text("bucket_str:N")
+        )
+
+        reliability_chart = (diag_line + error_bars + dots + bucket_labels).properties(height=380)
+        st.altair_chart(reliability_chart, use_container_width=True)
+        st.caption("Each dot = one confidence bucket. Size = sample N. Vertical line shows gap from predicted to actual. 🟡 Diagonal = perfect calibration. 🔴 Below diagonal = overconfident.")
 
     # -----------------------------------------------------------------------
     # NegBin Distribution Explorer
