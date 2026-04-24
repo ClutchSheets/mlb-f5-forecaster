@@ -1,16 +1,16 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-23,ATL,JR Ritchie,WSN,Cade Cavalli,2.8344,3.2104,6.0448,0.5490,v1.0
-2026-04-23,MIL,Brandon Sproat,DET,Tarik Skubal,2.0450,2.3514,4.3964,0.5530,v1.0
-2026-04-23,PHI,Cristopher Sánchez,CHC,Edward Cabrera,2.1740,2.3411,4.5151,0.5283,v1.0
-2026-04-23,SDP,Matt Waldron,COL,Ryan Feltner,3.0417,3.4279,6.4697,0.5521,v1.0
-2026-04-23,CHW,Davis Martin,ARI,Michael Soroka,2.5634,2.8070,5.3704,0.5353,v1.0
-2026-04-23,LAD,Tyler Glasnow,SFG,Logan Webb,2.3627,1.9631,4.3258,0.4300,v1.0
-2026-04-23,NYY,Cam Schlittler,BOS,Payton Tolle,2.7126,2.2314,4.9440,0.4251,v1.0
-2026-04-23,MIN,Joe Ryan,NYM,Christian Scott,2.8316,1.9358,4.7674,0.3578,v1.0
-2026-04-23,PIT,Bubba Chandler,TEX,Jacob deGrom,2.2323,2.1291,4.3614,0.4820,v1.0
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
+2026-04-24,DET,Framber Valdez,CIN,Andrew Abbott,2.5654,2.2909,4.8563,0.4727,v1.0
+2026-04-24,BOS,Brayan Bello,BAL,Brandon Young,2.4495,2.6937,5.1432,0.5531,v1.0
+2026-04-24,CLE,Gavin Williams,TOR,Max Scherzer,2.3251,2.3397,4.6648,0.5186,v1.0
+2026-04-24,COL,Michael Lorenzen,NYM,Freddy Peralta,2.2777,2.1824,4.4602,0.4999,v1.0
+2026-04-24,MIN,Taj Bradley,TBR,Drew Rasmussen,2.3702,2.4701,4.8403,0.5322,v1.0
+2026-04-24,PHI,Andrew Painter,ATL,Grant Holmes,2.4107,3.2646,5.6753,0.6329,v1.0
+2026-04-24,LAA,Yusei Kikuchi,KCR,Noah Cameron,2.3741,2.1566,4.5306,0.4795,v1.0
+2026-04-24,WSN,Miles Mikolas,CHW,Bryan Hudson,2.6746,2.3141,4.9887,0.4605,v1.0
+2026-04-24,PIT,Paul Skenes,MIL,Brandon Woodruff,2.2325,2.1649,4.3975,0.5045,v1.0
+2026-04-24,ATH,Luis Severino,TEX,Nathan Eovaldi,2.1105,2.4408,4.5514,0.5717,v1.0
+2026-04-24,NYY,Will Warren,HOU,Lance McCullers Jr.,2.6105,2.5958,5.2063,0.5141,v1.0
+2026-04-24,SEA,George Kirby,STL,Andre Pallante,2.4976,2.3089,4.8065,0.4860,v1.0
+2026-04-24,CHC,Jameson Taillon,LAD,Emmet Sheehan,2.5464,2.9498,5.4961,0.5735,v1.0
+2026-04-24,MIA,Sandy Alcantara,SFG,Adrian Houser,2.2834,2.0204,4.3038,0.4698,v1.0
 ,,,,,,,,,
