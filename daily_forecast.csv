@@ -1,16 +1,16 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-24,DET,Framber Valdez,CIN,Andrew Abbott,2.5654,2.2909,4.8563,0.4727,v1.0
-2026-04-24,BOS,Brayan Bello,BAL,Brandon Young,2.4495,2.6937,5.1432,0.5531,v1.0
-2026-04-24,CLE,Gavin Williams,TOR,Max Scherzer,2.3251,2.3397,4.6648,0.5186,v1.0
-2026-04-24,COL,Michael Lorenzen,NYM,Freddy Peralta,2.2777,2.1824,4.4602,0.4999,v1.0
-2026-04-24,MIN,Taj Bradley,TBR,Drew Rasmussen,2.3702,2.4701,4.8403,0.5322,v1.0
-2026-04-24,PHI,Andrew Painter,ATL,Grant Holmes,2.4107,3.2646,5.6753,0.6329,v1.0
-2026-04-24,LAA,Yusei Kikuchi,KCR,Noah Cameron,2.3741,2.1566,4.5306,0.4795,v1.0
-2026-04-24,WSN,Miles Mikolas,CHW,Bryan Hudson,2.6746,2.3141,4.9887,0.4605,v1.0
-2026-04-24,PIT,Paul Skenes,MIL,Brandon Woodruff,2.2325,2.1649,4.3975,0.5045,v1.0
-2026-04-24,ATH,Luis Severino,TEX,Nathan Eovaldi,2.1105,2.4408,4.5514,0.5717,v1.0
-2026-04-24,NYY,Will Warren,HOU,Lance McCullers Jr.,2.6105,2.5958,5.2063,0.5141,v1.0
-2026-04-24,SEA,George Kirby,STL,Andre Pallante,2.4976,2.3089,4.8065,0.4860,v1.0
-2026-04-24,CHC,Jameson Taillon,LAD,Emmet Sheehan,2.5464,2.9498,5.4961,0.5735,v1.0
-2026-04-24,MIA,Sandy Alcantara,SFG,Adrian Houser,2.2834,2.0204,4.3038,0.4698,v1.0
+2026-04-25,BOS,Garrett Crochet,BAL,Trevor Rogers,2.2629,2.3875,4.6504,0.5368,v1.0
+2026-04-25,SEA,Bryan Woo,STL,Matthew Liberatore,2.4846,2.2779,4.7626,0.4829,v1.0
+2026-04-25,CLE,Joey Cantillo,TOR,Kevin Gausman,2.2563,2.2934,4.5497,0.5225,v1.0
+2026-04-25,MIA,Eury Pérez,SFG,Robbie Ray,2.2814,1.9221,4.2035,0.4516,v1.0
+2026-04-25,MIN,Bailey Ober,TBR,Shane McClanahan,2.8474,2.5006,5.3480,0.4658,v1.0
+2026-04-25,WSN,Jake Irvin,CHW,Noah Schultz,2.6467,2.3347,4.9814,0.4679,v1.0
+2026-04-25,SDP,Germán Márquez,ARI,Zac Gallen,2.5736,2.8950,5.4686,0.5621,v1.0
+2026-04-25,ATH,Jeffrey Springs,TEX,MacKenzie Gore,2.2645,2.4461,4.7107,0.5459,v1.0
+2026-04-25,LAA,Walbert Urena,KCR,Cole Ragans,2.0759,2.4992,4.5751,0.5869,v1.0
+2026-04-25,NYY,Ryan Weathers,HOU,Mike Burrows,2.4582,2.6144,5.0726,0.5401,v1.0
+2026-04-25,PIT,Mitch Keller,MIL,Jacob Misiorowski,2.3596,2.3798,4.7394,0.5195,v1.0
+2026-04-25,DET,Jack Flaherty,CIN,Brady Singer,2.6225,2.3731,4.9956,0.4777,v1.0
+2026-04-25,CHC,Colin Rea,LAD,Roki Sasaki,3.0841,2.9255,6.0097,0.4954,v1.0
+2026-04-25,PHI,Zack Wheeler,ATL,Bryce Elder,2.4647,2.5168,4.9815,0.5243,v1.0
 ,,,,,,,,,
