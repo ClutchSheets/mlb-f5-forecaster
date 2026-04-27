@@ -53,13 +53,13 @@ def safe_get(url, params=None):
 
 def closing_timestamp(commence_time_str: str) -> str:
     """
-    Return a timestamp 5 minutes before game start.
-    The Odds API historical endpoint returns the most recent snapshot
-    at or before the requested date — so commence_time - 5min reliably
-    gives the true closing line rather than the opening snapshot.
+    Return a timestamp 30 minutes before game start.
+    Using 30 min (vs 5 min) ensures we land on an actual snapshot
+    in the Odds API historical feed rather than between snapshots.
+    Still well within closing-line territory for Pinnacle.
     """
     ct = datetime.fromisoformat(commence_time_str.replace("Z", "+00:00"))
-    close_dt = ct - timedelta(minutes=5)
+    close_dt = ct - timedelta(minutes=30)
     return close_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 def ensure_cols(cur):
@@ -107,16 +107,20 @@ def main():
             print(f"  [SKIP] Event not found: {away_n} @ {home_n} on {date}")
             continue
 
-        # ── FIX: use closing timestamp (5 min before game start) ──────────
+        # Use closing timestamp (30 min before game start) for reliable snapshot coverage
         close_ts = closing_timestamp(e["commence_time"])
         print(f"  [FETCH] {away}@{home} closing snapshot: {close_ts}")
 
-        odds_resp = safe_get(
-            f"{BASE_URL}/historical/sports/{SPORT}/events/{e['id']}/odds",
-            {"apiKey": API_KEY, "date": close_ts,
-             "bookmakers": "pinnacle", "markets": MARKET, "regions": "eu",
-             "oddsFormat": "american"}
-        ).json()["data"]
+        try:
+            odds_resp = safe_get(
+                f"{BASE_URL}/historical/sports/{SPORT}/events/{e['id']}/odds",
+                {"apiKey": API_KEY, "date": close_ts,
+                 "bookmakers": "pinnacle", "markets": MARKET, "regions": "eu",
+                 "oddsFormat": "american"}
+            ).json()["data"]
+        except Exception as ex:
+            print(f"  [SKIP] Odds fetch failed for {away}@{home}: {ex}")
+            continue
 
         # Guard against missing bookmaker data
         bookmakers = odds_resp.get("bookmakers", [])
