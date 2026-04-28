@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-04-26,BOS,Connelly Early,BAL,Kyle Bradish,2.1907,2.3919,4.5826,0.5499,v1.0
-2026-04-26,PHI,Aaron Nola,ATL,Chris Sale,2.1976,2.7176,4.9153,0.5975,v1.0
-2026-04-26,CLE,Slade Cecconi,TOR,Patrick Corbin,2.3939,2.3347,4.7286,0.5066,v1.0
-2026-04-26,DET,Keider Montero,CIN,Rhett Lowder,3.0943,2.6537,5.7480,0.4562,v1.0
-2026-04-26,COL,Jose Quintana,NYM,Nolan McLean,2.2099,2.3302,4.5401,0.5365,v1.0
-2026-04-26,COL,Chase Dollander,NYM,Kodai Senga,2.4686,2.3346,4.8032,0.4948,v1.0
-2026-04-26,MIN,Simeon Woods Richardson,TBR,Jesse Scholtens,2.8101,2.5017,5.3118,0.4711,v1.0
-2026-04-26,WSN,Foster Griffin,CHW,Bryan Hudson,2.6381,2.5294,5.1675,0.4999,v1.0
-2026-04-26,NYY,Luis Gil,HOU,Spencer Arrighetti,2.7157,2.8784,5.5942,0.5390,v1.0
-2026-04-26,PIT,Carmen Mlodzinski,MIL,Kyle Harrison,2.4774,2.4342,4.9117,0.5095,v1.0
-2026-04-26,SEA,Emerson Hancock,STL,Michael McGreevy,2.5794,2.7056,5.2850,0.5348,v1.0
-2026-04-26,ATH,J.T. Ginn,TEX,Kumar Rocker,2.3713,2.2375,4.6088,0.4940,v1.0
-2026-04-26,SDP,Michael King,ARI,Ryne Nelson,2.5851,2.5981,5.1832,0.5182,v1.0
-2026-04-26,MIA,Max Meyer,SFG,Landen Roupp,2.2966,1.9897,4.2863,0.4619,v1.0
-2026-04-26,CHC,Shota Imanaga,LAD,Justin Wrobleski,2.9707,2.9461,5.9167,0.5130,v1.0
-2026-04-26,LAA,Reid Detmers,KCR,Reid Detmers,2.2953,2.073498832,4.3688,0.4776,v1.0
+2026-04-28,TBR,Nick Martinez,CLE,Tanner Bibee,2.2831,2.2684,4.5514,0.5138,v1.0
+2026-04-28,HOU,Kai-Wei Teng,BAL,Shane Baz,2.7926,2.6586,5.4512,0.4971,v1.0
+2026-04-28,COL,Kyle Freeland,CIN,Chase Burns,2.2651,2.6212,4.8863,0.5724,v1.0
+2026-04-28,STL,Kyle Leahy,PIT,Braxton Ashcraft,2.2747,2.3719,4.6466,0.5323,v1.0
+2026-04-28,SFG,Tyler Mahle,PHI,Jesús Luzardo,2.0597,2.4116,4.4712,0.5762,v1.0
+2026-04-28,BOS,Payton Tolle,TOR,Trey Yesavage,2.2577,2.3322,4.5899,0.5287,v1.0
+2026-04-28,WSN,Zack Littell,NYM,Clay Holmes,2.5703,2.1894,4.7597,0.4548,v1.0
+2026-04-28,DET,Casey Mize,ATL,Martín Pérez,2.7661,2.7612,5.5273,0.5156,v1.0
+2026-04-28,SEA,Logan Gilbert,MIN,Joe Ryan,2.2774,2.2577,4.5351,0.5129,v1.0
+2026-04-28,LAA,José Soriano,CHW,Davis Martin,2.3834,2.0922,4.4756,0.4666,v1.0
+2026-04-28,ARI,Merrill Kelly,MIL,Chad Patrick,2.4104,2.2840,4.6944,0.4956,v1.0
+2026-04-28,NYY,Cam Schlittler,TEX,Jacob deGrom,2.3511,2.2179,4.5690,0.4939,v1.0
+2026-04-28,KCR,Kris Bubic,ATH,Aaron Civale,2.5744,2.4354,5.0098,0.4948,v1.0
+2026-04-28,CHC,Edward Cabrera,SDP,Walker Buehler,2.8052,2.2334,5.0386,0.4289,v1.0
+2026-04-28,MIA,Janson Junk,LAD,Shohei Ohtani,2.2052,2.9269,5.1322,0.6243,v1.0
+2026-04-28,LAA,Reid Detmers,KCR,Reid Detmers,2.2953,2.0729,4.3682,0.4775,v1.0
