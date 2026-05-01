@@ -1,6 +1,6 @@
 {
   "date": "2026-05-01",
-  "fetched_at": "2026-05-01 07:58 AM EDT",
+  "fetched_at": "2026-05-01 08:03 AM EDT",
   "games": {
     "Arizona Diamondbacks@Chicago Cubs": {
       "away": "Arizona Diamondbacks",
@@ -12,8 +12,8 @@
           "home": -135
         },
         "betrivers": {
-          "away": 112,
-          "home": -150
+          "away": 110,
+          "home": -148
         }
       },
       "pinnacle": {
@@ -179,8 +179,8 @@
           "away": -137
         },
         "draftkings": {
-          "home": -105,
-          "away": -125
+          "home": 100,
+          "away": -130
         },
         "betmgm": {
           "home": -102,
@@ -208,8 +208,8 @@
           "home": -135
         },
         "betrivers": {
-          "away": 104,
-          "home": -137
+          "away": -103,
+          "home": -130
         },
         "draftkings": {
           "away": 120,
@@ -253,8 +253,8 @@
           "away": -105
         },
         "betrivers": {
-          "home": -125,
-          "away": -106
+          "home": -118,
+          "away": -113
         }
       },
       "pinnacle": {
@@ -447,8 +447,8 @@
           "home": -148
         },
         "draftkings": {
-          "away": 120,
-          "home": -154
+          "away": 124,
+          "home": -160
         }
       },
       "pinnacle": {
