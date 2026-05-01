@@ -127,7 +127,7 @@ def load_history(db_path: str) -> pd.DataFrame:
     return df
 
 @st.cache_data(ttl=300)
-def compute_edge_clv(db_path: str, threshold: float = 0.05) -> pd.DataFrame:
+def compute_edge_clv(db_path: str, threshold: float = 0.05, snapshot_type: str = "6h") -> pd.DataFrame:
     """
     Compute edge/CLV at runtime directly from forecast_archive + odds_snapshot.
     Picks the best available odds (highest edge) per game across all books.
@@ -144,8 +144,8 @@ def compute_edge_clv(db_path: str, threshold: float = 0.05) -> pd.DataFrame:
         """, conn)
         os_ = pd.read_sql("""
             SELECT date, away_team, home_team, side, price_american, price_decimal, book, captured_at
-            FROM odds_snapshot WHERE snapshot_type='6h'
-        """, conn)
+            FROM odds_snapshot WHERE snapshot_type=?
+        """, conn, params=[snapshot_type])
     except Exception:
         return pd.DataFrame()
     finally:
@@ -205,6 +205,7 @@ def compute_edge_clv(db_path: str, threshold: float = 0.05) -> pd.DataFrame:
         .copy()
     )
 
+    bets["snapshot_type"] = snapshot_type
     bets["pick_side"] = bets["side_clean"].str.upper()
     bets["odds_taken_american"] = bets["price_american"].astype(int)
     bets["close_prob_devig"] = bets["close_prob"]
@@ -213,16 +214,62 @@ def compute_edge_clv(db_path: str, threshold: float = 0.05) -> pd.DataFrame:
 
 def render_edge_clv_section(db_path: str):
     st.subheader("Beating the Market")
-    st.caption("Best available odds per game (across all books) at the 6-hour snapshot. CLV = devigged Pinnacle closing implied prob minus the implied prob of the odds taken.")
+    st.caption(
+        "Edge >= 5%. One bet per game. Uses best available odds from each timing snapshot. "
+        "CLV = devigged Pinnacle closing implied probability minus implied probability of the odds taken. "
+        "Positive CLV means the model beat the market."
+    )
 
-    bets = compute_edge_clv(db_path, threshold=0.05)
+    bets_6h = compute_edge_clv(db_path, threshold=0.05, snapshot_type="6h")
+    bets_2h = compute_edge_clv(db_path, threshold=0.05, snapshot_type="2h")
 
-    if bets.empty:
-        st.info("No qualifying bets yet (need completed games with closing Pinnacle odds and a 6h odds snapshot).")
+    def summarize(bets):
+        if bets.empty:
+            return 0, np.nan, np.nan, np.nan
+        return len(bets), bets["clv"].mean(), bets["beat_close"].mean(), bets["edge"].mean()
+
+    n6, clv6, bc6, edge6 = summarize(bets_6h)
+    n2, clv2, bc2, edge2 = summarize(bets_2h)
+
+    st.markdown("#### Edge >= 5% — 6h vs 2h Timing")
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    c1.metric("6h Bets", n6)
+    c2.metric("6h Avg CLV", f"{clv6*100:.2f}%" if pd.notna(clv6) else "—")
+    c3.metric("6h Beat Close", f"{bc6*100:.1f}%" if pd.notna(bc6) else "—")
+    c4.metric("2h Bets", n2)
+    c5.metric("2h Avg CLV", f"{clv2*100:.2f}%" if pd.notna(clv2) else "—")
+    c6.metric("2h Beat Close", f"{bc2*100:.1f}%" if pd.notna(bc2) else "—")
+
+    timing = pd.DataFrame([
+        {
+            "Timing": "6h",
+            "Bets": n6,
+            "Avg CLV": f"{clv6*100:.2f}%" if pd.notna(clv6) else "—",
+            "Beat Close": f"{bc6*100:.1f}%" if pd.notna(bc6) else "—",
+            "Avg Edge": f"{edge6*100:.1f}%" if pd.notna(edge6) else "—",
+        },
+        {
+            "Timing": "2h",
+            "Bets": n2,
+            "Avg CLV": f"{clv2*100:.2f}%" if pd.notna(clv2) else "—",
+            "Beat Close": f"{bc2*100:.1f}%" if pd.notna(bc2) else "—",
+            "Avg Edge": f"{edge2*100:.1f}%" if pd.notna(edge2) else "—",
+        },
+    ])
+    st.dataframe(timing, use_container_width=True, hide_index=True)
+
+    detail_bets = bets_6h.copy()
+    detail_label = "6h"
+    if detail_bets.empty and not bets_2h.empty:
+        detail_bets = bets_2h.copy()
+        detail_label = "2h"
+
+    if detail_bets.empty:
+        st.info("No qualifying bets yet. Need completed games with closing Pinnacle odds and 6h/2h odds snapshots.")
         return
 
-    st.markdown("#### Edge ≥ 5% — Best Odds Per Game")
-    disp = bets.copy()
+    st.markdown(f"#### Edge >= 5% Detail — {detail_label}")
+    disp = detail_bets.copy()
     disp["Matchup"] = disp["away_team"] + " @ " + disp["home_team"]
     disp["Edge %"] = (disp["edge"] * 100).round(1)
     disp["Odds Taken"] = disp["odds_taken_american"].apply(fmt_american)
@@ -394,8 +441,8 @@ def render_performance(hist: pd.DataFrame):
     model_logloss    = scored["logloss"].mean() if "logloss" in scored.columns else np.nan
     close_logloss    = scored["close_logloss_devig"].mean() if "close_logloss_devig" in scored.columns else np.nan
 
-    # CLV summary for side-by-side
-    clv_bets = compute_edge_clv(DB_PATH, threshold=0.05)
+    # CLV summary for the original 6h release point
+    clv_bets = compute_edge_clv(DB_PATH, threshold=0.05, snapshot_type="6h")
     n_bets        = len(clv_bets)
     avg_clv       = clv_bets["clv"].mean() if n_bets > 0 else np.nan
     beat_close_rt = clv_bets["beat_close"].mean() if n_bets > 0 else np.nan
