@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-01,ARI,Zac Gallen,CHC,Colin Rea,2.4969,2.6524,5.1493,0.5397,v1.0
-2026-05-01,TEX,MacKenzie Gore,DET,Jack Flaherty,2.0968,2.4055,4.5022,0.5686,v1.0
-2026-05-01,CIN,Brady Singer,PIT,Mitch Keller,2.5002,2.3303,4.8306,0.4891,v1.0
-2026-05-01,MIL,Jacob Misiorowski,WSN,Jake Irvin,2.7472,2.3964,5.1436,0.4634,v1.0
-2026-05-01,BAL,Cade Povich,NYY,Will Warren,2.4659,2.5718,5.0376,0.5325,v1.0
-2026-05-01,HOU,Mike Burrows,BOS,Jake Bennett,3.2303,2.3589,5.5892,0.3957,v1.0
-2026-05-01,SFG,Robbie Ray,TBR,Shane McClanahan,2.7432,2.3314,5.0746,0.4535,v1.0
-2026-05-01,PHI,Zack Wheeler,MIA,Eury Pérez,2.3052,2.0287,4.3340,0.4678,v1.0
-2026-05-01,TOR,Patrick Corbin,MIN,Simeon Woods Richardson,2.4411,2.5628,5.0039,0.5351,v1.0
-2026-05-01,LAD,Emmet Sheehan,STL,Matthew Liberatore,2.7072,2.3696,5.0768,0.4648,v1.0
-2026-05-01,ATL,Grant Holmes,COL,Jose Quintana,3.4882,3.1126,6.6008,0.4665,v1.0
-2026-05-01,NYM,Christian Scott,LAA,Walbert Urena,2.8727,3.2254,6.0982,0.5619,v1.0
-2026-05-01,CLE,Joey Cantillo,ATH,J.T. Ginn,2.2830,2.4758,4.7588,0.5474,v1.0
-2026-05-01,CHW,Noah Schultz,SDP,Germán Márquez,2.5861,2.7979,5.3839,0.5469,v1.0
-2026-05-01,KCR,Cole Ragans,SEA,Bryan Woo,2.0027,1.8612,3.8639,0.4888,v1.0
+2026-05-02,BAL,Kyle Bradish,NYY,Ryan Weathers,2.3821,2.2183,4.6005,0.4890,v1.0
+2026-05-02,TOR,Dylan Cease,MIN,Connor Prielipp,2.8436,2.3189,5.1626,0.4377,v1.0
+2026-05-02,ARI,Ryne Nelson,CHC,Shota Imanaga,2.4839,2.6397,5.1236,0.5398,v1.0
+2026-05-02,CLE,Slade Cecconi,ATH,Jacob Lopez,2.2436,2.4822,4.7258,0.5550,v1.0
+2026-05-02,CIN,Rhett Lowder,PIT,Carmen Mlodzinski,2.5542,2.8855,5.4397,0.5637,v1.0
+2026-05-02,MIL,Kyle Harrison,WSN,Foster Griffin,3.1052,2.5760,5.6812,0.4435,v1.0
+2026-05-02,HOU,Spencer Arrighetti,BOS,Connelly Early,2.3782,2.6423,5.0205,0.5569,v1.0
+2026-05-02,PHI,Andrew Painter,MIA,Max Meyer,2.3137,2.7808,5.0945,0.5871,v1.0
+2026-05-02,SFG,Landen Roupp,TBR,Griffin Jax,2.2602,2.3484,4.6086,0.5309,v1.0
+2026-05-02,LAD,Roki Sasaki,STL,Michael McGreevy,2.7457,2.9836,5.7293,0.5488,v1.0
+2026-05-02,TEX,Kumar Rocker,DET,Keider Montero,2.3418,2.5209,4.8627,0.5446,v1.0
+2026-05-02,ATL,Chris Sale,COL,Chase Dollander,3.4914,2.7622,6.2536,0.4155,v1.0
+2026-05-02,CHW,Sean Burke,SDP,Michael King,2.2802,2.4954,4.7757,0.5509,v1.0
+2026-05-02,NYM,Nolan McLean,LAA,Reid Detmers,2.8756,2.4700,5.3456,0.4573,v1.0
+2026-05-02,KCR,Seth Lugo,SEA,Emerson Hancock,2.3911,2.2511,4.6422,0.4931,v1.0
 ,,,,,,,,,
