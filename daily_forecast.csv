@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-02,BAL,Kyle Bradish,NYY,Ryan Weathers,2.3821,2.2183,4.6005,0.4890,v1.0
-2026-05-02,TOR,Dylan Cease,MIN,Connor Prielipp,2.8436,2.3189,5.1626,0.4377,v1.0
-2026-05-02,ARI,Ryne Nelson,CHC,Shota Imanaga,2.4839,2.6397,5.1236,0.5398,v1.0
-2026-05-02,CLE,Slade Cecconi,ATH,Jacob Lopez,2.2436,2.4822,4.7258,0.5550,v1.0
-2026-05-02,CIN,Rhett Lowder,PIT,Carmen Mlodzinski,2.5542,2.8855,5.4397,0.5637,v1.0
-2026-05-02,MIL,Kyle Harrison,WSN,Foster Griffin,3.1052,2.5760,5.6812,0.4435,v1.0
-2026-05-02,HOU,Spencer Arrighetti,BOS,Connelly Early,2.3782,2.6423,5.0205,0.5569,v1.0
-2026-05-02,PHI,Andrew Painter,MIA,Max Meyer,2.3137,2.7808,5.0945,0.5871,v1.0
-2026-05-02,SFG,Landen Roupp,TBR,Griffin Jax,2.2602,2.3484,4.6086,0.5309,v1.0
-2026-05-02,LAD,Roki Sasaki,STL,Michael McGreevy,2.7457,2.9836,5.7293,0.5488,v1.0
-2026-05-02,TEX,Kumar Rocker,DET,Keider Montero,2.3418,2.5209,4.8627,0.5446,v1.0
-2026-05-02,ATL,Chris Sale,COL,Chase Dollander,3.4914,2.7622,6.2536,0.4155,v1.0
-2026-05-02,CHW,Sean Burke,SDP,Michael King,2.2802,2.4954,4.7757,0.5509,v1.0
-2026-05-02,NYM,Nolan McLean,LAA,Reid Detmers,2.8756,2.4700,5.3456,0.4573,v1.0
-2026-05-02,KCR,Seth Lugo,SEA,Emerson Hancock,2.3911,2.2511,4.6422,0.4931,v1.0
+2026-05-03,TOR,Trey Yesavage,MIN,Joe Ryan,2.1009,2.4789,4.5798,0.5793,v1.0
+2026-05-03,HOU,Cody Bolton,BOS,Ranger Suarez,2.5923,2.9676,5.5600,0.5690,v1.0
+2026-05-03,CIN,Chase Burns,PIT,Braxton Ashcraft,2.3111,2.0202,4.3313,0.4652,v1.0
+2026-05-03,BAL,Trey Gibson,NYY,Max Fried,2.2439,2.9977,5.2416,0.6270,v1.0
+2026-05-03,MIL,Logan Henderson,WSN,PJ Poulin,3.1052,2.4710,5.5762,0.4278,v1.0
+2026-05-03,SFG,Tyler Mahle,TBR,Steven Matz,2.0093,2.4058,4.4151,0.5845,v1.0
+2026-05-03,PHI,Jesús Luzardo,MIA,Chris Paddack,2.5420,2.0907,4.6327,0.4418,v1.0
+2026-05-03,LAD,Justin Wrobleski,STL,Dustin May,2.7153,2.8575,5.5729,0.5362,v1.0
+2026-05-03,ARI,Merrill Kelly,CHC,Matthew Boyd,2.4130,2.5582,4.9712,0.5388,v1.0
+2026-05-03,ATL,Spencer Strider,COL,Kyle Freeland,3.3250,3.1293,6.4543,0.4898,v1.0
+2026-05-03,CLE,Parker Messick,ATH,Aaron Civale,2.4713,2.3331,4.8044,0.4941,v1.0
+2026-05-03,NYM,Clay Holmes,LAA,Jack Kochanowicz,2.6693,2.8093,5.4786,0.5362,v1.0
+2026-05-03,KCR,Kris Bubic,SEA,Luis Castillo,2.2002,2.1108,4.3110,0.5005,v1.0
+2026-05-03,CHW,Anthony Kay,SDP,Griffin Canning,2.3746,2.7971,5.1716,0.5795,v1.0
+2026-05-03,TEX,Jack Leiter,DET,Tyler Holton,1.9845,2.5474,4.5320,0.6106,v1.0
 ,,,,,,,,,
