@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-03,TOR,Trey Yesavage,MIN,Joe Ryan,2.1009,2.4789,4.5798,0.5793,v1.0
-2026-05-03,HOU,Cody Bolton,BOS,Ranger Suarez,2.5923,2.9676,5.5600,0.5690,v1.0
-2026-05-03,CIN,Chase Burns,PIT,Braxton Ashcraft,2.3111,2.0202,4.3313,0.4652,v1.0
-2026-05-03,BAL,Trey Gibson,NYY,Max Fried,2.2439,2.9977,5.2416,0.6270,v1.0
-2026-05-03,MIL,Logan Henderson,WSN,PJ Poulin,3.1052,2.4710,5.5762,0.4278,v1.0
-2026-05-03,SFG,Tyler Mahle,TBR,Steven Matz,2.0093,2.4058,4.4151,0.5845,v1.0
-2026-05-03,PHI,Jesús Luzardo,MIA,Chris Paddack,2.5420,2.0907,4.6327,0.4418,v1.0
-2026-05-03,LAD,Justin Wrobleski,STL,Dustin May,2.7153,2.8575,5.5729,0.5362,v1.0
-2026-05-03,ARI,Merrill Kelly,CHC,Matthew Boyd,2.4130,2.5582,4.9712,0.5388,v1.0
-2026-05-03,ATL,Spencer Strider,COL,Kyle Freeland,3.3250,3.1293,6.4543,0.4898,v1.0
-2026-05-03,CLE,Parker Messick,ATH,Aaron Civale,2.4713,2.3331,4.8044,0.4941,v1.0
-2026-05-03,NYM,Clay Holmes,LAA,Jack Kochanowicz,2.6693,2.8093,5.4786,0.5362,v1.0
-2026-05-03,KCR,Kris Bubic,SEA,Luis Castillo,2.2002,2.1108,4.3110,0.5005,v1.0
-2026-05-03,CHW,Anthony Kay,SDP,Griffin Canning,2.3746,2.7971,5.1716,0.5795,v1.0
-2026-05-03,TEX,Jack Leiter,DET,Tyler Holton,1.9845,2.5474,4.5320,0.6106,v1.0
+2026-05-04,NYM,Huascar Brazoban,COL,Tomoyuki Sugano,2.9702,3.7507,6.7209,0.6172,v1.0
+2026-05-04,BOS,Payton Tolle,DET,Tarik Skubal,1.9168,2.5583,4.4751,0.6247,v1.0
+2026-05-04,TOR,Eric Lauer,TBR,Nick Martinez,2.3205,2.2729,4.5934,0.5083,v1.0
+2026-05-04,PHI,Aaron Nola,MIA,Janson Junk,2.4588,2.2018,4.6606,0.4740,v1.0
+2026-05-04,BAL,Shane Baz,NYY,Cam Schlittler,2.3223,2.4442,4.7665,0.5359,v1.0
+2026-05-04,CIN,Chase Petty,CHC,Edward Cabrera,2.4045,2.7548,5.1593,0.5689,v1.0
+2026-05-04,CLE,Tanner Bibee,KCR,Michael Wacha,2.2313,2.3793,4.6105,0.5409,v1.0
+2026-05-04,MIL,Chad Patrick,STL,Kyle Leahy,2.5467,2.6377,5.1844,0.5299,v1.0
+2026-05-04,LAD,Yoshinobu Yamamoto,HOU,Steven Okert,2.4507,2.3191,4.7698,0.4950,v1.0
+2026-05-04,CHW,Davis Martin,LAA,José Soriano,2.4931,2.8767,5.3698,0.5718,v1.0
+2026-05-04,ATL,JR Ritchie,SEA,Logan Gilbert,1.9228,2.5983,4.5212,0.6294,v1.0
+2026-05-04,SDP,Randy Vásquez,SFG,Trevor McDonald,2.1803,2.4394,4.6198,0.5592,v1.0
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
 ,,,,,,,,,
