@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-06,TOR,Patrick Corbin,TBR,Shane McClanahan,2.8353,2.3328,5.1681,0.4411,v1.0
-2026-05-06,MIL,Brandon Sproat,STL,Andre Pallante,2.5458,2.6023,5.1481,0.5248,v1.0
-2026-05-06,LAD,Tyler Glasnow,HOU,Lance McCullers Jr.,2.6312,2.4361,5.0673,0.4864,v1.0
-2026-05-06,SDP,Matt Waldron,SFG,Adrian Houser,2.2340,2.4399,4.6739,0.5501,v1.0
-2026-05-06,CHW,Noah Schultz,LAA,Walbert Ureña,3.1443,3.0468,6.1911,0.5038,v1.0
-2026-05-06,ATL,Martín Pérez,SEA,Bryan Woo,2.1191,2.1823,4.3014,0.5274,v1.0
-2026-05-06,BOS,Sonny Gray,DET,Jack Flaherty,2.1786,2.1014,4.2800,0.5025,v1.0
-2026-05-06,ATH,Jeffrey Springs,PHI,Zack Wheeler,2.1485,2.5619,4.7104,0.5835,v1.0
-2026-05-06,BAL,Brandon Young,MIA,Eury Pérez,2.2737,2.4724,4.7460,0.5484,v1.0
-2026-05-06,MIN,Bailey Ober,WSN,Miles Mikolas,2.7744,2.6189,5.3934,0.4938,v1.0
-2026-05-06,TEX,Nathan Eovaldi,NYY,Will Warren,2.2909,2.4727,4.7636,0.5456,v1.0
-2026-05-06,CIN,Brady Singer,CHC,Colin Rea,2.4435,2.6315,5.0750,0.5450,v1.0
-2026-05-06,CLE,Joey Cantillo,KCR,Cole Ragans,1.9052,2.2050,4.1102,0.5713,v1.0
-2026-05-06,NYM,Freddy Peralta,COL,Michael Lorenzen,2.8243,2.9547,5.7790,0.5340,v1.0
-2026-05-06,PIT,Paul Skenes,ARI,Michael Soroka,2.6478,2.3181,4.9658,0.4650,v1.0
+2026-05-07,TEX,MacKenzie Gore,NYY,Paul Blackburn,2.4508,2.5521,5.0029,0.5319,v1.0
+2026-05-07,MIN,Simeon Woods Richardson,WSN,Jake Irvin,2.7695,2.6806,5.4501,0.5035,v1.0
+2026-05-07,CLE,Slade Cecconi,KCR,Seth Lugo,2.2976,2.2251,4.5227,0.5040,v1.0
+2026-05-07,CIN,Rhett Lowder,CHC,Shota Imanaga,2.4458,3.2545,5.7003,0.6264,v1.0
+2026-05-07,NYM,Christian Scott,COL,Jose Quintana,3.1388,3.7282,6.8670,0.5914,v1.0
+2026-05-07,PIT,Mitch Keller,ARI,Zac Gallen,2.7656,2.5776,5.3433,0.4888,v1.0
+2026-05-07,ATH,J.T. Ginn,PHI,Andrew Painter,2.9566,2.3240,5.2807,0.4237,v1.0
+2026-05-07,BAL,Cade Povich,MIA,Max Meyer,2.3222,2.3421,4.6644,0.5195,v1.0
+2026-05-07,TBR,Griffin Jax,BOS,Jake Bennett,2.9253,2.4324,5.3577,0.4448,v1.0
+2026-05-07,STL,Matthew Liberatore,SDP,Michael King,2.3407,2.3376,4.6783,0.5157,v1.0
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
 ,,,,,,,,,
