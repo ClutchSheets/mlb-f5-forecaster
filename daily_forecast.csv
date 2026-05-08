@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-07,TEX,MacKenzie Gore,NYY,Paul Blackburn,2.4508,2.5521,5.0029,0.5319,v1.0
-2026-05-07,MIN,Simeon Woods Richardson,WSN,Jake Irvin,2.7695,2.6806,5.4501,0.5035,v1.0
-2026-05-07,CLE,Slade Cecconi,KCR,Seth Lugo,2.2976,2.2251,4.5227,0.5040,v1.0
-2026-05-07,CIN,Rhett Lowder,CHC,Shota Imanaga,2.4458,3.2545,5.7003,0.6264,v1.0
-2026-05-07,NYM,Christian Scott,COL,Jose Quintana,3.1388,3.7282,6.8670,0.5914,v1.0
-2026-05-07,PIT,Mitch Keller,ARI,Zac Gallen,2.7656,2.5776,5.3433,0.4888,v1.0
-2026-05-07,ATH,J.T. Ginn,PHI,Andrew Painter,2.9566,2.3240,5.2807,0.4237,v1.0
-2026-05-07,BAL,Cade Povich,MIA,Max Meyer,2.3222,2.3421,4.6644,0.5195,v1.0
-2026-05-07,TBR,Griffin Jax,BOS,Jake Bennett,2.9253,2.4324,5.3577,0.4448,v1.0
-2026-05-07,STL,Matthew Liberatore,SDP,Michael King,2.3407,2.3376,4.6783,0.5157,v1.0
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
+2026-05-08,HOU,Mike Burrows,CIN,Nick Lodolo,2.5139,2.4683,4.9822,0.5092,v1.0
+2026-05-08,COL,Chase Dollander,PHI,Jesús Luzardo,2.2459,2.5614,4.8073,0.5667,v1.0
+2026-05-08,ATH,Jacob Lopez,BAL,Kyle Bradish,2.3699,2.4754,4.8452,0.5330,v1.0
+2026-05-08,LAA,Reid Detmers,TOR,Dylan Cease,2.1884,2.7758,4.9642,0.6071,v1.0
+2026-05-08,TBR,Jesse Scholtens,BOS,Connelly Early,2.0957,2.9222,5.0179,0.6421,v1.0
+2026-05-08,WSN,Foster Griffin,MIA,Robby Snelling,2.9346,2.8122,5.7468,0.4995,v1.0
+2026-05-08,MIN,Connor Prielipp,CLE,Parker Messick,2.1195,2.6835,4.8030,0.6061,v1.0
+2026-05-08,DET,Keider Montero,KCR,Kris Bubic,2.1369,2.3473,4.4841,0.5521,v1.0
+2026-05-08,SEA,Emerson Hancock,CHW,Sean Burke,2.2591,2.3093,4.5685,0.5247,v1.0
+2026-05-08,NYY,Max Fried,MIL,Jacob Misiorowski,2.5193,2.2171,4.7364,0.4673,v1.0
+2026-05-08,CHC,Ben Brown,TEX,Kumar Rocker,2.5546,2.2145,4.7691,0.4615,v1.0
+2026-05-08,NYM,Nolan McLean,ARI,Ryne Nelson,2.5046,2.2900,4.7946,0.4818,v1.0
+2026-05-08,STL,Michael McGreevy,SDP,Griffin Canning,2.4221,2.3324,4.7545,0.5017,v1.0
+2026-05-08,ATL,Chris Sale,LAD,Emmet Sheehan,2.4554,2.4235,4.8788,0.5112,v1.0
+2026-05-08,PIT,Carmen Mlodzinski,SFG,Robbie Ray,2.3186,2.0921,4.4106,0.4771,v1.0
 ,,,,,,,,,
