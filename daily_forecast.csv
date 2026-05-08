@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-08,HOU,Mike Burrows,CIN,Nick Lodolo,2.5139,2.4683,4.9822,0.5092,v1.0
-2026-05-08,COL,Chase Dollander,PHI,Jesús Luzardo,2.2459,2.5614,4.8073,0.5667,v1.0
-2026-05-08,ATH,Jacob Lopez,BAL,Kyle Bradish,2.3699,2.4754,4.8452,0.5330,v1.0
-2026-05-08,LAA,Reid Detmers,TOR,Dylan Cease,2.1884,2.7758,4.9642,0.6071,v1.0
-2026-05-08,TBR,Jesse Scholtens,BOS,Connelly Early,2.0957,2.9222,5.0179,0.6421,v1.0
-2026-05-08,WSN,Foster Griffin,MIA,Robby Snelling,2.9346,2.8122,5.7468,0.4995,v1.0
-2026-05-08,MIN,Connor Prielipp,CLE,Parker Messick,2.1195,2.6835,4.8030,0.6061,v1.0
-2026-05-08,DET,Keider Montero,KCR,Kris Bubic,2.1369,2.3473,4.4841,0.5521,v1.0
-2026-05-08,SEA,Emerson Hancock,CHW,Sean Burke,2.2591,2.3093,4.5685,0.5247,v1.0
-2026-05-08,NYY,Max Fried,MIL,Jacob Misiorowski,2.5193,2.2171,4.7364,0.4673,v1.0
-2026-05-08,CHC,Ben Brown,TEX,Kumar Rocker,2.5546,2.2145,4.7691,0.4615,v1.0
-2026-05-08,NYM,Nolan McLean,ARI,Ryne Nelson,2.5046,2.2900,4.7946,0.4818,v1.0
-2026-05-08,STL,Michael McGreevy,SDP,Griffin Canning,2.4221,2.3324,4.7545,0.5017,v1.0
-2026-05-08,ATL,Chris Sale,LAD,Emmet Sheehan,2.4554,2.4235,4.8788,0.5112,v1.0
-2026-05-08,PIT,Carmen Mlodzinski,SFG,Robbie Ray,2.3186,2.0921,4.4106,0.4771,v1.0
+2026-05-08,HOU,Mike Burrows,CIN,Nick Lodolo,2.5139,2.4683,4.9822,0.5104,v1.0
+2026-05-08,COL,Chase Dollander,PHI,Jesús Luzardo,2.2459,2.5614,4.8073,0.5680,v1.0
+2026-05-08,ATH,Jacob Lopez,BAL,Kyle Bradish,2.3699,2.4754,4.8452,0.5343,v1.0
+2026-05-08,LAA,Reid Detmers,TOR,Dylan Cease,2.1884,2.7758,4.9642,0.6084,v1.0
+2026-05-08,TBR,Jesse Scholtens,BOS,Connelly Early,2.0957,2.9222,5.0179,0.6433,v1.0
+2026-05-08,WSN,Foster Griffin,MIA,Robby Snelling,2.9346,2.8122,5.7468,0.5008,v1.0
+2026-05-08,MIN,Connor Prielipp,CLE,Parker Messick,2.1195,2.6835,4.8030,0.6074,v1.0
+2026-05-08,DET,Keider Montero,KCR,Kris Bubic,2.1369,2.3473,4.4841,0.5533,v1.0
+2026-05-08,SEA,Emerson Hancock,CHW,Sean Burke,2.2591,2.3093,4.5685,0.5259,v1.0
+2026-05-08,NYY,Max Fried,MIL,Jacob Misiorowski,2.5193,2.2171,4.7364,0.4685,v1.0
+2026-05-08,CHC,Ben Brown,TEX,Kumar Rocker,2.5546,2.2145,4.7691,0.4627,v1.0
+2026-05-08,NYM,Nolan McLean,ARI,Ryne Nelson,2.5046,2.2900,4.7946,0.4831,v1.0
+2026-05-08,STL,Michael McGreevy,SDP,Griffin Canning,2.4221,2.3324,4.7545,0.5030,v1.0
+2026-05-08,ATL,Chris Sale,LAD,Emmet Sheehan,2.4554,2.4235,4.8788,0.5125,v1.0
+2026-05-08,PIT,Carmen Mlodzinski,SFG,Robbie Ray,2.3186,2.0921,4.4106,0.4784,v1.0
 ,,,,,,,,,
