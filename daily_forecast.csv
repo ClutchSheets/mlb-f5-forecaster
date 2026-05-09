@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-08,HOU,Mike Burrows,CIN,Nick Lodolo,2.5139,2.4683,4.9822,0.5104,v1.0
-2026-05-08,COL,Chase Dollander,PHI,Jesús Luzardo,2.2459,2.5614,4.8073,0.5680,v1.0
-2026-05-08,ATH,Jacob Lopez,BAL,Kyle Bradish,2.3699,2.4754,4.8452,0.5343,v1.0
-2026-05-08,LAA,Reid Detmers,TOR,Dylan Cease,2.1884,2.7758,4.9642,0.6084,v1.0
-2026-05-08,TBR,Jesse Scholtens,BOS,Connelly Early,2.0957,2.9222,5.0179,0.6433,v1.0
-2026-05-08,WSN,Foster Griffin,MIA,Robby Snelling,2.9346,2.8122,5.7468,0.5008,v1.0
-2026-05-08,MIN,Connor Prielipp,CLE,Parker Messick,2.1195,2.6835,4.8030,0.6074,v1.0
-2026-05-08,DET,Keider Montero,KCR,Kris Bubic,2.1369,2.3473,4.4841,0.5533,v1.0
-2026-05-08,SEA,Emerson Hancock,CHW,Sean Burke,2.2591,2.3093,4.5685,0.5259,v1.0
-2026-05-08,NYY,Max Fried,MIL,Jacob Misiorowski,2.5193,2.2171,4.7364,0.4685,v1.0
-2026-05-08,CHC,Ben Brown,TEX,Kumar Rocker,2.5546,2.2145,4.7691,0.4627,v1.0
-2026-05-08,NYM,Nolan McLean,ARI,Ryne Nelson,2.5046,2.2900,4.7946,0.4831,v1.0
-2026-05-08,STL,Michael McGreevy,SDP,Griffin Canning,2.4221,2.3324,4.7545,0.5030,v1.0
-2026-05-08,ATL,Chris Sale,LAD,Emmet Sheehan,2.4554,2.4235,4.8788,0.5125,v1.0
-2026-05-08,PIT,Carmen Mlodzinski,SFG,Robbie Ray,2.3186,2.0921,4.4106,0.4784,v1.0
+2026-05-09,LAA,Jack Kochanowicz,TOR,Trey Yesavage,2.4241,2.5104,4.9345,0.5310,v1.0
+2026-05-09,ATH,Aaron Civale,BAL,Shane Baz,2.6362,2.7470,5.3832,0.5335,v1.0
+2026-05-09,HOU,Spencer Arrighetti,CIN,Chase Burns,2.5056,2.7234,5.2289,0.5499,v1.0
+2026-05-09,TBR,Nick Martinez,BOS,Payton Tolle,2.4299,2.5173,4.9472,0.5311,v1.0
+2026-05-09,WSN,Zack Littell,MIA,Janson Junk,2.5136,2.4270,4.9406,0.5039,v1.0
+2026-05-09,COL,Kyle Freeland,PHI,Aaron Nola,2.4203,2.4622,4.8825,0.5241,v1.0
+2026-05-09,MIN,Joe Ryan,CLE,Tanner Bibee,2.2405,2.0369,4.2775,0.4814,v1.0
+2026-05-09,CHC,Edward Cabrera,TEX,Jack Leiter,2.5368,2.1235,4.6603,0.4497,v1.0
+2026-05-09,DET,Burch Smith,KCR,Michael Wacha,2.3736,2.7543,5.1279,0.5750,v1.0
+2026-05-09,SEA,Luis Castillo,CHW,Anthony Kay,2.3070,2.1203,4.4272,0.4853,v1.0
+2026-05-09,NYY,Cam Schlittler,MIL,Kyle Harrison,2.5181,2.2165,4.7346,0.4686,v1.0
+2026-05-09,NYM,Clay Holmes,ARI,Merrill Kelly,2.4395,2.7129,5.1524,0.5586,v1.0
+2026-05-09,STL,Dustin May,SDP,Randy Vásquez,2.5263,2.3124,4.8388,0.4834,v1.0
+2026-05-09,PIT,Braxton Ashcraft,SFG,Landen Roupp,2.3188,1.9200,4.2389,0.4463,v1.0
+2026-05-09,ATL,Spencer Strider,LAD,Blake Snell,2.5443,2.7435,5.2878,0.5468,v1.0
 ,,,,,,,,,
