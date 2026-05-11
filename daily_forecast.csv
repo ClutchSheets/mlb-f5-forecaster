@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-10,WSN,Cade Cavalli,MIA,Sandy Alcantara,2.5024,2.3620,4.8644,0.4952,v1.0
-2026-05-10,ATH,Luis Severino,BAL,Chris Bassitt,2.7281,2.6988,5.4269,0.5133,v1.0
-2026-05-10,TBR,Nick Martinez,BOS,Payton Tolle,2.3940,2.5067,4.9008,0.5353,v1.0
-2026-05-10,COL,Tomoyuki Sugano,PHI,Cristopher Sánchez,2.1168,2.5351,4.6519,0.5863,v1.0
-2026-05-10,LAA,José Soriano,TOR,Spencer Miles,2.8705,2.2155,5.0860,0.4185,v1.0
-2026-05-10,HOU,Kai-Wei Teng,CIN,Andrew Abbott,2.8151,2.5471,5.3622,0.4786,v1.0
-2026-05-10,MIN,Andrew Morris,CLE,Gavin Williams,2.2288,2.6805,4.9094,0.5883,v1.0
-2026-05-10,SEA,Logan Gilbert,CHW,Davis Martin,2.1575,1.9618,4.1193,0.4816,v1.0
-2026-05-10,NYY,Carlos Rodón,MIL,Logan Henderson,2.4746,2.3264,4.8010,0.4937,v1.0
-2026-05-10,CHC,Jameson Taillon,TEX,Jacob deGrom,2.2396,2.3026,4.5422,0.5281,v1.0
-2026-05-10,PIT,Bubba Chandler,SFG,Tyler Mahle,2.3987,2.1257,4.5244,0.4714,v1.0
-2026-05-10,NYM,Huascar Brazobán,ARI,Eduardo Rodriguez,2.6211,2.7794,5.4005,0.5404,v1.0
-2026-05-10,STL,Kyle Leahy,SDP,Walker Buehler,2.6245,2.2857,4.9102,0.4643,v1.0
-2026-05-10,ATL,Bryce Elder,LAD,Justin Wrobleski,2.9232,2.6845,5.6078,0.4842,v1.0
-2026-05-10,DET,Brenan Hanifee,KCR,Noah Cameron,2.2652,2.7189,4.9841,0.5876,v1.0
+2026-05-11,LAA,Brent Suter,CLE,Joey Cantillo,2.2588,2.3118,4.5706,0.5264,v1.0
+2026-05-11,NYY,Ryan Weathers,BAL,Brandon Young,2.9054,2.4453,5.3507,0.4507,v1.0
+2026-05-11,TBR,Drew Rasmussen,TOR,Kevin Gausman,2.1617,2.1782,4.3399,0.5204,v1.0
+2026-05-11,ARI,Michael Soroka,TEX,Nathan Eovaldi,2.0686,2.1163,4.1849,0.5261,v1.0
+2026-05-11,SEA,George Kirby,HOU,Peter Lambert,2.3739,2.3155,4.6894,0.5079,v1.0
+2026-05-11,SFG,Trevor McDonald,LAD,Roki Sasaki,2.4474,2.5526,5.0000,0.5338,v1.0
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
 ,,,,,,,,,
