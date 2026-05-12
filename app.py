@@ -213,7 +213,7 @@ def compute_edge_clv(db_path: str, threshold: float = 0.05, snapshot_type: str =
     return bets.sort_values(["date", "away_team", "home_team"], ascending=[False, True, True]).reset_index(drop=True)
 
 def render_edge_clv_section(db_path: str):
-    st.subheader("Beating the Market")
+    st.subheader("Market Comparison & Closing Line Analysis")
     st.caption(
         "Edge >= 5%. One bet per game. Uses best available odds from each timing snapshot. "
         "CLV = devigged Pinnacle closing implied probability minus implied probability of the odds taken. "
@@ -232,7 +232,7 @@ def render_edge_clv_section(db_path: str):
     n2, clv2, bc2, edge2 = summarize(bets_2h)
 
     st.markdown("#### Edge >= 5% — 6h vs 2h Timing")
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("6h Bets", n6)
     c2.metric("6h Avg CLV", f"{clv6*100:.2f}%" if pd.notna(clv6) else "—")
     c3.metric("6h Beat Close", f"{bc6*100:.1f}%" if pd.notna(bc6) else "—")
@@ -548,6 +548,9 @@ def render_calibration(hist: pd.DataFrame, forecast_df: pd.DataFrame):
 
         # Reliability diagram: dots on diagonal
         st.markdown("#### Reliability Diagram — Predicted vs Actual Win Rate")
+        st.caption("""
+The diagonal represents perfect calibration. Points above the line indicate the model underestimated outcomes relative to actual results. Points below the line indicate overconfidence. Larger circles represent larger sample sizes. Extreme confidence buckets may contain limited samples and therefore higher variance.
+""")
         chart_df = bucket_stats.dropna(subset=["actual_win_rate", "avg_pred_prob"]).copy()
         chart_df["bucket_str"] = chart_df["bucket"].astype(str)
         # Dot size proportional to sample size
@@ -610,7 +613,7 @@ def render_calibration(hist: pd.DataFrame, forecast_df: pd.DataFrame):
     # -----------------------------------------------------------------------
     st.markdown("---")
     st.markdown("### NegBin Run Distribution Explorer")
-    st.caption("Distributions reconstructed from stored λ (mean) values using the pipeline's dynamic dispersion formula: r = MAX(3, MIN(6, 2.5 + 0.4 × projected total)). Win% shown is the **raw NegBin output** — expect ~8% lower than the stored final win prob due to HFA/handedness adjustments applied downstream.")
+    st.caption("Distributions reconstructed from stored λ (mean) values using the pipeline's dynamic dispersion formula: r = MAX(3, MIN(6, 2.5 + 0.4 × projected total)). This section is a diagnostic view of the run distribution behind each forecast.")
 
     # Build game list — prefer today's forecast, fall back to recent archived games
     game_options = []
@@ -677,13 +680,12 @@ def render_calibration(hist: pd.DataFrame, forecast_df: pd.DataFrame):
     )
 
     # Header metrics
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric(f"{away_team} λ", f"{mu_away:.3f}")
     c2.metric(f"{home_team} λ", f"{mu_home:.3f}")
     c3.metric("Proj Total", f"{total_proj:.2f}")
     c4.metric("Dispersion r", f"{r:.2f}")
     c5.metric(f"{home_team} Win% (stored)", f"{winprob_home*100:.1f}%")
-    c6.metric(f"{home_team} Win% (pre-adj)", f"{win_home_joint*100:.1f}%", delta=f"{(win_home_joint - winprob_home)*100:+.1f}% vs final", help="Raw NegBin output before pipeline adjustments (HFA, handedness). Expect ~8% lower than stored win prob for home teams.")
 
     # Result annotation for archived games
     if selected["source"] == "archive" and pd.notna(row.get("home_win_f5")):
@@ -764,7 +766,41 @@ def render_calibration(hist: pd.DataFrame, forecast_df: pd.DataFrame):
 
 def main():
     st.markdown("<style>header[data-testid='stHeader']{display:none!important}#MainMenu{display:none!important}footer{display:none!important}.block-container{padding-top:0.5rem!important;padding-bottom:0!important}h2{margin-top:0!important}</style>", unsafe_allow_html=True)
-    st.markdown("<h2 style='color:#1a7a3a;margin:0 0 6px 0'>⚾ ClutchSheets F5 Baseball Forecaster</h2>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style='margin-bottom:14px'>
+        <div style='font-size:2rem;font-weight:800;color:#1a7a3a;letter-spacing:0.02em'>
+            ⚾ ClutchSheets MLB F5 Forecaster
+        </div>
+
+        <div style='font-size:1.02rem;color:#d0d0d0;margin-top:10px;max-width:980px;line-height:1.5'>
+            Independent MLB First 5 forecasting model built to predict game outcomes using
+            pitcher xRA, handedness splits, park effects, lineup adjustments, and run environment modelling.
+        </div>
+
+        <div style='font-size:0.96rem;color:#9aa3b2;margin-top:8px;max-width:980px;line-height:1.5'>
+            Model probabilities are benchmarked against Pinnacle closing prices to evaluate calibration,
+            market agreement, and predictive accuracy — not just betting outcomes.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    with st.expander("Model Methodology"):
+        st.markdown("""
+### Philosophy
+This model is designed primarily as a predictive forecasting system rather than a pure betting model.
+
+The objective is to independently estimate First 5 inning win probabilities and compare them against efficient market prices, particularly Pinnacle closing lines.
+
+### Market Benchmarking
+Pinnacle closing probabilities are used as an external benchmark because they represent one of the most efficient publicly available baseball markets.
+
+Model evaluation focuses on:
+- Calibration
+- Log loss
+- Probability agreement with market close
+- Closing line value (CLV)
+- Long-term predictive stability
+""")
     CSV_PATH = os.environ.get("FORECAST_CSV", "daily_forecast.csv")
     fetched_at = None; odds_file_date = None
     if os.path.exists(DAILY_ODDS_FILE):
@@ -806,6 +842,10 @@ def main():
         hist = load_history(DB_PATH)
         forecast_df = load_forecast(CSV_PATH)
         render_calibration(hist, forecast_df)
+
+    st.caption("""
+This project is experimental and continuously evolving. Small-sample variance, lineup uncertainty, and market movement can materially impact short-term results. Nothing displayed on this site should be interpreted as financial advice or guaranteed betting value.
+""")
 
 if __name__ == "__main__":
     main()
