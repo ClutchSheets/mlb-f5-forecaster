@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-12,LAA,Walbert Ureña,CLE,Slade Cecconi,2.2905,2.6827,4.9731,0.5783,v1.0
-2026-05-12,NYY,Will Warren,BAL,Trevor Rogers,2.6864,2.4486,5.1350,0.4816,v1.0
-2026-05-12,WSN,Miles Mikolas,CIN,Brady Singer,2.6593,2.6648,5.3241,0.5183,v1.0
-2026-05-12,COL,Michael Lorenzen,PIT,Paul Skenes,2.0300,2.4704,4.5004,0.5920,v1.0
-2026-05-12,PHI,Zack Wheeler,BOS,Brayan Bello,2.6432,2.0947,4.7379,0.4290,v1.0
-2026-05-12,TBR,Shane McClanahan,TOR,Patrick Corbin,2.3277,2.2900,4.6177,0.5112,v1.0
-2026-05-12,DET,Jack Flaherty,NYM,Freddy Peralta,2.2732,2.1366,4.4098,0.4939,v1.0
-2026-05-12,CHC,Colin Rea,ATL,Grant Holmes,2.7413,2.7712,5.5125,0.5217,v1.0
-2026-05-12,KCR,Stephen Kolek,CHW,Erick Fedde,2.4010,2.2181,4.6191,0.4871,v1.0
-2026-05-12,MIA,Eury Pérez,MIN,Bailey Ober,2.5660,2.4448,5.0109,0.4988,v1.0
-2026-05-12,SDP,Matt Waldron,MIL,Brandon Sproat,2.3590,2.5675,4.9265,0.5502,v1.0
-2026-05-12,ARI,Zac Gallen,TEX,MacKenzie Gore,2.2526,2.2610,4.5137,0.5189,v1.0
-2026-05-12,SEA,Bryan Woo,HOU,Tatsuya Imai,2.5177,2.2752,4.7929,0.4786,v1.0
-2026-05-12,STL,Andre Pallante,ATH,Jeffrey Springs,2.5334,2.5985,5.1320,0.5273,v1.0
-2026-05-12,SFG,Adrian Houser,LAD,Yoshinobu Yamamoto,2.1515,2.7849,4.9364,0.6159,v1.0
+2026-05-13,NYY,Max Fried,BAL,Kyle Bradish,2.6351,2.4049,5.0400,0.4822,v1.0
+2026-05-13,LAA,Reid Detmers,CLE,Parker Messick,2.0772,2.1439,4.2210,0.5295,v1.0
+2026-05-13,WSN,Jake Irvin,CIN,Nick Lodolo,2.4871,2.6975,5.1845,0.5490,v1.0
+2026-05-13,COL,Jose Quintana,PIT,Mitch Keller,2.3311,2.7194,5.0504,0.5769,v1.0
+2026-05-13,PHI,Andrew Painter,BOS,Sonny Gray,2.2965,2.4864,4.7830,0.5481,v1.0
+2026-05-13,TBR,Griffin Jax,TOR,Dylan Cease,2.0945,2.3073,4.4018,0.5543,v1.0
+2026-05-13,DET,Framber Valdez,NYM,Christian Scott,2.4250,2.0839,4.5088,0.4598,v1.0
+2026-05-13,CHC,Shota Imanaga,ATL,JR Ritchie,2.8723,2.6101,5.4824,0.4802,v1.0
+2026-05-13,KCR,Seth Lugo,CHW,Noah Schultz,2.2771,2.2422,4.5193,0.5116,v1.0
+2026-05-13,MIA,Max Meyer,MIN,Simeon Woods Richardson,2.6012,2.4434,5.0446,0.4933,v1.0
+2026-05-13,SDP,Michael King,MIL,Jacob Misiorowski,2.0153,2.3812,4.3965,0.5808,v1.0
+2026-05-13,ARI,Ryne Nelson,TEX,Kumar Rocker,2.2798,2.2497,4.5295,0.5124,v1.0
+2026-05-13,SEA,Bryce Miller,HOU,Lance McCullers Jr.,2.4283,2.5348,4.9631,0.5341,v1.0
+2026-05-13,STL,Matthew Liberatore,ATH,J.T. Ginn,2.4127,2.6783,5.0910,0.5579,v1.0
+2026-05-13,SFG,Robbie Ray,LAD,Shohei Ohtani,2.0256,2.6407,4.6662,0.6179,v1.0
 ,,,,,,,,,
