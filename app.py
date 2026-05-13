@@ -768,8 +768,7 @@ def main():
     st.markdown("<style>header[data-testid='stHeader']{display:none!important}#MainMenu{display:none!important}footer{display:none!important}.block-container{padding-top:0.5rem!important;padding-bottom:0!important}h2{margin-top:0!important}</style>", unsafe_allow_html=True)
     st.markdown("""<div style='margin-bottom:14px'>
 <div style='font-size:2rem;font-weight:800;color:#1a7a3a;letter-spacing:0.02em'>⚾ ClutchSheets MLB F5 Forecaster</div>
-<div style='font-size:1.02rem;color:#d0d0d0;margin-top:10px;max-width:980px;line-height:1.5'>Independent MLB First 5 forecasting model built to predict game outcomes using pitcher xRA, handedness splits, park effects, lineup adjustments, and run environment modelling.</div>
-<div style='font-size:0.96rem;color:#9aa3b2;margin-top:8px;max-width:980px;line-height:1.5'>Model probabilities are benchmarked against Pinnacle closing prices to evaluate calibration, market agreement, and predictive accuracy — not just betting outcomes.</div>
+<div style='font-size:1.02rem;color:#9aa3b2;margin-top:8px;max-width:980px;line-height:1.5'>Model probabilities are benchmarked against Pinnacle closing prices to evaluate calibration, market agreement, and predictive accuracy — not just betting outcomes.</div>
 </div>""", unsafe_allow_html=True)
 
     with st.expander("Model Methodology"):
