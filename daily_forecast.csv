@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-13,NYY,Max Fried,BAL,Kyle Bradish,2.6351,2.4049,5.0400,0.4822,v1.0
-2026-05-13,LAA,Reid Detmers,CLE,Parker Messick,2.0772,2.1439,4.2210,0.5295,v1.0
-2026-05-13,WSN,Jake Irvin,CIN,Nick Lodolo,2.4871,2.6975,5.1845,0.5490,v1.0
-2026-05-13,COL,Jose Quintana,PIT,Mitch Keller,2.3311,2.7194,5.0504,0.5769,v1.0
-2026-05-13,PHI,Andrew Painter,BOS,Sonny Gray,2.2965,2.4864,4.7830,0.5481,v1.0
-2026-05-13,TBR,Griffin Jax,TOR,Dylan Cease,2.0945,2.3073,4.4018,0.5543,v1.0
-2026-05-13,DET,Framber Valdez,NYM,Christian Scott,2.4250,2.0839,4.5088,0.4598,v1.0
-2026-05-13,CHC,Shota Imanaga,ATL,JR Ritchie,2.8723,2.6101,5.4824,0.4802,v1.0
-2026-05-13,KCR,Seth Lugo,CHW,Noah Schultz,2.2771,2.2422,4.5193,0.5116,v1.0
-2026-05-13,MIA,Max Meyer,MIN,Simeon Woods Richardson,2.6012,2.4434,5.0446,0.4933,v1.0
-2026-05-13,SDP,Michael King,MIL,Jacob Misiorowski,2.0153,2.3812,4.3965,0.5808,v1.0
-2026-05-13,ARI,Ryne Nelson,TEX,Kumar Rocker,2.2798,2.2497,4.5295,0.5124,v1.0
-2026-05-13,SEA,Bryce Miller,HOU,Lance McCullers Jr.,2.4283,2.5348,4.9631,0.5341,v1.0
-2026-05-13,STL,Matthew Liberatore,ATH,J.T. Ginn,2.4127,2.6783,5.0910,0.5579,v1.0
-2026-05-13,SFG,Robbie Ray,LAD,Shohei Ohtani,2.0256,2.6407,4.6662,0.6179,v1.0
+2026-05-14,COL,Chase Dollander,PIT,Mason Montgomery,2.3024,2.6269,4.9293,0.5683,v1.0
+2026-05-14,WSN,Foster Griffin,CIN,Chase Burns,2.4547,2.5267,4.9814,0.5287,v1.0
+2026-05-14,DET,Keider Montero,NYM,Nolan McLean,2.1167,2.2355,4.3522,0.5383,v1.0
+2026-05-14,MIA,Braxton Garrett,MIN,Zebby Matthews,2.3605,3.0347,5.3952,0.6142,v1.0
+2026-05-14,SDP,Griffin Canning,MIL,Kyle Harrison,2.1967,2.4850,4.6817,0.5647,v1.0
+2026-05-14,SEA,Luis Castillo,HOU,Mike Burrows,2.2769,2.3738,4.6508,0.5335,v1.0
+2026-05-14,STL,Michael McGreevy,ATH,Jacob Lopez,2.5053,2.6003,5.1056,0.5319,v1.0
+2026-05-14,PHI,Jesús Luzardo,BOS,Ranger Suarez,2.3816,2.1145,4.4962,0.4721,v1.0
+2026-05-14,CHC,Ben Brown,ATL,Chris Sale,2.3384,2.6606,4.9990,0.5673,v1.0
+2026-05-14,KCR,Kris Bubic,CHW,Anthony Kay,2.2386,2.1576,4.3962,0.5035,v1.0
+2026-05-14,SFG,Landen Roupp,LAD,Emmet Sheehan,2.0731,2.6648,4.7379,0.6128,v1.0
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
 ,,,,,,,,,
