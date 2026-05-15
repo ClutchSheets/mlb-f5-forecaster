@@ -1,356 +1,224 @@
 {
-  "date": "2026-05-14",
-  "fetched_at": "2026-05-14 11:41 AM EDT",
+  "date": "2026-05-15",
+  "fetched_at": "2026-05-15 06:05 PM EDT",
   "games": {
-    "Colorado Rockies@Pittsburgh Pirates": {
-      "away": "Colorado Rockies",
+    "Philadelphia Phillies@Pittsburgh Pirates": {
+      "away": "Philadelphia Phillies",
       "home": "Pittsburgh Pirates",
-      "commence_edt": "12:36 PM",
+      "commence_edt": "6:41 PM",
       "ml": {
         "fanduel": {
-          "away": 122,
-          "home": -152
+          "away": 116,
+          "home": -145
         },
         "betonlineag": {
-          "away": 123,
-          "home": -143
+          "away": 122,
+          "home": -142
         },
-        "draftkings": {
-          "away": 124,
-          "home": -160
+        "betrivers": {
+          "away": 106,
+          "home": -141
         },
         "betmgm": {
           "away": 115,
           "home": -145
         },
-        "betrivers": {
-          "away": 123,
-          "home": -165
+        "draftkings": {
+          "away": 105,
+          "home": -135
         }
       },
       "pinnacle": {
         "ml": {
-          "away": 131,
-          "home": -151
+          "away": 125,
+          "home": -144
         }
       }
     },
-    "Washington Nationals@Cincinnati Reds": {
-      "away": "Washington Nationals",
-      "home": "Cincinnati Reds",
-      "commence_edt": "12:41 PM",
+    "Baltimore Orioles@Washington Nationals": {
+      "away": "Baltimore Orioles",
+      "home": "Washington Nationals",
+      "commence_edt": "6:46 PM",
       "ml": {
         "fanduel": {
-          "home": -168,
-          "away": 134
+          "away": -142,
+          "home": 114
         },
         "betonlineag": {
-          "home": -150,
-          "away": 130
+          "away": -138,
+          "home": 118
         },
         "draftkings": {
-          "home": -175,
-          "away": 135
-        },
-        "betmgm": {
-          "home": -150,
-          "away": 118
+          "away": -140,
+          "home": 110
         },
         "betrivers": {
-          "home": -175,
-          "away": 130
+          "away": -141,
+          "home": 106
+        },
+        "betmgm": {
+          "away": -145,
+          "home": 115
         }
       },
       "pinnacle": {
         "ml": {
-          "home": -154,
-          "away": 134
+          "away": -135,
+          "home": 118
         }
       }
     },
-    "Detroit Tigers@New York Mets": {
-      "away": "Detroit Tigers",
-      "home": "New York Mets",
-      "commence_edt": "1:11 PM",
+    "Toronto Blue Jays@Detroit Tigers": {
+      "away": "Toronto Blue Jays",
+      "home": "Detroit Tigers",
+      "commence_edt": "6:46 PM",
       "ml": {
         "fanduel": {
-          "away": 140,
-          "home": -176
+          "home": 102,
+          "away": -128
         },
         "betonlineag": {
-          "away": 165,
-          "home": -190
+          "home": 110,
+          "away": -130
         },
         "draftkings": {
-          "away": 160,
-          "home": -210
-        },
-        "betmgm": {
-          "away": 140,
-          "home": -180
+          "home": 100,
+          "away": -130
         },
         "betrivers": {
-          "away": 143,
-          "home": -190
+          "home": -103,
+          "away": -130
+        },
+        "betmgm": {
+          "home": 105,
+          "away": -135
         }
       },
       "pinnacle": {
         "ml": {
-          "away": 159,
-          "home": -185
+          "home": 107,
+          "away": -123
         }
       }
     },
-    "Miami Marlins@Minnesota Twins": {
+    "Cincinnati Reds@Cleveland Guardians": {
+      "away": "Cincinnati Reds",
+      "home": "Cleveland Guardians",
+      "commence_edt": "7:11 PM",
+      "ml": {
+        "fanduel": {
+          "away": 106,
+          "home": -132
+        },
+        "betonlineag": {
+          "away": 110,
+          "home": -130
+        },
+        "draftkings": {
+          "away": 110,
+          "home": -140
+        },
+        "betrivers": {
+          "away": 102,
+          "home": -136
+        },
+        "betmgm": {
+          "away": 110,
+          "home": -140
+        }
+      },
+      "pinnacle": {
+        "ml": {
+          "away": 113,
+          "home": -129
+        }
+      }
+    },
+    "Miami Marlins@Tampa Bay Rays": {
       "away": "Miami Marlins",
-      "home": "Minnesota Twins",
-      "commence_edt": "1:40 PM",
+      "home": "Tampa Bay Rays",
+      "commence_edt": "7:11 PM",
       "ml": {
         "fanduel": {
-          "away": 100,
+          "away": -104,
+          "home": -120
+        },
+        "betonlineag": {
+          "away": -110,
+          "home": -110
+        },
+        "draftkings": {
+          "away": -105,
+          "home": -125
+        },
+        "betrivers": {
+          "away": -107,
           "home": -124
         },
-        "betonlineag": {
-          "away": -105,
-          "home": -115
+        "betmgm": {
+          "away": -110,
+          "home": -110
+        }
+      },
+      "pinnacle": {
+        "ml": {
+          "away": 100,
+          "home": -114
+        }
+      }
+    },
+    "Milwaukee Brewers@Minnesota Twins": {
+      "away": "Milwaukee Brewers",
+      "home": "Minnesota Twins",
+      "commence_edt": "7:11 PM",
+      "ml": {
+        "fanduel": {
+          "away": 102,
+          "home": -128
         },
         "draftkings": {
           "away": -105,
           "home": -125
         },
         "betmgm": {
-          "away": -102,
-          "home": -120
+          "away": 100,
+          "home": -125
         },
         "betrivers": {
-          "away": -103,
+          "away": 100,
+          "home": -132
+        },
+        "betonlineag": {
+          "away": 110,
           "home": -130
         }
       },
       "pinnacle": {
         "ml": {
-          "away": 100,
-          "home": -115
+          "away": 111,
+          "home": -127
         }
       }
     },
-    "San Diego Padres@Milwaukee Brewers": {
-      "away": "San Diego Padres",
-      "home": "Milwaukee Brewers",
-      "commence_edt": "1:41 PM",
-      "ml": {
-        "fanduel": {
-          "home": -148,
-          "away": 118
-        },
-        "betonlineag": {
-          "home": -143,
-          "away": 123
-        },
-        "draftkings": {
-          "home": -140,
-          "away": 110
-        },
-        "betmgm": {
-          "home": -135,
-          "away": 105
-        },
-        "betrivers": {
-          "home": -152,
-          "away": 115
-        }
-      },
-      "pinnacle": {
-        "ml": {
-          "home": -140,
-          "away": 121
-        }
-      }
-    },
-    "Seattle Mariners@Houston Astros": {
-      "away": "Seattle Mariners",
-      "home": "Houston Astros",
-      "commence_edt": "2:11 PM",
-      "ml": {
-        "fanduel": {
-          "home": -110,
-          "away": -114
-        },
-        "betonlineag": {
-          "home": -112,
-          "away": -108
-        },
-        "draftkings": {
-          "home": -120,
-          "away": -110
-        },
-        "betmgm": {
-          "home": -110,
-          "away": -110
-        },
-        "betrivers": {
-          "home": -115,
-          "away": -115
-        }
-      },
-      "pinnacle": {
-        "ml": {
-          "home": -107,
-          "away": -107
-        }
-      }
-    },
-    "St. Louis Cardinals@Athletics": {
-      "away": "St. Louis Cardinals",
-      "home": "Athletics",
-      "commence_edt": "3:06 PM",
-      "ml": {
-        "fanduel": {
-          "home": -114,
-          "away": -110
-        },
-        "betonlineag": {
-          "home": -115,
-          "away": -105
-        },
-        "draftkings": {
-          "home": -110,
-          "away": -120
-        },
-        "betmgm": {
-          "home": -115,
-          "away": -110
-        },
-        "betrivers": {
-          "home": -125,
-          "away": -107
-        }
-      },
-      "pinnacle": {
-        "ml": {
-          "home": -111,
-          "away": -103
-        }
-      }
-    },
-    "Philadelphia Phillies@Boston Red Sox": {
-      "away": "Philadelphia Phillies",
-      "home": "Boston Red Sox",
-      "commence_edt": "6:46 PM",
-      "ml": {
-        "fanduel": {
-          "home": -104,
-          "away": -120
-        },
-        "betonlineag": {
-          "home": 105,
-          "away": -125
-        },
-        "draftkings": {
-          "home": 100,
-          "away": -130
-        },
-        "betmgm": {
-          "home": -110,
-          "away": -115
-        },
-        "betrivers": {
-          "home": -107,
-          "away": -124
-        }
-      },
-      "pinnacle": {
-        "ml": {
-          "home": 107,
-          "away": -122
-        }
-      }
-    },
-    "Chicago Cubs@Atlanta Braves": {
-      "away": "Chicago Cubs",
+    "Boston Red Sox@Atlanta Braves": {
+      "away": "Boston Red Sox",
       "home": "Atlanta Braves",
       "commence_edt": "7:16 PM",
       "ml": {
         "fanduel": {
-          "home": -180,
-          "away": 142
+          "home": -152,
+          "away": 122
         },
         "betonlineag": {
-          "home": -175,
-          "away": 153
-        },
-        "draftkings": {
-          "home": -195,
-          "away": 150
-        },
-        "betmgm": {
-          "home": -180,
-          "away": 140
-        },
-        "betrivers": {
-          "home": -186,
-          "away": 140
-        }
-      },
-      "pinnacle": {
-        "ml": {
-          "home": -176,
-          "away": 151
-        }
-      }
-    },
-    "Kansas City Royals@Chicago White Sox": {
-      "away": "Kansas City Royals",
-      "home": "Chicago White Sox",
-      "commence_edt": "7:41 PM",
-      "ml": {
-        "fanduel": {
-          "home": 124,
-          "away": -156
-        },
-        "betonlineag": {
-          "home": 125,
-          "away": -145
-        },
-        "draftkings": {
-          "home": 124,
-          "away": -160
-        },
-        "betmgm": {
-          "home": 115,
-          "away": -145
-        },
-        "betrivers": {
-          "home": 112,
-          "away": -148
-        }
-      },
-      "pinnacle": {
-        "ml": {
-          "home": 127,
-          "away": -147
-        }
-      }
-    },
-    "San Francisco Giants@Los Angeles Dodgers": {
-      "away": "San Francisco Giants",
-      "home": "Los Angeles Dodgers",
-      "commence_edt": "10:11 PM",
-      "ml": {
-        "fanduel": {
-          "home": -166,
-          "away": 132
-        },
-        "betonlineag": {
-          "home": -160,
-          "away": 140
-        },
-        "draftkings": {
-          "home": -166,
+          "home": -150,
           "away": 130
         },
+        "draftkings": {
+          "home": -154,
+          "away": 120
+        },
         "betmgm": {
-          "home": -165,
+          "home": -160,
           "away": 130
         },
         "betrivers": {
@@ -360,8 +228,272 @@
       },
       "pinnacle": {
         "ml": {
-          "home": -155,
-          "away": 135
+          "home": -146,
+          "away": 127
+        }
+      }
+    },
+    "New York Yankees@New York Mets": {
+      "away": "New York Yankees",
+      "home": "New York Mets",
+      "commence_edt": "7:16 PM",
+      "ml": {
+        "fanduel": {
+          "home": 132,
+          "away": -166
+        },
+        "betonlineag": {
+          "home": 135,
+          "away": -155
+        },
+        "draftkings": {
+          "home": 130,
+          "away": -166
+        },
+        "betrivers": {
+          "home": 123,
+          "away": -165
+        },
+        "betmgm": {
+          "home": 135,
+          "away": -170
+        }
+      },
+      "pinnacle": {
+        "ml": {
+          "home": 137,
+          "away": -159
+        }
+      }
+    },
+    "Chicago Cubs@Chicago White Sox": {
+      "away": "Chicago Cubs",
+      "home": "Chicago White Sox",
+      "commence_edt": "7:41 PM",
+      "ml": {
+        "fanduel": {
+          "away": -135,
+          "home": 108
+        },
+        "betonlineag": {
+          "away": -130,
+          "home": 110
+        },
+        "draftkings": {
+          "away": -130,
+          "home": 100
+        },
+        "betrivers": {
+          "away": -143,
+          "home": 108
+        },
+        "betmgm": {
+          "away": -135,
+          "home": 105
+        }
+      },
+      "pinnacle": {
+        "ml": {
+          "away": -124,
+          "home": 108
+        }
+      }
+    },
+    "Texas Rangers@Houston Astros": {
+      "away": "Texas Rangers",
+      "home": "Houston Astros",
+      "commence_edt": "8:11 PM",
+      "ml": {
+        "fanduel": {
+          "home": -112,
+          "away": -112
+        },
+        "betonlineag": {
+          "home": -110,
+          "away": -110
+        },
+        "draftkings": {
+          "home": -115,
+          "away": -115
+        },
+        "betrivers": {
+          "home": -113,
+          "away": -118
+        },
+        "betmgm": {
+          "home": -115,
+          "away": -110
+        }
+      },
+      "pinnacle": {
+        "ml": {
+          "home": -105,
+          "away": -109
+        }
+      }
+    },
+    "Kansas City Royals@St. Louis Cardinals": {
+      "away": "Kansas City Royals",
+      "home": "St. Louis Cardinals",
+      "commence_edt": "8:16 PM",
+      "ml": {
+        "fanduel": {
+          "away": -112,
+          "home": -112
+        },
+        "betrivers": {
+          "away": -117,
+          "home": -113
+        },
+        "betonlineag": {
+          "away": -115,
+          "home": -105
+        },
+        "draftkings": {
+          "away": -120,
+          "home": -110
+        },
+        "betmgm": {
+          "away": -115,
+          "home": -110
+        }
+      },
+      "pinnacle": {
+        "ml": {
+          "away": -110,
+          "home": -104
+        }
+      }
+    },
+    "Arizona Diamondbacks@Colorado Rockies": {
+      "away": "Arizona Diamondbacks",
+      "home": "Colorado Rockies",
+      "commence_edt": "8:41 PM",
+      "ml": {
+        "fanduel": {
+          "away": -116,
+          "home": -108
+        },
+        "betonlineag": {
+          "away": -120,
+          "home": 100
+        },
+        "draftkings": {
+          "away": -120,
+          "home": -110
+        },
+        "betmgm": {
+          "away": -120,
+          "home": -105
+        },
+        "betrivers": {
+          "away": -127,
+          "home": -106
+        }
+      },
+      "pinnacle": {
+        "ml": {
+          "away": -110,
+          "home": -104
+        }
+      }
+    },
+    "Los Angeles Dodgers@Los Angeles Angels": {
+      "away": "Los Angeles Dodgers",
+      "home": "Los Angeles Angels",
+      "commence_edt": "9:39 PM",
+      "ml": {
+        "fanduel": {
+          "home": 144,
+          "away": -182
+        },
+        "betonlineag": {
+          "home": 153,
+          "away": -175
+        },
+        "draftkings": {
+          "home": 150,
+          "away": -195
+        },
+        "betmgm": {
+          "home": 145,
+          "away": -185
+        },
+        "betrivers": {
+          "home": 140,
+          "away": -190
+        }
+      },
+      "pinnacle": {
+        "ml": {
+          "home": 157,
+          "away": -183
+        }
+      }
+    },
+    "San Francisco Giants@Athletics": {
+      "away": "San Francisco Giants",
+      "home": "Athletics",
+      "commence_edt": "9:41 PM",
+      "ml": {
+        "fanduel": {
+          "home": -132,
+          "away": 106
+        },
+        "betonlineag": {
+          "home": -120,
+          "away": 100
+        },
+        "draftkings": {
+          "home": -125,
+          "away": -105
+        },
+        "betmgm": {
+          "home": -120,
+          "away": -102
+        },
+        "betrivers": {
+          "home": -148,
+          "away": 110
+        }
+      },
+      "pinnacle": {
+        "ml": {
+          "home": -128,
+          "away": 112
+        }
+      }
+    },
+    "San Diego Padres@Seattle Mariners": {
+      "away": "San Diego Padres",
+      "home": "Seattle Mariners",
+      "commence_edt": "9:41 PM",
+      "ml": {
+        "fanduel": {
+          "away": 120,
+          "home": -150
+        },
+        "betonlineag": {
+          "away": 110,
+          "home": -130
+        },
+        "draftkings": {
+          "away": 100,
+          "home": -130
+        },
+        "betrivers": {
+          "away": 120,
+          "home": -159
+        },
+        "betmgm": {
+          "away": 105,
+          "home": -135
+        }
+      },
+      "pinnacle": {
+        "ml": {
+          "away": 118,
+          "home": -136
         }
       }
     }

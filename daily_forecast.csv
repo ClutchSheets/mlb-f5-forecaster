@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-14,COL,Chase Dollander,PIT,Mason Montgomery,2.3024,2.6269,4.9293,0.5683,v1.0
-2026-05-14,WSN,Foster Griffin,CIN,Chase Burns,2.4547,2.5267,4.9814,0.5287,v1.0
-2026-05-14,DET,Keider Montero,NYM,Nolan McLean,2.1167,2.2355,4.3522,0.5383,v1.0
-2026-05-14,MIA,Braxton Garrett,MIN,Zebby Matthews,2.3605,3.0347,5.3952,0.6142,v1.0
-2026-05-14,SDP,Griffin Canning,MIL,Kyle Harrison,2.1967,2.4850,4.6817,0.5647,v1.0
-2026-05-14,SEA,Luis Castillo,HOU,Mike Burrows,2.2769,2.3738,4.6508,0.5335,v1.0
-2026-05-14,STL,Michael McGreevy,ATH,Jacob Lopez,2.5053,2.6003,5.1056,0.5319,v1.0
-2026-05-14,PHI,Jesús Luzardo,BOS,Ranger Suarez,2.3816,2.1145,4.4962,0.4721,v1.0
-2026-05-14,CHC,Ben Brown,ATL,Chris Sale,2.3384,2.6606,4.9990,0.5673,v1.0
-2026-05-14,KCR,Kris Bubic,CHW,Anthony Kay,2.2386,2.1576,4.3962,0.5035,v1.0
-2026-05-14,SFG,Landen Roupp,LAD,Emmet Sheehan,2.0731,2.6648,4.7379,0.6128,v1.0
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
+2026-05-15,PHI,Aaron Nola,PIT,Braxton Ashcraft,2.1591,2.3718,4.5309,0.5534,v1.0
+2026-05-15,BAL,Shane Baz,WSN,Zack Littell,2.6022,2.6516,5.2538,0.5248,v1.0
+2026-05-15,TOR,Trey Yesavage,DET,Brenan Hanifee,2.7764,2.3509,5.1273,0.4533,v1.0
+2026-05-15,CIN,Andrew Abbott,CLE,Tanner Bibee,2.2028,2.2623,4.4651,0.5277,v1.0
+2026-05-15,MIA,Janson Junk,TBR,Ian Seymour,2.2273,2.3690,4.5963,0.5411,v1.0
+2026-05-15,MIL,Coleman Crow,MIN,Joe Ryan,2.2709,2.5722,4.8430,0.5654,v1.0
+2026-05-15,BOS,Connelly Early,ATL,Spencer Strider,2.3835,2.5791,4.9626,0.5480,v1.0
+2026-05-15,NYY,Cam Schlittler,NYM,Clay Holmes,2.6254,2.0336,4.6590,0.4207,v1.0
+2026-05-15,CHC,Edward Cabrera,CHW,Sean Burke,2.3044,2.0386,4.3431,0.4710,v1.0
+2026-05-15,TEX,Jack Leiter,HOU,Spencer Arrighetti,2.4159,2.4513,4.8672,0.5231,v1.0
+2026-05-15,KCR,Michael Wacha,STL,Dustin May,2.5260,2.6115,5.1375,0.5304,v1.0
+2026-05-15,ARI,Merrill Kelly,COL,Kyle Freeland,3.0507,3.0754,6.1262,0.5207,v1.0
+2026-05-15,LAD,Will Klein,LAA,Jack Kochanowicz,3.0087,3.1393,6.1480,0.5343,v1.0
+2026-05-15,SDP,Randy Vásquez,SEA,Emerson Hancock,1.9698,2.2299,4.1997,0.5644,v1.0
+2026-05-15,SFG,Tyler Mahle,ATH,Aaron Civale,2.4102,2.6066,5.0168,0.5478,v1.0
 ,,,,,,,,,
