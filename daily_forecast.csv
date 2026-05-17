@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-16,TOR,Mason Fluharty,DET,Casey Mize,2.1817,2.6293,4.8110,0.5889,v1.0
-2026-05-16,KCR,Noah Cameron,STL,Kyle Leahy,2.5434,2.5610,5.1043,0.5202,v1.0
-2026-05-16,ARI,Eduardo Rodriguez,COL,Tomoyuki Sugano,3.1798,3.2473,6.4272,0.5267,v1.0
-2026-05-16,BAL,Chris Bassitt,WSN,Cade Cavalli,2.4975,2.7289,5.2263,0.5519,v1.0
-2026-05-16,PHI,Cristopher Sánchez,PIT,Bubba Chandler,2.4220,2.0994,4.5214,0.4630,v1.0
-2026-05-16,MIA,Sandy Alcantara,TBR,Nick Martinez,2.3971,2.4007,4.7978,0.5181,v1.0
-2026-05-16,CIN,Chris Paddack,CLE,Joey Cantillo,2.2675,2.2846,4.5521,0.5204,v1.0
-2026-05-16,TEX,Jacob deGrom,HOU,Kai-Wei Teng,2.2850,2.1749,4.4599,0.4986,v1.0
-2026-05-16,CHC,Jameson Taillon,CHW,Davis Martin,2.2645,2.2701,4.5346,0.5184,v1.0
-2026-05-16,MIL,Logan Henderson,MIN,Connor Prielipp,2.4325,2.4118,4.8443,0.5142,v1.0
-2026-05-16,SDP,Walker Buehler,SEA,Logan Gilbert,1.7520,2.3359,4.0879,0.6245,v1.0
-2026-05-16,BOS,Payton Tolle,ATL,Bryce Elder,2.3926,2.5873,4.9799,0.5477,v1.0
-2026-05-16,NYY,Carlos Rodón,NYM,Huascar Brazobán,3.0722,2.2289,5.3011,0.3952,v1.0
-2026-05-16,LAD,Justin Wrobleski,LAA,José Soriano,2.6267,2.7336,5.3604,0.5330,v1.0
-2026-05-16,SFG,Trevor McDonald,ATH,Luis Severino,2.3964,2.3927,4.7891,0.5169,v1.0
+2026-05-17,MIA,Eury Pérez,TBR,Drew Rasmussen,2.1519,2.3011,4.4530,0.5431,v1.0
+2026-05-17,BAL,Brandon Young,WSN,Richard Lovelady,2.4818,2.8286,5.3104,0.5683,v1.0
+2026-05-17,PHI,Zack Wheeler,PIT,Paul Skenes,1.9762,2.1619,4.1381,0.5514,v1.0
+2026-05-17,BOS,Brayan Bello,ATL,Grant Holmes,2.4294,2.7492,5.1786,0.5654,v1.0
+2026-05-17,CIN,Brady Singer,CLE,Gavin Williams,2.2877,2.2261,4.5138,0.5071,v1.0
+2026-05-17,TOR,Kevin Gausman,DET,Jack Flaherty,2.1815,2.2139,4.3954,0.5231,v1.0
+2026-05-17,NYY,Elmer Rodríguez,NYM,Freddy Peralta,2.3595,2.4525,4.8120,0.5324,v1.0
+2026-05-17,TEX,Nathan Eovaldi,HOU,Peter Lambert,2.2216,2.2165,4.4381,0.5166,v1.0
+2026-05-17,CHC,Colin Rea,CHW,Erick Fedde,2.4559,2.2843,4.7401,0.4897,v1.0
+2026-05-17,MIL,Robert Gasser,MIN,Bailey Ober,2.5235,2.6537,5.1772,0.5370,v1.0
+2026-05-17,KCR,Stephen Kolek,STL,Andre Pallante,2.5678,2.6054,5.1732,0.5231,v1.0
+2026-05-17,ARI,Michael Soroka,COL,Michael Lorenzen,3.0264,2.8146,5.8410,0.4890,v1.0
+2026-05-17,SFG,Adrian Houser,ATH,Jeffrey Springs,2.4357,2.6354,5.0711,0.5480,v1.0
+2026-05-17,LAD,Roki Sasaki,LAA,Grayson Rodriguez,3.2839,2.6373,5.9211,0.4320,v1.0
+2026-05-17,SDP,Lucas Giolito,SEA,George Kirby,1.8143,2.2476,4.0619,0.5977,v1.0
 ,,,,,,,,,
