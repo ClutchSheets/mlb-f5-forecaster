@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-17,MIA,Eury Pérez,TBR,Drew Rasmussen,2.1519,2.3011,4.4530,0.5431,v1.0
-2026-05-17,BAL,Brandon Young,WSN,Richard Lovelady,2.4818,2.8286,5.3104,0.5683,v1.0
-2026-05-17,PHI,Zack Wheeler,PIT,Paul Skenes,1.9762,2.1619,4.1381,0.5514,v1.0
-2026-05-17,BOS,Brayan Bello,ATL,Grant Holmes,2.4294,2.7492,5.1786,0.5654,v1.0
-2026-05-17,CIN,Brady Singer,CLE,Gavin Williams,2.2877,2.2261,4.5138,0.5071,v1.0
-2026-05-17,TOR,Kevin Gausman,DET,Jack Flaherty,2.1815,2.2139,4.3954,0.5231,v1.0
-2026-05-17,NYY,Elmer Rodríguez,NYM,Freddy Peralta,2.3595,2.4525,4.8120,0.5324,v1.0
-2026-05-17,TEX,Nathan Eovaldi,HOU,Peter Lambert,2.2216,2.2165,4.4381,0.5166,v1.0
-2026-05-17,CHC,Colin Rea,CHW,Erick Fedde,2.4559,2.2843,4.7401,0.4897,v1.0
-2026-05-17,MIL,Robert Gasser,MIN,Bailey Ober,2.5235,2.6537,5.1772,0.5370,v1.0
-2026-05-17,KCR,Stephen Kolek,STL,Andre Pallante,2.5678,2.6054,5.1732,0.5231,v1.0
-2026-05-17,ARI,Michael Soroka,COL,Michael Lorenzen,3.0264,2.8146,5.8410,0.4890,v1.0
-2026-05-17,SFG,Adrian Houser,ATH,Jeffrey Springs,2.4357,2.6354,5.0711,0.5480,v1.0
-2026-05-17,LAD,Roki Sasaki,LAA,Grayson Rodriguez,3.2839,2.6373,5.9211,0.4320,v1.0
-2026-05-17,SDP,Lucas Giolito,SEA,George Kirby,1.8143,2.2476,4.0619,0.5977,v1.0
+2026-05-18,CLE,Slade Cecconi,DET,Framber Valdez,2.2492,2.3333,4.5825,0.5316,v1.0
+2026-05-18,BAL,Trevor Rogers,TBR,Shane McClanahan,2.2815,2.3298,4.6112,0.5255,v1.0
+2026-05-18,CIN,Nick Lodolo,PHI,Andrew Painter,2.5507,2.2145,4.7651,0.4633,v1.0
+2026-05-18,ATL,JR Ritchie,MIA,Max Meyer,2.4495,2.5192,4.9687,0.5283,v1.0
+2026-05-18,NYM,Christian Scott,WSN,Jake Irvin,2.5667,2.7415,5.3082,0.5431,v1.0
+2026-05-18,TOR,Patrick Corbin,NYY,Ryan Weathers,2.1360,2.5695,4.7055,0.5880,v1.0
+2026-05-18,BOS,Sonny Gray,KCR,Seth Lugo,2.1932,2.0234,4.2166,0.4870,v1.0
+2026-05-18,HOU,Tatsuya Imai,MIN,Kendry Rojas,3.0495,2.6927,5.7422,0.4688,v1.0
+2026-05-18,MIL,Brandon Sproat,CHC,Shota Imanaga,2.2597,2.5538,4.8135,0.5645,v1.0
+2026-05-18,TEX,MacKenzie Gore,COL,Jose Quintana,3.2844,3.0486,6.3330,0.4850,v1.0
+2026-05-18,ATH,J.T. Ginn,LAA,Walbert Ureña,3.1896,2.4468,5.6364,0.4151,v1.0
+2026-05-18,LAD,Yoshinobu Yamamoto,SDP,Michael King,2.5164,2.0194,4.5358,0.4341,v1.0
+2026-05-18,SFG,Robbie Ray,ARI,Zac Gallen,2.5918,2.5991,5.1909,0.5186,v1.0
+2026-05-18,CHW,Noah Schultz,SEA,Bryan Woo,2.0265,2.2873,4.3138,0.5634,v1.0
+,,,,,,,,,
 ,,,,,,,,,
