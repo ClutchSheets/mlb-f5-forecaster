@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-18,CLE,Slade Cecconi,DET,Framber Valdez,2.2492,2.3333,4.5825,0.5316,v1.0
-2026-05-18,BAL,Trevor Rogers,TBR,Shane McClanahan,2.2815,2.3298,4.6112,0.5255,v1.0
-2026-05-18,CIN,Nick Lodolo,PHI,Andrew Painter,2.5507,2.2145,4.7651,0.4633,v1.0
-2026-05-18,ATL,JR Ritchie,MIA,Max Meyer,2.4495,2.5192,4.9687,0.5283,v1.0
-2026-05-18,NYM,Christian Scott,WSN,Jake Irvin,2.5667,2.7415,5.3082,0.5431,v1.0
-2026-05-18,TOR,Patrick Corbin,NYY,Ryan Weathers,2.1360,2.5695,4.7055,0.5880,v1.0
-2026-05-18,BOS,Sonny Gray,KCR,Seth Lugo,2.1932,2.0234,4.2166,0.4870,v1.0
-2026-05-18,HOU,Tatsuya Imai,MIN,Kendry Rojas,3.0495,2.6927,5.7422,0.4688,v1.0
-2026-05-18,MIL,Brandon Sproat,CHC,Shota Imanaga,2.2597,2.5538,4.8135,0.5645,v1.0
-2026-05-18,TEX,MacKenzie Gore,COL,Jose Quintana,3.2844,3.0486,6.3330,0.4850,v1.0
-2026-05-18,ATH,J.T. Ginn,LAA,Walbert Ureña,3.1896,2.4468,5.6364,0.4151,v1.0
-2026-05-18,LAD,Yoshinobu Yamamoto,SDP,Michael King,2.5164,2.0194,4.5358,0.4341,v1.0
-2026-05-18,SFG,Robbie Ray,ARI,Zac Gallen,2.5918,2.5991,5.1909,0.5186,v1.0
-2026-05-18,CHW,Noah Schultz,SEA,Bryan Woo,2.0265,2.2873,4.3138,0.5634,v1.0
-,,,,,,,,,
+2026-05-19,ATL,Martín Pérez,MIA,Braxton Garrett,2.7799,2.5031,5.2830,0.4768,v1.0
+2026-05-19,CLE,Parker Messick,DET,Keider Montero,2.4274,2.1283,4.5558,0.4673,v1.0
+2026-05-19,BAL,Kyle Bradish,TBR,Griffin Jax,2.5549,2.2640,4.8189,0.4710,v1.0
+2026-05-19,CIN,Chase Burns,PHI,Jesús Luzardo,2.1762,2.1912,4.3674,0.5201,v1.0
+2026-05-19,NYM,Nolan McLean,WSN,Foster Griffin,2.3928,2.4174,4.8102,0.5214,v1.0
+2026-05-19,TOR,Dylan Cease,NYY,Will Warren,2.2155,2.3370,4.5525,0.5379,v1.0
+2026-05-19,BOS,Ranger Suarez,KCR,Bailey Falter,2.3892,2.1083,4.4975,0.4698,v1.0
+2026-05-19,HOU,Lance McCullers Jr.,MIN,Zebby Matthews,2.4805,2.5686,5.0491,0.5310,v1.0
+2026-05-19,MIL,Jacob Misiorowski,CHC,Ben Brown,2.3348,2.2404,4.5752,0.5017,v1.0
+2026-05-19,PIT,Mitch Keller,STL,Matthew Liberatore,2.7221,2.5179,5.2400,0.4872,v1.0
+2026-05-19,TEX,Kumar Rocker,COL,Sammy Peralta,3.5959,3.1371,6.7331,0.4579,v1.0
+2026-05-19,ATH,Jacob Lopez,LAA,Reid Detmers,2.5614,2.5786,5.1401,0.5201,v1.0
+2026-05-19,LAD,Emmet Sheehan,SDP,Griffin Canning,2.6609,1.9622,4.6232,0.4028,v1.0
+2026-05-19,SFG,Landen Roupp,ARI,Ryne Nelson,2.4995,2.6089,5.1084,0.5341,v1.0
+2026-05-19,CHW,Anthony Kay,SEA,Bryce Miller,2.2367,2.1952,4.4319,0.5104,v1.0
 ,,,,,,,,,
