@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-21,CLE,Joey Cantillo,DET,Casey Mize,2.3109,2.2767,4.5876,0.5118,v1.0
-2026-05-21,PIT,Braxton Ashcraft,STL,Dustin May,2.6559,2.3272,4.9831,0.4666,v1.0
-2026-05-21,NYM,David Peterson,WSN,Cade Cavalli,2.4597,2.6968,5.1565,0.5532,v1.0
-2026-05-21,ATL,Spencer Strider,MIA,Sandy Alcantara,2.5204,2.3460,4.8664,0.4899,v1.0
-2026-05-21,TOR,Braydon Fisher,NYY,Carlos Rodón,2.2586,2.7093,4.9679,0.5874,v1.0
-2026-05-21,ATH,Luis Severino,LAA,José Soriano,2.5382,2.6198,5.1581,0.5298,v1.0
-2026-05-21,COL,Zach Agnos,ARI,Eduardo Rodriguez,2.6833,3.2462,5.9295,0.5920,v1.0
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
+2026-05-23,STL,Andre Pallante,CIN,Chris Paddack,2.6055,2.6718,5.2773,0.5273,v1.0
+2026-05-23,STL,Kyle Leahy,CIN,Chase Petty,2.6631,2.7037,5.3668,0.5234,v1.0
+2026-05-23,HOU,Kai-Wei Teng,CHC,Colin Rea,2.4380,2.4930,4.9310,0.5261,v1.0
+2026-05-23,PIT,Paul Skenes,TOR,Patrick Corbin,2.4625,1.8882,4.3507,0.4178,v1.0
+2026-05-23,DET,Framber Valdez,BAL,Brandon Young,2.6126,2.5253,5.1379,0.5043,v1.0
+2026-05-23,CLE,Slade Cecconi,PHI,Zack Wheeler,2.1305,2.4232,4.5537,0.5666,v1.0
+2026-05-23,CHW,Bryan Hudson,SFG,Adrian Houser,2.3889,2.1711,4.5600,0.4810,v1.0
+2026-05-23,SEA,George Kirby,KCR,Stephen Kolek,2.2473,1.9945,4.2418,0.4723,v1.0
+2026-05-23,MIN,Taj Bradley,BOS,Jovani Morán,2.5016,2.4356,4.9372,0.5072,v1.0
+2026-05-23,WSN,Jake Irvin,ATL,Grant Holmes,2.7084,2.8166,5.5250,0.5328,v1.0
+2026-05-23,NYM,Freddy Peralta,MIA,Max Meyer,2.2393,2.2314,4.4707,0.5162,v1.0
+2026-05-23,LAD,Roki Sasaki,MIL,Robert Gasser,2.7039,2.4196,5.1235,0.4745,v1.0
+2026-05-23,ATH,J.T. Ginn,SDP,Lucas Giolito,2.5063,2.1607,4.6670,0.4608,v1.0
+2026-05-23,TEX,Nathan Eovaldi,LAA,Walbert Ureña,2.6945,2.3256,5.0201,0.4607,v1.0
+2026-05-23,COL,Michael Lorenzen,ARI,Zac Gallen,2.5560,2.6832,5.2392,0.5364,v1.0
 ,,,,,,,,,
