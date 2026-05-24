@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-23,STL,Andre Pallante,CIN,Chris Paddack,2.6055,2.6718,5.2773,0.5273,v1.0
-2026-05-23,STL,Kyle Leahy,CIN,Chase Petty,2.6631,2.7037,5.3668,0.5234,v1.0
-2026-05-23,HOU,Kai-Wei Teng,CHC,Colin Rea,2.4380,2.4930,4.9310,0.5261,v1.0
-2026-05-23,PIT,Paul Skenes,TOR,Patrick Corbin,2.4625,1.8882,4.3507,0.4178,v1.0
-2026-05-23,DET,Framber Valdez,BAL,Brandon Young,2.6126,2.5253,5.1379,0.5043,v1.0
-2026-05-23,CLE,Slade Cecconi,PHI,Zack Wheeler,2.1305,2.4232,4.5537,0.5666,v1.0
-2026-05-23,CHW,Bryan Hudson,SFG,Adrian Houser,2.3889,2.1711,4.5600,0.4810,v1.0
-2026-05-23,SEA,George Kirby,KCR,Stephen Kolek,2.2473,1.9945,4.2418,0.4723,v1.0
-2026-05-23,MIN,Taj Bradley,BOS,Jovani Morán,2.5016,2.4356,4.9372,0.5072,v1.0
-2026-05-23,WSN,Jake Irvin,ATL,Grant Holmes,2.7084,2.8166,5.5250,0.5328,v1.0
-2026-05-23,NYM,Freddy Peralta,MIA,Max Meyer,2.2393,2.2314,4.4707,0.5162,v1.0
-2026-05-23,LAD,Roki Sasaki,MIL,Robert Gasser,2.7039,2.4196,5.1235,0.4745,v1.0
-2026-05-23,ATH,J.T. Ginn,SDP,Lucas Giolito,2.5063,2.1607,4.6670,0.4608,v1.0
-2026-05-23,TEX,Nathan Eovaldi,LAA,Walbert Ureña,2.6945,2.3256,5.0201,0.4607,v1.0
-2026-05-23,COL,Michael Lorenzen,ARI,Zac Gallen,2.5560,2.6832,5.2392,0.5364,v1.0
+2026-05-24,PIT,Mitch Keller,TOR,Dylan Cease,2.1532,2.2820,4.4352,0.5397,v1.0
+2026-05-24,DET,Framber Valdez,BAL,Brandon Young,2.5739,2.5829,5.1567,0.5189,v1.0
+2026-05-24,DET,Troy Melton,BAL,Trevor Rogers,2.3750,2.6529,5.0280,0.5602,v1.0
+2026-05-24,MIN,Bailey Ober,BOS,Sonny Gray,2.3260,2.5737,4.8997,0.5565,v1.0
+2026-05-24,CLE,Parker Messick,PHI,Andrew Painter,2.4805,2.1244,4.6049,0.4584,v1.0
+2026-05-24,TBR,Drew Rasmussen,NYY,Ryan Weathers,2.3133,2.3820,4.6953,0.5287,v1.0
+2026-05-24,STL,Matthew Liberatore,CIN,Brady Singer,2.5701,2.7371,5.3072,0.5420,v1.0
+2026-05-24,NYM,Christian Scott,MIA,Tyler Phillips,2.3137,2.3415,4.6552,0.5221,v1.0
+2026-05-24,SEA,Bryan Woo,KCR,Seth Lugo,2.1993,1.9095,4.1088,0.4643,v1.0
+2026-05-24,LAD,Yoshinobu Yamamoto,MIL,Brandon Sproat,2.5580,2.2177,4.7757,0.4628,v1.0
+2026-05-24,HOU,Peter Lambert,CHC,Shota Imanaga,2.2334,2.3824,4.6158,0.5423,v1.0
+2026-05-24,CHW,Noah Schultz,SFG,Robbie Ray,2.2551,2.3246,4.5797,0.5291,v1.0
+2026-05-24,COL,Jose Quintana,ARI,Ryne Nelson,2.4867,2.9794,5.4660,0.5876,v1.0
+2026-05-24,ATH,Luis Medina,SDP,Michael King,2.3652,2.6778,5.0429,0.5654,v1.0
+2026-05-24,WSN,Foster Griffin,ATL,Martín Pérez,2.7610,2.5864,5.3474,0.4921,v1.0
 ,,,,,,,,,
