@@ -1,17 +1,17 @@
 ﻿date,away_team,away_sp,home_team,home_sp,lambda_away,lambda_home,total_proj,winprob_home,model_version
-2026-05-24,PIT,Mitch Keller,TOR,Dylan Cease,2.1532,2.2820,4.4352,0.5397,v1.0
-2026-05-24,DET,Framber Valdez,BAL,Brandon Young,2.5739,2.5829,5.1567,0.5189,v1.0
-2026-05-24,DET,Troy Melton,BAL,Trevor Rogers,2.3750,2.6529,5.0280,0.5602,v1.0
-2026-05-24,MIN,Bailey Ober,BOS,Sonny Gray,2.3260,2.5737,4.8997,0.5565,v1.0
-2026-05-24,CLE,Parker Messick,PHI,Andrew Painter,2.4805,2.1244,4.6049,0.4584,v1.0
-2026-05-24,TBR,Drew Rasmussen,NYY,Ryan Weathers,2.3133,2.3820,4.6953,0.5287,v1.0
-2026-05-24,STL,Matthew Liberatore,CIN,Brady Singer,2.5701,2.7371,5.3072,0.5420,v1.0
-2026-05-24,NYM,Christian Scott,MIA,Tyler Phillips,2.3137,2.3415,4.6552,0.5221,v1.0
-2026-05-24,SEA,Bryan Woo,KCR,Seth Lugo,2.1993,1.9095,4.1088,0.4643,v1.0
-2026-05-24,LAD,Yoshinobu Yamamoto,MIL,Brandon Sproat,2.5580,2.2177,4.7757,0.4628,v1.0
-2026-05-24,HOU,Peter Lambert,CHC,Shota Imanaga,2.2334,2.3824,4.6158,0.5423,v1.0
-2026-05-24,CHW,Noah Schultz,SFG,Robbie Ray,2.2551,2.3246,4.5797,0.5291,v1.0
-2026-05-24,COL,Jose Quintana,ARI,Ryne Nelson,2.4867,2.9794,5.4660,0.5876,v1.0
-2026-05-24,ATH,Luis Medina,SDP,Michael King,2.3652,2.6778,5.0429,0.5654,v1.0
-2026-05-24,WSN,Foster Griffin,ATL,Martín Pérez,2.7610,2.5864,5.3474,0.4921,v1.0
+2026-05-25,CHC,Ben Brown,PIT,Carmen Mlodzinski,2.2984,2.3590,4.6574,0.5275,v1.0
+2026-05-25,TBR,Shane McClanahan,BAL,Kyle Bradish,2.4509,2.4964,4.9474,0.5246,v1.0
+2026-05-25,MIN,Zebby Matthews,CHW,Anthony Kay,2.2682,2.0590,4.3272,0.4807,v1.0
+2026-05-25,STL,Matthew Liberatore,MIL,Jacob Misiorowski,2.1377,2.4858,4.6236,0.5751,v1.0
+2026-05-25,NYY,Will Warren,KCR,Michael Wacha,2.3919,2.0863,4.4782,0.4654,v1.0
+2026-05-25,CIN,Nick Lodolo,NYM,Nolan McLean,2.1519,2.0766,4.2285,0.5040,v1.0
+2026-05-25,ARI,Merrill Kelly,SFG,Landen Roupp,2.1957,2.2137,4.4094,0.5206,v1.0
+2026-05-25,WSN,Zack Littell,CLE,Tanner Bibee,2.3082,2.2506,4.5588,0.5078,v1.0
+2026-05-25,PHI,Jesús Luzardo,SDP,Randy Vásquez,2.3982,1.9464,4.3446,0.4387,v1.0
+2026-05-25,HOU,Tatsuya Imai,TEX,Kumar Rocker,2.3616,2.4090,4.7707,0.5252,v1.0
+2026-05-25,MIA,Janson Junk,TOR,Trey Yesavage,2.2228,2.3106,4.5334,0.5323,v1.0
+2026-05-25,COL,Tanner Gordon,LAD,Emmet Sheehan,2.1140,2.7070,4.8210,0.6116,v1.0
+2026-05-25,SEA,Luis Castillo,ATH,Aaron Civale,2.5391,2.4131,4.9522,0.4978,v1.0
+,,,,,,,,,
+,,,,,,,,,
 ,,,,,,,,,
