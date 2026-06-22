@@ -523,12 +523,21 @@ def render_calibration(hist: pd.DataFrame, forecast_df: pd.DataFrame):
         total_games = len(scored)
         overall_actual = long_df["actual"].mean()
         overall_pred   = long_df["pred_prob"].mean()
-        mean_abs_err   = (long_df["actual"] - long_df["pred_prob"]).abs().mean()
+
+        # Weighted Calibration Error / Expected Calibration Error (ECE)
+        # This measures bucket-level calibration, not game-level absolute error.
+        # Previous version used abs(actual - probability), which is ordinary
+        # binary forecast error and will naturally be large because actuals are 0/1.
+        bucket_stats["abs_delta"] = bucket_stats["delta"].abs()
+        mean_abs_err = (
+            bucket_stats["abs_delta"] * bucket_stats["n"]
+        ).sum() / bucket_stats["n"].sum()
+
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Scored Games", total_games)
         c2.metric("Avg Predicted Win%", f"{overall_pred*100:.1f}%")
         c3.metric("Avg Actual Win%", f"{overall_actual*100:.1f}%")
-        c4.metric("Mean Abs Calibration Error", f"{mean_abs_err*100:.2f}%")
+        c4.metric("Weighted Calibration Error", f"{mean_abs_err*100:.2f}%")
 
         st.markdown("---")
 
