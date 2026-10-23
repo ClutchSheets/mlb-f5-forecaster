@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "d31971f20a2edb069b228e828826815a")
+ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "")
 
 BOOKS = [
     "betonlineag",
